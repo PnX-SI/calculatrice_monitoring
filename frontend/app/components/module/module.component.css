@@ -1,0 +1,18 @@
+h1, h2 {
+  text-align: center;
+}
+
+.indicators {
+  background-color: white;
+  min-height: 90vh;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.indicator {
+  padding: 5px;
+}
+
+.indicator h2 {
+  text-align: center;
+}

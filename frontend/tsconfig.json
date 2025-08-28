@@ -1,0 +1,3 @@
+{
+  "extends": "../../GeoNature/frontend/tsconfig.json"
+}

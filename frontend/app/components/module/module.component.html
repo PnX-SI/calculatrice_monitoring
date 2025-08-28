@@ -1,0 +1,30 @@
+<div class="indicators container">
+  <h1 class="title-module display-5 mb-4">{{ titleModule }}</h1>
+  <div
+    class="text-center my-auto"
+    style="height: 80vh"
+    *ngIf="indicators.length < 1"
+  >
+    Pas d'indicateurs
+  </div>
+  <div class="text-center">{{ description }}</div>
+  <div
+    class="m-2"
+    *ngIf="indicators.length > 0"
+  >
+    <div class="btn-module text-center">
+      <div class="container-fluid py-5 m-2">
+        <h3>Liste des indicateurs</h3>
+        <div class="row row-eq-height justify-content-center">
+          <div
+            class="col-12 col-sm-5 col-md-3 col-lg-3 indicator"
+            style="min-width: 250px; max-width: 250px"
+            *ngFor="let indicator of indicators"
+          >
+            <p>{{ indicator.id }} - {{ indicator.name }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
