@@ -15,7 +15,11 @@ geonature install-gn-module ~/calculatrice_monitoring
 - utiliser le virtualenv de GeoNature
 - installer les dépendances frontend de développement (pour lancer les tests, le formatage auto)
 
-Ce projet utilise `black`, `flake8`, `prettier` et `eslint` pour assurer la cohérence du style et les bonnes pratiques Python et TypeScript. Vérifier que PyCharm utilise les configurations fournies avec le projet pour auto-formater et linter le code.
+Ce projet utilise `ruff`, `prettier` et `eslint` pour assurer la cohérence du style et les bonnes pratiques Python et TypeScript. Vérifier que votre éditeur utilise les configurations fournies avec le projet pour auto-formater et linter le code.
+
+# Convention pour les commits
+
+Ce projet suit la convention ??? pour les commits. 
 
 # Lancer les tests backend
 
@@ -34,13 +38,14 @@ Dans le répertoire `calculatrice_monitoring/frontend` exécuter `npx cypress ru
 Pour exécuter localement les vérifications appliquées par la CI il faut activer `pre-commit` comme suit :
 
 ```bash
-pre-commit install
+pre-commit install --install-hooks
 ```
 
 Les vérifications suivantes sont exécutées :
 
-- formatage black sur les fichiers python (modifications appliquées dans le staging de Git)
-- formatage et organisation des imports python avec isort (modifications appliquées dans le staging de Git)
+- linter ruff sur les fichiers python (modifications appliquées directement si possible, sinon erreur dans les logs)
+- formatage ruff sur les fichiers python (modifications appliquées directement)
+- vérification que le message de commit suit la convention (commit échoue si ce n'est pas le cas)
 - formatage code frontend + organisation imports avec prettier (check-only, modifications à appliquer avec `npm run format`)
 
 Note : pour le moment `prettier` vérifie l'intégralité des fichiers frontend à chaque commit, il n'est donc pas possible de commiter un fichier bien formaté si d'autres ne le sont pas. 
