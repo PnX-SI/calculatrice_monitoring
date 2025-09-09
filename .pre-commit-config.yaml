@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
+    rev: v0.12.12
     hooks:
       - id: ruff
         name: Ruff lint check
@@ -8,7 +8,7 @@ repos:
       - id: ruff-format
         name: Ruff format check
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.29.1
+    rev: v4.9.0
     hooks:
       - id: commitizen
         name: Check conventional commit format
