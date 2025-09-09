@@ -1,6 +1,6 @@
-import setuptools
 from pathlib import Path
 
+import setuptools
 
 root_dir = Path(__file__).absolute().parent
 with (root_dir / "VERSION").open() as f:

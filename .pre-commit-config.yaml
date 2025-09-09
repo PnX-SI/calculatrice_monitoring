@@ -1,20 +1,18 @@
 repos:
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.1.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
     hooks:
-      - id: black
-        name: Black lint check
-        language_version: python3.11
-  - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+      - id: ruff
+        name: Ruff lint check
+        args: [--fix]
+      - id: ruff-format
+        name: Ruff format check
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.1
     hooks:
-      - id: isort
-        name: isort (python)
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
-    hooks:
-      - id: flake8
-        name: flake8
+      - id: commitizen
+        name: Check conventional commit format
+        stages: [commit-msg]
   - repo: local
     hooks:
       - id: prettier
