@@ -19,7 +19,22 @@ Ce projet utilise `ruff`, `prettier` et `eslint` pour assurer la cohérence du s
 
 # Convention pour les commits
 
-Ce projet suit la convention ??? pour les commits. 
+Ce projet suit la convention [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
+
+Les messages de commits doivent être de la forme :
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+Par exemple :
+
+- `feat(indicateur): add creation datetime`
+- `docs: update README`
 
 # Lancer les tests backend
 
