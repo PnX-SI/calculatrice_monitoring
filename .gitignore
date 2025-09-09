@@ -1,0 +1,4 @@
+/backend/calculatrice_monitoring.egg-info/
+node_modules
+/frontend/app/module.config.ts
+__pycache__

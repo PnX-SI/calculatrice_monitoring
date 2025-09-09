@@ -1,0 +1,26 @@
+<div class="indicators container">
+  <h1 class="mb-4">{{ titleModule }}</h1>
+  <div class="text-center">{{ description }}</div>
+  <div
+    class="text-center"
+    *ngIf="indicators.length < 1"
+  >
+    Pas d'indicateurs
+  </div>
+  <div
+    class="m-2"
+    *ngIf="indicators.length > 0"
+  >
+    <div class="btn-module text-center">
+      <div class="container-fluid py-5 m-2">
+        <h3>Liste des indicateurs</h3>
+        <div
+          class="indicator"
+          *ngFor="let indicator of indicators"
+        >
+          <p>{{ indicator.id }} - {{ indicator.name }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

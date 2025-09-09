@@ -1,5 +1,6 @@
 import os
 import sys
+
 import requests
 
 # Configuration
@@ -12,11 +13,11 @@ PROJECT_ID = os.environ["PROJECT_ID"]
 
 headers = {
     "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3+json"
+    "Accept": "application/vnd.github.v3+json",
 }
 graphql_headers = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github+json"
+    "Accept": "application/vnd.github+json",
 }
 
 
@@ -27,8 +28,8 @@ def update_epic_complexity(issue, complexity_value):
         issue: Objet issue récupéré via l'API REST GitHub
         complexity_value: Valeur numérique de la complexité
     """
-    issue_number = issue.get('number')
-    node_id = issue.get('node_id')
+    issue_number = issue.get("number")
+    node_id = issue.get("node_id")
 
     print(f"\n🔄 Mise à jour complexité issue #{issue_number} -> {complexity_value}")
 
@@ -80,13 +81,13 @@ def update_epic_complexity(issue, complexity_value):
         "projectId": PROJECT_ID,
         "itemId": project_item_id,
         "fieldId": EPIC_COMPLEXITY_FIELD_ID,
-        "value": float(complexity_value)
+        "value": float(complexity_value),
     }
 
     response = requests.post(
         graphql_url,
         json={"query": mutation, "variables": variables},
-        headers=graphql_headers
+        headers=graphql_headers,
     )
 
     if response.status_code != 200:
@@ -96,11 +97,11 @@ def update_epic_complexity(issue, complexity_value):
 
     data = response.json()
 
-    if 'errors' in data:
+    if "errors" in data:
         print(f"❌ Erreurs GraphQL: {data['errors']}")
         return False
 
-    update_result = data.get('data', {}).get('updateProjectV2ItemFieldValue')
+    update_result = data.get("data", {}).get("updateProjectV2ItemFieldValue")
     if update_result:
         print(f"✅ Complexité mise à jour pour issue #{issue_number}: {complexity_value}")
         return True
@@ -137,7 +138,7 @@ def get_project_item_id(issue_node_id):
     response = requests.post(
         graphql_url,
         json={"query": query, "variables": {"nodeId": issue_node_id}},
-        headers=graphql_headers
+        headers=graphql_headers,
     )
 
     if response.status_code != 200:
@@ -146,25 +147,25 @@ def get_project_item_id(issue_node_id):
 
     data = response.json()
 
-    if 'errors' in data:
+    if "errors" in data:
         print(f"❌ Erreurs GraphQL: {data['errors']}")
         return None
 
     try:
-        node_data = data.get('data', {}).get('node')
+        node_data = data.get("data", {}).get("node")
         if not node_data:
             return None
 
-        project_items = node_data.get('projectItems', {}).get('nodes', [])
+        project_items = node_data.get("projectItems", {}).get("nodes", [])
 
         # Chercher l'item correspondant au bon projet
         for item in project_items:
             if not item:
                 continue
 
-            project = item.get('project', {})
-            if project.get('id') == PROJECT_ID:
-                item_id = item.get('id')
+            project = item.get("project", {})
+            if project.get("id") == PROJECT_ID:
+                item_id = item.get("id")
                 print(f"✅ Project item ID trouvé: {item_id}")
                 return item_id
 
@@ -178,8 +179,8 @@ def get_project_item_id(issue_node_id):
 
 def get_issue_complexity(issue):
     """Récupère la valeur du champ complexité d'une issue"""
-    issue_number = issue.get('number')
-    issue_node_id = issue.get('node_id')
+    issue_number = issue.get("number")
+    issue_node_id = issue.get("node_id")
 
     print(f"🔍 Recherche complexité pour issue #{issue_number} (node_id: {issue_node_id})")
 
@@ -244,7 +245,7 @@ def get_issue_complexity(issue):
     response = requests.post(
         graphql_url,
         json={"query": query, "variables": {"nodeId": issue_node_id}},
-        headers=graphql_headers
+        headers=graphql_headers,
     )
 
     if response.status_code != 200:
@@ -256,12 +257,12 @@ def get_issue_complexity(issue):
     data = response.json()
 
     try:
-        node_data = data.get('data', {}).get('node')
+        node_data = data.get("data", {}).get("node")
         if not node_data:
             print(f"❌ Aucune donnée pour le node {issue_node_id}")
             return None
 
-        project_items = node_data.get('projectItems', {}).get('nodes', [])
+        project_items = node_data.get("projectItems", {}).get("nodes", [])
         if not project_items:
             print(f"⚠️ L'issue #{issue_number} n'est liée à aucun projet")
             return None
@@ -272,24 +273,27 @@ def get_issue_complexity(issue):
             if not item:  # Vérification de sécurité
                 continue
 
-            project_info = item.get('project', {})
+            project_info = item.get("project", {})
             print(f"  Projet: {project_info.get('title')} (ID: {project_info.get('id')})")
 
             # Vérifier si c'est le bon projet
-            if project_info.get('id') == PROJECT_ID:
-                print(f"✅ Projet correspondant trouvé!")
+            if project_info.get("id") == PROJECT_ID:
+                print("✅ Projet correspondant trouvé!")
 
-                field_values = item.get('fieldValues', {}).get('nodes', [])
+                field_values = item.get("fieldValues", {}).get("nodes", [])
                 for field_value in field_values:
                     if not field_value:
                         continue
 
-                    field_info = field_value.get('field', {})
-                    field_id = field_info.get('id')
+                    field_info = field_value.get("field", {})
+                    field_id = field_info.get("id")
                     if field_id == COMPLEXITY_FIELD_ID:
-                        return field_value['number']
+                        return field_value["number"]
 
-        print(f"❌ Champ complexité (ID: {COMPLEXITY_FIELD_ID}) non trouvé pour l'issue #{issue_number}")
+        print(
+            f"❌ Champ complexité (ID: {COMPLEXITY_FIELD_ID})"
+            + f" non trouvé pour l'issue #{issue_number}"
+        )
         return None
 
     except (KeyError, TypeError) as e:
@@ -303,7 +307,7 @@ def get_sub_issues(issue_number):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         return response.json()
-    print(f"❌ Erreur lors de la récupération des sub-issues")
+    print("❌ Erreur lors de la récupération des sub-issues")
     print(f"Status: {response.status_code}")
     print(f"Réponse: {response.text}")
     return []
@@ -314,14 +318,14 @@ def get_issue(issue_number):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         return response.json()
-    print(f"❌ Erreur lors de la récupération des sub-issues")
+    print("❌ Erreur lors de la récupération des sub-issues")
     print(f"Status: {response.status_code}")
     print(f"Réponse: {response.text}")
     return []
 
 
 def get_parent_issue(issue):
-    issue_node_id = issue.get('node_id')
+    issue_node_id = issue.get("node_id")
     query = """
         query($issueId: ID!) {
           node(id: $issueId) {
@@ -367,7 +371,7 @@ def update_complexity(issue_number):
         print(f"\nNombre de sub-issues trouvées : {len(sub_issues)}: {sub_issues}")
         epic_complexity = 0
         for issue in sub_issues:
-            if issue_complexity:= get_issue_complexity(issue):
+            if issue_complexity := get_issue_complexity(issue):
                 print(f"adding issue {issue['title']} {issue_complexity}")
                 epic_complexity += issue_complexity
         update_epic_complexity(get_issue(issue_number), epic_complexity)
