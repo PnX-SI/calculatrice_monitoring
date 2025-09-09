@@ -1,3 +1,6 @@
+default_install_hook_types:
+  - commit-msg
+  - pre-commit
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.12
@@ -5,8 +8,10 @@ repos:
       - id: ruff
         name: Ruff lint check
         args: [--fix]
+        stages: [pre-commit]
       - id: ruff-format
         name: Ruff format check
+        stages: [pre-commit]
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v4.8.4
     hooks:
@@ -20,3 +25,4 @@ repos:
         entry: bash -c "echo $PWD; . ${HOME}/.nvm/nvm.sh; cd frontend; nvm use; npm run format:check"
         language: system
         pass_filenames: true
+        stages: [pre-commit]
