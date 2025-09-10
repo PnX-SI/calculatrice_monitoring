@@ -1,0 +1,14 @@
+name: pytest
+env:
+  MODULE_DIR: ${{ github.event.repository.name }}
+on:
+#  push:
+#    branches:
+#      - feat/add-pytest-ci
+#  pull_request:
+
+jobs:
+  gn_module_pytest:
+    uses: pnx-si/geonature/.github/workflows/gn-module-pytest.yml@develop
+    with:
+      geonature_ref: "2.16.2"

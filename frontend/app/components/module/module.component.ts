@@ -24,5 +24,6 @@ export class ModuleComponent implements OnInit {
       { id: 1, name: 'foo' },
       { id: 2, name: 'bar' },
     ];
+    let foo = 'bar';
   }
 }

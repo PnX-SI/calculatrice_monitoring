@@ -6,7 +6,8 @@ from .fixtures import indicators  # noqa: F401  # We need to import fixtures so 
 
 def test_get_indicators_empty_list(client):
     response = client.get(url_for("calculatrice.get_indicators"))
-    assert response.status_code == 200
+    # assert response.status_code == 200
+    assert response.status_code == 400
     assert response.json == []
 
 

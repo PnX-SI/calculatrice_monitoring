@@ -1,3 +1,4 @@
+
 from flask import Blueprint
 from geonature.utils.env import db
 

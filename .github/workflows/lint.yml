@@ -1,0 +1,50 @@
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: check if geonature checkout and/or install necessary for linters
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      # TODO: check ruff find its config
+      - name: Install ruff and run ruff check
+        uses: astral-sh/ruff-action@v3
+      - name: Run ruff format
+        run: ruff format
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Fetch node version
+        run: echo "NODE_VERSION=$(cat ./frontend/.nvmrc)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Frontend code formatting check (Prettier)
+        run: npm install prettier@~3.1.0 && npm run format:check
+        working-directory: ./frontend
+
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install commitizen
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install commitizen
+      - name: Run commitizen check
+        run: |
+          cz check --message '${{ github.event.head_commit.message }}'
