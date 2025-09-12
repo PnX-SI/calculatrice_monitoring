@@ -13,6 +13,8 @@ jobs:
       # TODO: check ruff find its config
       - name: Install ruff and run ruff check
         uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check --diff"
       - name: Run ruff format
         run: ruff format --check
 
