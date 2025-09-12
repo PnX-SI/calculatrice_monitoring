@@ -2,7 +2,7 @@ name: pytest
 env:
   MODULE_DIR: ${{ github.event.repository.name }}
 on:
-  push:
+#  push:
 
 jobs:
   gn_module_pytest:

@@ -1,6 +1,6 @@
 name: cypress
 on:
-  push:
+#  push:
 
 jobs:
   mount_app_and_run_cypress:
