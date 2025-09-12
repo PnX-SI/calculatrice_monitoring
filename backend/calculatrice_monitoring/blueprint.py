@@ -1,4 +1,3 @@
-
 from flask import Blueprint
 from geonature.utils.env import db
 
@@ -10,5 +9,8 @@ blueprint = Blueprint("calculatrice", __name__)
 
 @blueprint.route("/indicators", methods=["GET"])
 def get_indicators():
-    indicators = db.session.execute(db.select(Indicator).order_by(Indicator.name)).scalars()
+    """une pydoc qui n'est pas dans le format numpy"""
+    indicators = db.session.execute(
+        db.select(Indicator).order_by(Indicator.name)
+    ).scalars()  # foo foo foo
     return IndicatorSchema().jsonify(indicators, many=True)
