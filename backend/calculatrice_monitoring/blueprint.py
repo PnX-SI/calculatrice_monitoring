@@ -9,7 +9,12 @@ blueprint = Blueprint("calculatrice", __name__)
 
 @blueprint.route("/indicators", methods=["GET"])
 def get_indicators():
-    """une pydoc qui n'est pas dans le format numpy"""
+    """une pydoc qui n'est pas dans le format numpy
+
+    Returns
+
+
+    """
     indicators = db.session.execute(
         db.select(Indicator).order_by(Indicator.name)
     ).scalars()  # foo foo foo
