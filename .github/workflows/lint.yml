@@ -1,12 +1,12 @@
 name: lint
 
-on: [push, pull_request]
+on:
+  push:
 
 jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      # TODO: check if geonature checkout and/or install necessary for linters
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0

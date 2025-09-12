@@ -2,10 +2,7 @@ name: pytest
 env:
   MODULE_DIR: ${{ github.event.repository.name }}
 on:
-#  push:
-#    branches:
-#      - feat/add-pytest-ci
-#  pull_request:
+  push:
 
 jobs:
   gn_module_pytest:
