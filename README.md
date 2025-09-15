@@ -40,7 +40,7 @@ Par exemple :
 
 Les tests backend doivent être lancés sur une BD ne contenant pas d'objets du module calculatrice.
 
-Dans le répertoire `calculatrice_monitoring` exécuter `pytest`.
+Dans le répertoire `calculatrice_monitoring` exécuter `pytest --cov`.
 
 # Lancer les tests frontend
 
