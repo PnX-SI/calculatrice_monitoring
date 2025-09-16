@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { MatListOption } from '@angular/material/list';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-type Indicator = {
-  id: number;
-  name: string;
-};
+import { Indicator, Protocol } from '../../interfaces';
+import { DataService } from '../../services/data.service';
 
 @Component({
   selector: 'pnx-calc-module',
@@ -11,18 +11,35 @@ type Indicator = {
   styleUrls: ['./module.component.css'],
 })
 export class ModuleComponent implements OnInit {
-  description: string;
-  titleModule: string;
-  indicators: Array<Indicator> = [];
+  @ViewChild('descriptionModal') protected modalContent: TemplateRef<any>;
+  protected indicators: Array<Indicator> = [];
+  protected protocols: Array<Protocol> = [];
+  protected selectedIndicator: Indicator | undefined;
 
-  constructor() {}
+  constructor(
+    private _data: DataService,
+    private _modalService: NgbModal
+  ) {}
 
   ngOnInit() {
-    this.titleModule = 'Calculatrice';
-    this.description = "C'est le module calculatrice";
-    this.indicators = [
-      { id: 1, name: 'foo' },
-      { id: 2, name: 'bar' },
-    ];
+    this._data.getProtocols().subscribe((data: Array<Protocol>) => {
+      this.protocols = data;
+    });
+  }
+
+  onProtocolChange(options: MatListOption[]) {
+    let protocolId: number = options[0].value;
+    this._data.getIndicators(protocolId).subscribe((data: Array<Indicator>) => {
+      this.indicators = data;
+    });
+  }
+
+  onInformationClick(event: MouseEvent, indicator: Indicator) {
+    this.selectedIndicator = indicator;
+    this._modalService.open(this.modalContent, { size: 'xl' });
+
+    // Those are to avoid navigating to visualization when clicking for information
+    event.preventDefault();
+    event.stopPropagation();
   }
 }
