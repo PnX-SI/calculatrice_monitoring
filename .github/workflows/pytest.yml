@@ -1,0 +1,22 @@
+name: pytest
+
+env:
+  MODULE_DIR: ${{ github.event.repository.name }}
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/pytest.yml'
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/pytest.yml'
+
+jobs:
+  gn_module_pytest:
+    uses: pnx-si/geonature/.github/workflows/gn-module-pytest.yml@2.16.2
+    with:
+      geonature_ref: "2.16.2"
+      upload_coverage: true
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}

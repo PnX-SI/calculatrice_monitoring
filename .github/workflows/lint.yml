@@ -1,0 +1,56 @@
+name: lint
+
+on: [push, pull_request]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install ruff and run ruff check
+        uses: astral-sh/ruff-action@v3
+      - name: Run ruff format
+        run: ruff format --check
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Fetch node version
+        run: echo "NODE_VERSION=$(cat ./frontend/.nvmrc)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install prettier & plugin
+        run: npm install prettier prettier-plugin-organize-imports
+        working-directory: ./frontend
+      - name: Run prettier format check
+        run: npm run format:check
+        working-directory: ./frontend
+
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install commitizen
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install commitizen
+      - name: Run commitizen check on head-commit
+        if: github.event_name == 'push'
+        run: |
+          cz check --message '${{ github.event.head_commit.message }}'
+      - name: Run commitizen check on rev-range
+        if: github.event_name == 'pull_request'
+        run: |
+          cz check --rev-range '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'

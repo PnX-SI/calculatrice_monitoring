@@ -2,3 +2,5 @@
 node_modules
 /frontend/app/module.config.ts
 __pycache__
+.coverage
+coverage.xml
