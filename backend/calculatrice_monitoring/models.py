@@ -7,3 +7,5 @@ class Indicator(db.Model):
 
     id_indicator = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(100), nullable=False)
+    id_protocol = db.Column(db.ForeignKey("gn_monitoring.t_module_complements.id_module"))
+    description = db.Column(db.Unicode)

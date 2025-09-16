@@ -1,14 +1,60 @@
-h1, h2 {
+h1 {
   text-align: center;
+}
+
+.container {
+  padding: 0;
 }
 
 .indicators {
   background-color: white;
-  min-height: 90vh;
-  padding: 1rem;
-  margin-bottom: 1rem;
 }
 
-.indicator {
-  padding: 5px;
+.indic-container {
+  display: flex;
+  min-height: 90vh;
+}
+
+.indic-container > div {
+  padding: 1rem 0;
+}
+
+.indic-protocol-list {
+  min-width: 20%;
+  border-right: solid 2px dimgrey;
+  background-color: #ededed;
+}
+
+.indic-protocol-list h3 {
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.indic-protocol-list mat-list-option.mdc-list-item--selected {
+  background-color: lightgrey;
+}
+
+.indic-list {
+  flex-grow: 1;
+}
+
+.indic-list > div {
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.indic-list mat-list-item {
+  min-width: 550px;
+  margin: 1rem 0;
+}
+
+.indic-list mat-list-item .list-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.indic-list mat-icon {
+  vertical-align: middle;
 }
