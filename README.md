@@ -8,6 +8,10 @@ En considérant que le code source a été installé dans `~/calculatrice_monito
 geonature install-gn-module ~/calculatrice_monitoring
 ```
 
+# Dépendances et versions
+
+Le module calculatrice cible GeoNature v2.16.2 et gn_module_monitoring v1.1.0.
+
 # Préparation environnement de développement avec PyCharm
 
 - on considère que ce projet est placé dans le même répertoire parent que le projet GeoNature (sinon ajuster le path de `frontend/tsconfig.json`)
@@ -38,13 +42,22 @@ Par exemple :
 
 # Lancer les tests backend
 
-Les tests backend doivent être lancés sur une BD ne contenant pas d'objets du module calculatrice.
+Les tests backend doivent être lancés sur une BD ne contenant pas d'objets du module calculatrice. Voici la procédure
+pour obtenir une BD de test :
 
-Dans le répertoire `calculatrice_monitoring` exécuter `pytest --cov`.
+1. à partir de la BD initialisée lors de l'installation standard de GeoNature
+2. installer gn_module_monitoring 1.1.0 avec `geonature install-gn-module ./gn_module_monitoring --build false`
+3. installer le module calculatrice `geonature install-gn-module ./calculatrice_monitoring --build false`
+
+Puis dans le répertoire `calculatrice_monitoring` exécuter `pytest --cov`.
+
+Pour l'étape 1. il est aussi possible de partir de l'image docker [geonature-db](https://github.com/PnX-SI/geonature_db) 
+générée pour la version adéquate de GeoNature.
 
 # Lancer les tests frontend
 
-Les tests frontend nécessitent que le module calculatrice ait été installé sur l'instance GeoNature locale et que le frontend et le backend soient démarrées.
+Les tests frontend nécessitent que le module calculatrice ait été installé sur l'instance GeoNature locale et
+que le frontend et le backend soient démarrées.
 
 Dans le répertoire `calculatrice_monitoring/frontend` exécuter `npx cypress run`.
 
