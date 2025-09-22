@@ -12,6 +12,10 @@ geonature install-gn-module ~/calculatrice_monitoring
 
 Le module calculatrice cible GeoNature v2.16.2 et gn_module_monitoring v1.1.0.
 
+Le module `gn_module_monitoring` utilise plusieurs termes pour désigner les protocoles de suivi selon le contexte :
+« protocoles », « modules » ou « sous-modules », « MonitoringModules ». Dans le cadre de ce module calculatrice le terme
+_protocole_ sera privilégié autant que possible, que ce soit dans les interfaces utilisateurs ou dans le code.
+
 # Préparation environnement de développement avec PyCharm
 
 - on considère que ce projet est placé dans le même répertoire parent que le projet GeoNature (sinon ajuster le path de `frontend/tsconfig.json`)
