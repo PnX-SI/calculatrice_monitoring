@@ -107,9 +107,9 @@ jobs:
       - name: Install core modules
         run: |
           # --upgrade-db is false because those modules are already in the pre-populated DB
-          geonature install-gn-module contrib/occtax OCCTAX --build=false --upgrade-db=false
-          geonature install-gn-module contrib/gn_module_occhab OCCHAB --build=false --upgrade-db=false
-          geonature install-gn-module contrib/gn_module_validation VALIDATION --build=false --upgrade-db=false
+          geonature install-gn-module contrib/occtax --build=false --upgrade-db=false
+          geonature install-gn-module contrib/gn_module_occhab --build=false --upgrade-db=false
+          geonature install-gn-module contrib/gn_module_validation --build=false --upgrade-db=false
           geonature db upgrade occtax-samples-test@head
           geonature db upgrade occhab-samples@head
           geonature db upgrade import-samples@head
@@ -124,7 +124,7 @@ jobs:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Install Calculatrice module
         run: |
-          geonature install-gn-module ${MODULE_DIR} CALCULATRICE --build=false
+          geonature install-gn-module ${MODULE_DIR} --build=false
           geonature db upgrade calculatrice@head
           geonature db autoupgrade
           geonature permissions supergrant --group --nom "Grp_admin" --yes
