@@ -1,15 +1,14 @@
-# ruff: noqa: F811  # ruff complains about pytest dependency injection of fixtures
 import pytest
 from flask import url_for
 from flask_login import logout_user
 from pypnusershub.tests.utils import set_logged_user
 
 from .fixtures import (
-    calculatrice_permissions,  # noqa: F401  # We need to import fixtures so pytest can use them
-    protocol,  # noqa: F401  # We need to import fixtures so pytest can use them  # noqa: F401  # We need to import fixtures so pytest can use them
-    protocol_with_indicators,  # noqa: F401  # We need to import fixtures so pytest can use them  # noqa: F401  # We need to import fixtures so pytest can use them
-    protocols,  # noqa: F401  # We need to import fixtures so pytest can use them  # noqa: F401  # We need to import fixtures so pytest can use them
-    users,  # noqa: F401  # We need to import fixtures so pytest can use them
+    calculatrice_permissions,
+    protocol,
+    protocol_with_indicators,
+    protocols,
+    users,
 )
 
 
