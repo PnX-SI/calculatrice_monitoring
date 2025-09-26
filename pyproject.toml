@@ -32,6 +32,7 @@ select = [
     "PLC", # Pylint Convention
     "N" # Pep8 naming
 ]
+per-file-ignores = { "**/tests/**/test_*.py" = ["F811", "F401"] }
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
