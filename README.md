@@ -10,7 +10,7 @@ geonature install-gn-module ~/calculatrice_monitoring
 
 # Dépendances et versions
 
-Le module calculatrice cible GeoNature v2.16.2 et gn_module_monitoring v1.1.0.
+Le module calculatrice cible GeoNature v2.16.3 et gn_module_monitoring v1.1.0.
 
 Le module `gn_module_monitoring` utilise plusieurs termes pour désigner les protocoles de suivi selon le contexte :
 « protocoles », « modules » ou « sous-modules », « MonitoringModules ». Dans le cadre de ce module calculatrice le terme
