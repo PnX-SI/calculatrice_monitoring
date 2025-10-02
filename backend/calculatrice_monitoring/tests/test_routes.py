@@ -5,10 +5,11 @@ from pypnusershub.tests.utils import set_logged_user
 
 from .fixtures import (
     calculatrice_permissions,
+    indicators,
+    monitoring_objects,
     protocol,
     protocol_with_indicators,
     protocols,
-    protocols_with_indicators,
     users,
 )
 
@@ -39,7 +40,7 @@ class TestGetIndicators:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_error_endpoint_needs_read_permission(self, client, users, protocol_with_indicators):
-        set_logged_user(client, users["noright_user"])
+        set_logged_user(client, users["public"])
         id_protocol = protocol_with_indicators.id_module
         response = client.get(url_for("calculatrice.get_indicators", id_protocol=id_protocol))
         assert response.status_code == 403
@@ -74,15 +75,19 @@ class TestGetProtocols:
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_protocols"))
         assert response.status_code == 200
-        expected_labels = ["Amphibiens", "Flore", "Odonates"]
+        expected_labels = [
+            "MhéO Amphibiens (test)",
+            "MhéO Flore (test)",
+            "MhéO Odonate (test)",
+        ]
         assert [protocol["label"] for protocol in response.json] == expected_labels
 
-    @pytest.mark.usefixtures("protocols_with_indicators", "calculatrice_permissions")
+    @pytest.mark.usefixtures("indicators", "calculatrice_permissions")
     def test_get_protocols_with_indicators_only(self, client, users):
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_protocols", with_indicators_only=True))
         assert response.status_code == 200
-        expected_labels = ["Flore", "Odonates"]
+        expected_labels = ["MhéO Flore (test)", "MhéO Odonate (test)"]
         assert [protocol["label"] for protocol in response.json] == expected_labels
 
     @pytest.mark.usefixtures("protocols", "calculatrice_permissions")
@@ -90,11 +95,25 @@ class TestGetProtocols:
         set_logged_user(client, users["admin"])
         response = client.get(url_for("calculatrice.get_protocols"))
         assert response.status_code == 200
-        expected_labels = ["Amphibiens", "Flore", "Odonates", "Pedologie", "Piezometrie"]
+        # FIXME: for now protocol name "Pedologie" without accented characters because of a bug
+        # in the pre-populated database used for the CI. Names can be fixed on upgrading
+        # to the next pre-populated db docker image.
+        # See: https://github.com/PnX-SI/geonature_db/issues/4
+        expected_labels = [
+            "MhéO Amphibiens (test)",
+            "MhéO Flore (test)",
+            "MhéO Odonate (test)",
+            "MhéO Pedologie (test)",
+            "MhéO Piézométrie (test)",
+        ]
         assert [protocol["label"] for protocol in response.json] == expected_labels
 
-    def test_get_empty_protocol_list(self, client, users):
-        set_logged_user(client, users["admin"])
-        response = client.get(url_for("calculatrice.get_protocols"))
-        assert response.status_code == 200
-        assert response.json == []
+
+def test_monitoring_objects_fixture(monitoring_objects):
+    assert len(monitoring_objects["sites"]) == 5
+    assert len(monitoring_objects["visits"]) == 5
+    assert len(monitoring_objects["observations"]) == 39
+
+
+def test_indicators_fixture(indicators):
+    assert len(indicators) == 5
