@@ -1,0 +1,79 @@
+<div class="container mt-4">
+  <form
+    [formGroup]="campaignForm"
+    (ngSubmit)="onSubmit()"
+  >
+    <ng-select
+      #sitesGroupSelect
+      [items]="sitesGroups"
+      bindLabel="name"
+      bindValue="groupId"
+      placeholder="Select a group site"
+      formControlName="sitesGroup"
+    ></ng-select>
+    <div formArrayName="campaigns">
+      <h4>Campagnes</h4>
+
+      <div
+        *ngFor="let campaign of campaigns.controls; let i = index"
+        [formGroupName]="i"
+        class="campaign-item mb-3 p-3 border rounded"
+      >
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5>Campagne #{{ i + 1 }}</h5>
+          <button
+            *ngIf="campaigns.controls.length > 1"
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="removeCampaign(i)"
+          >
+            Supprimer
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label [for]="'startDate-' + i">Date de début</label>
+              <input
+                [id]="'startDate-' + i"
+                type="date"
+                class="form-control"
+                formControlName="startDate"
+              />
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label [for]="'endDate-' + i">Date de fin</label>
+              <input
+                [id]="'endDate-' + i"
+                type="date"
+                class="form-control"
+                formControlName="endDate"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-primary mt-2"
+      (click)="addCampaign()"
+    >
+      + Ajouter une campagne
+    </button>
+
+    <hr />
+
+    <button
+      type="submit"
+      class="btn btn-success"
+      [disabled]="!campaignForm.valid"
+    >
+      Soumettre le formulaire
+    </button>
+  </form>
+</div>
