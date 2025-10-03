@@ -64,6 +64,42 @@ class TestGetIndicators:
         assert response.status_code == 404
 
 
+class TestGetIndicator:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_indicator(self, client, users, protocol_with_indicators):
+        set_logged_user(client, users["gestionnaire"])
+        indicator = protocol_with_indicators["indicators"][0]
+        response = client.get(
+            url_for("calculatrice.get_indicator", indicator_id=indicator.id_indicator)
+        )
+        assert response.status_code == 200
+        assert response.json["name"] == indicator.name
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_get_indicator_login_required_error(self, client, protocol_with_indicators):
+        logout_user()
+        indicator = protocol_with_indicators["indicators"][0]
+        response = client.get(
+            url_for("calculatrice.get_indicator", indicator_id=indicator.id_indicator)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_indicator_needs_permission_error(self, client, users, protocol_with_indicators):
+        set_logged_user(client, users["public"])
+        indicator = protocol_with_indicators["indicators"][0]
+        response = client.get(
+            url_for("calculatrice.get_indicator", indicator_id=indicator.id_indicator)
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "protocol_with_indicators")
+    def test_get_indicator_not_found_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(url_for("calculatrice.get_indicator", indicator_id=12345))
+        assert response.status_code == 404
+
+
 class TestGetProtocols:
     def test_error_endpoint_requires_login(self, client):
         logout_user()
@@ -107,6 +143,36 @@ class TestGetProtocols:
             "MhéO Piézométrie (test)",
         ]
         assert [protocol["label"] for protocol in response.json] == expected_labels
+
+
+class TestGetProtocol:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_protocol(self, client, users, protocols):
+        set_logged_user(client, users["gestionnaire"])
+        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
+        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        assert response.status_code == 200
+        assert response.json["code"] == protocol.module_code
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_get_protocol_login_required_error(self, client, protocols):
+        logout_user()
+        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
+        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_protocol_needs_permission_error(self, client, users, protocols):
+        set_logged_user(client, users["public"])
+        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
+        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "protocols")
+    def test_get_protocol_not_found_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(url_for("calculatrice.get_protocol", protocol_id=12345))
+        assert response.status_code == 404
 
 
 def test_monitoring_objects_fixture(monitoring_objects):
