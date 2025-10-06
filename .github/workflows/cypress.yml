@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: ghcr.io/pnx-si/geonature-db:latest
+        image: ghcr.io/pnx-si/geonature-db:2.16.2
         env:
           POSTGRES_DB: geonature2db
           POSTGRES_PASSWORD: geonatadmin
