@@ -12,7 +12,7 @@ from alembic import op
 revision = "1e2926e0b603"
 down_revision = "78ba67f597ee"
 branch_labels = None
-depends_on = None
+depends_on = ("f051b88a57fd",)  # geonature: creation of gn_permissions.t_permissions_available
 
 module_code = "CALCULATRICE"
 object_code = "ALL"

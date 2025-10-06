@@ -1,26 +1,82 @@
 <div class="indicators container">
-  <h1 class="mb-4">{{ titleModule }}</h1>
-  <div class="text-center">{{ description }}</div>
-  <div
-    class="text-center"
-    *ngIf="indicators.length < 1"
-  >
-    Pas d'indicateurs
-  </div>
-  <div
-    class="m-2"
-    *ngIf="indicators.length > 0"
-  >
-    <div class="btn-module text-center">
-      <div class="container-fluid py-5 m-2">
-        <h3>Liste des indicateurs</h3>
-        <div
-          class="indicator"
-          *ngFor="let indicator of indicators"
+  <div class="indic-container">
+    <div class="indic-protocol-list">
+      <h3>Protocoles</h3>
+      <mat-selection-list
+        role="list"
+        hideSingleSelectionIndicator
+        #protocolList
+        [multiple]="false"
+        (selectionChange)="onProtocolChange(protocolList.selectedOptions.selected)"
+      >
+        <mat-list-option
+          class="protocol"
+          role="listitem"
+          *ngFor="let protocol of protocols; index as i"
+          [value]="protocol.id"
+          [selected]="protocol && i === 0"
+          class="mat-elevation-z2"
         >
-          <p>{{ indicator.id }} - {{ indicator.name }}</p>
-        </div>
+          {{ protocol.label }}
+        </mat-list-option>
+      </mat-selection-list>
+    </div>
+    <div class="indic-list">
+      <div>
+        <h2>Liste des indicateurs</h2>
+        <mat-nav-list
+          role="list"
+          *ngIf="indicators.length > 0"
+        >
+          <mat-list-item
+            class="mat-elevation-z2"
+            role="listitem"
+            *ngFor="let indicator of indicators"
+          >
+            <a
+              matListItemTitle
+              class="list-item-container"
+              [routerLink]="['/calculatrice/visualize', indicator.id]"
+            >
+              <span>{{ indicator.name }}</span>
+              <button
+                mat-icon-button
+                (click)="onInformationClick($event, indicator)"
+              >
+                <mat-icon>info</mat-icon>
+              </button>
+            </a>
+          </mat-list-item>
+        </mat-nav-list>
+        <p *ngIf="protocols.length === 0; else elseBlock">Vous n'avez accès à aucun protocole.</p>
+        <ng-template #elseBlock>
+          <p *ngIf="indicators.length === 0">Le protocole choisi n'a pas d'indicateurs</p>
+        </ng-template>
       </div>
     </div>
   </div>
+  <ng-template
+    #descriptionModal
+    let-modal
+  >
+    <div class="modal-header">
+      <h4
+        class="modal-title"
+        id="modal-basic-title"
+      >
+        {{ selectedIndicator.name }}
+      </h4>
+      <button
+        type="button"
+        class="close"
+        aria-label="Close"
+        (click)="modal.dismiss('Cross click')"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p>{{ selectedIndicator.description }}</p>
+    </div>
+  </ng-template>
 </div>

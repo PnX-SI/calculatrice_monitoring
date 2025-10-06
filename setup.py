@@ -7,6 +7,8 @@ with (root_dir / "VERSION").open() as f:
     version = f.read()
 with (root_dir / "README.md").open() as f:
     long_description = f.read()
+with (root_dir / "requirements.txt").open() as f:
+    requirements = f.read().splitlines()
 
 
 setuptools.setup(
@@ -21,6 +23,7 @@ setuptools.setup(
     packages=setuptools.find_packages("backend"),
     package_dir={"": "backend"},
     package_data={},
+    install_requires=requirements,
     zip_safe=False,
     entry_points={
         "gn_module": [

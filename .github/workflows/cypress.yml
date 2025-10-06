@@ -12,12 +12,15 @@ on:
       - 'frontend/**'
       - '.github/workflows/cypress.yml'
 
+env:
+  gn_module_monitoring_ref: "1.1.0"
+
 jobs:
   mount_app_and_run_cypress:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: ghcr.io/pnx-si/geonature-db:latest
+        image: ghcr.io/pnx-si/geonature-db:2.16.2
         env:
           POSTGRES_DB: geonature2db
           POSTGRES_PASSWORD: geonatadmin
@@ -47,6 +50,12 @@ jobs:
           repository: pnx-si/geonature
           ref: "2.16.2"
           submodules: true
+      - name: Clone gn_module_monitoring
+        uses: actions/checkout@v4
+        with:
+          repository: pnx-si/gn_module_monitoring
+          ref: ${{ env.gn_module_monitoring_ref }}
+          path: ${{ github.workspace }}/extra/gn_module_monitoring
       - name: Clone ${{ github.event.repository.name }} module
         uses: actions/checkout@v4
         with:
@@ -98,9 +107,9 @@ jobs:
       - name: Install core modules
         run: |
           # --upgrade-db is false because those modules are already in the pre-populated DB
-          geonature install-gn-module contrib/occtax OCCTAX --build=false --upgrade-db=false
-          geonature install-gn-module contrib/gn_module_occhab OCCHAB --build=false --upgrade-db=false
-          geonature install-gn-module contrib/gn_module_validation VALIDATION --build=false --upgrade-db=false
+          geonature install-gn-module contrib/occtax --build=false --upgrade-db=false
+          geonature install-gn-module contrib/gn_module_occhab --build=false --upgrade-db=false
+          geonature install-gn-module contrib/gn_module_validation --build=false --upgrade-db=false
           geonature db upgrade occtax-samples-test@head
           geonature db upgrade occhab-samples@head
           geonature db upgrade import-samples@head
@@ -108,9 +117,14 @@ jobs:
           geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+      - name: Install gn_module_monitoring module
+        run: |
+          geonature install-gn-module ${{ github.workspace }}/extra/gn_module_monitoring --build=false
+        env:
+          GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Install Calculatrice module
         run: |
-          geonature install-gn-module ${MODULE_DIR} CALCULATRICE --build=false
+          geonature install-gn-module ${MODULE_DIR} --build=false
           geonature db upgrade calculatrice@head
           geonature db autoupgrade
           geonature permissions supergrant --group --nom "Grp_admin" --yes
