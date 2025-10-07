@@ -31,6 +31,7 @@ setuptools.setup(
             "picto = calculatrice_monitoring:MODULE_PICTO",
             "blueprint = calculatrice_monitoring.blueprint:blueprint",
             "migrations = calculatrice_monitoring:migrations",
+            "alembic_branch = calculatrice_monitoring:ALEMBIC_BRANCH",
         ],
     },
     classifiers=[],

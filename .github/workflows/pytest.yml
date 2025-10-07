@@ -1,12 +1,12 @@
 # This workflow is a fork of the reusable workflow gn-module-pytest
-# at https://github.com/PnX-SI/GeoNature/blob/2.16.2/.github/workflows/gn-module-pytest.yml
+# at https://github.com/PnX-SI/GeoNature/blob/2.16.3/.github/workflows/gn-module-pytest.yml
 # The fork is necessary because one needs to install the gn_module_monitoring
 # module and the reusable workflow only installs contrib modules.
 
 name: pytest
 
 env:
-  geonature_ref: "2.16.2"
+  geonature_ref: "2.16.3"
   gn_module_monitoring_ref: "1.1.0"
   upload_coverage: true
 
@@ -42,7 +42,7 @@ jobs:
 
     services:
       postgres:
-        image: ghcr.io/pnx-si/geonature-db:2.16.2
+        image: ghcr.io/pnx-si/geonature-db:2.16.3
         env:
           POSTGRES_DB: geonature2db
           POSTGRES_PASSWORD: geonatadmin
@@ -143,6 +143,25 @@ jobs:
           geonature upgrade-modules-db
         env:
           GEONATURE_CONFIG_FILE: config/test_config.toml
+      - name: Create links for MhéO test protocols
+        run: |
+          if ! [ -d "monitorings" ]; then mkdir monitorings; fi
+          cd monitorings 
+          ln -s ${{ env.MODULE_DIR }}/data/protocols/mheo_amphibiens_test
+          ln -s ${{ env.MODULE_DIR }}/data/protocols/mheo_flore_test
+          ln -s ${{ env.MODULE_DIR }}/data/protocols/mheo_odonate_test
+          ln -s ${{ env.MODULE_DIR }}/data/protocols/mheo_pedologie_test
+          ln -s ${{ env.MODULE_DIR }}/data/protocols/mheo_piezometrie_test
+        working-directory: '${{ github.workspace }}/backend/media'
+      - name: Install MhéO test protocols
+        run: |
+          geonature monitorings install mheo_amphibiens_test
+          geonature monitorings install mheo_flore_test
+          geonature monitorings install mheo_odonate_test
+          geonature monitorings install mheo_pedologie_test
+          geonature monitorings install mheo_piezometrie_test
+        env:
+            GEONATURE_CONFIG_FILE: config/test_config.toml
       - name: Show database status
         run: |
           geonature db status --dependencies

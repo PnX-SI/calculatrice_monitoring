@@ -1,0 +1,30 @@
+{
+  "specific": {
+    "abondance": {
+      "attribut_label": "Abondance",
+      "type_widget": "select",
+      "values": [
+        {
+          "label": "Inférieur à 5%",
+          "value": "1"
+        },
+        {
+          "label": "Entre 5% et 25%",
+          "value": "2"
+        },
+        {
+          "label": "Entre 25% et 50%",
+          "value": "3"
+        },
+        {
+          "label": "Entre 50% et 75%",
+          "value": "4"
+        },
+        {
+          "label": "Supérieur à 75%",
+          "value": "5"
+        }
+      ]
+    }
+  }
+}

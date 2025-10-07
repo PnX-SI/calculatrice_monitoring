@@ -1,0 +1,18 @@
+{
+  "types": [
+    {
+      "mnemonique": "TYPE_SITE",
+      "label_default": "Type de sites",
+      "definition_default": "Nomenclature des types de sites suivi dans gn_monitoring."
+    }
+  ],
+  "nomenclatures": [
+    {
+      "type": "TYPE_SITE",
+      "cd_nomenclature": "MHEO_QUADRAT_FLORE_TEST",
+      "mnemonique": "Quadrat relevé flore (test)",
+      "label_default": "Quadrat relevé flore (test)",
+      "definition_default": "Quadrat de relevé pour le protocole MhéO Flore (test)"
+    }
+  ]
+}
