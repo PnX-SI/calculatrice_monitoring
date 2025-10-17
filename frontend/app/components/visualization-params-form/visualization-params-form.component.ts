@@ -12,7 +12,7 @@ type Campaign = {
 @Component({
   selector: 'pnx-calc-viz-params-form',
   templateUrl: './visualization-params-form.component.html',
-  styleUrls: [],
+  styleUrls: ['./visualization-params-form.component.css'],
 })
 export class VisualizationParamsFormComponent implements OnInit {
   campaignForm: FormGroup;
