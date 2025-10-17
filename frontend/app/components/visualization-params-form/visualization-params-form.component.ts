@@ -26,7 +26,7 @@ export class VisualizationParamsFormComponent implements OnInit {
     private _route: ActivatedRoute
   ) {
     this.campaignForm = this._formBuilder.group({
-      sitesGroup: [null],
+      sitesGroup: [null, Validators.required],
       campaigns: this._formBuilder.array([]),
     });
   }
