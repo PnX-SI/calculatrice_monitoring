@@ -108,7 +108,7 @@ export class DataService {
     );
   }
 
-  async getPage(url: string, params: ParamsDict): Promise<PaginatedList> {
+  private async getPage(url: string, params: ParamsDict): Promise<PaginatedList> {
     let httpParams = new HttpParams();
     for (const key in params) {
       httpParams = httpParams.set(key, params[key].toString());
@@ -116,7 +116,10 @@ export class DataService {
     return this._http.get(url, { params: httpParams }).toPromise() as Promise<PaginatedList>;
   }
 
-  async getAll<T>(url: string, params: ParamsDict, uniqueKey: string): Promise<Array<T>> {
+  /**
+   * Utility method to fetch all pages of a paginated endpoint and return a concatenated list.
+   */
+  private async getAll<T>(url: string, params: ParamsDict, uniqueKey: string): Promise<Array<T>> {
     const pageSize = 100;
     let page = 1;
     params.page = page;
