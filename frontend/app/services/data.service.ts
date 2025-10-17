@@ -3,7 +3,14 @@ import { Injectable } from '@angular/core';
 import { ConfigService } from '@geonature/services/config.service';
 import { ParamsDict } from '@geonature_common/form/data-form.service';
 import { from } from 'rxjs';
-import { Indicator, Protocol, Site, SitesGroup } from '../interfaces';
+import {
+  Campaign,
+  Indicator,
+  Protocol,
+  Site,
+  SitesGroup,
+  VisualizationBlockDefinition,
+} from '../interfaces';
 
 interface MonitoringSitesGroup {
   id_sites_group: number;
@@ -107,6 +114,26 @@ export class DataService {
     }
     return from(
       this.getAll<MonitoringSite>(url, params, 'id_base_site').then((items) => transform(items))
+    );
+  }
+
+  getVisualizationBlocks(
+    indicatorId: number,
+    sites: Site[],
+    campaigns: Campaign[],
+    visualizationType: string
+  ) {
+    return this._http.post<VisualizationBlockDefinition[]>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/visualize`,
+      {
+        indicator_id: indicatorId,
+        sites_ids: sites.map<number>((item) => item.id),
+        campaigns: campaigns.map((item) => ({
+          start_date: item.startDate,
+          end_date: item.endDate,
+        })),
+        viz_type: visualizationType,
+      }
     );
   }
 

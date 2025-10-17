@@ -21,3 +21,27 @@ export interface Site {
   id: number;
   name: string;
 }
+
+export type ScalarVisualizationBlockData = {
+  figure: number;
+};
+
+export type BarChartVisualizationBlockData = {
+  labels: string[];
+  datasets: any[];
+};
+
+export type VisualizationBlockData = ScalarVisualizationBlockData | BarChartVisualizationBlockData;
+
+export interface VisualizationBlockDefinition {
+  title: string;
+  info: string;
+  description: string;
+  type: 'scalaire' | 'barChart';
+  data: VisualizationBlockData;
+}
+
+export interface Campaign {
+  startDate: string;
+  endDate: string;
+}

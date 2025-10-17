@@ -1,0 +1,45 @@
+<mat-card>
+  <mat-card-title>
+    <h1>{{ blockDef.title }}</h1>
+  </mat-card-title>
+  <mat-card-content>
+    <div class="graphics-row">
+      <div #viewContainer></div>
+      <button
+        mat-icon-button
+        (click)="onInformationClick($event)"
+      >
+        <mat-icon>info</mat-icon>
+      </button>
+    </div>
+    <div
+      class="description"
+      [innerHTML]="blockDef.description"
+    ></div>
+  </mat-card-content>
+</mat-card>
+<ng-template
+  #infoModal
+  let-modal
+>
+  <div class="modal-header">
+    <h4
+      class="modal-title"
+      id="modal-basic-title"
+    >
+      {{ blockDef.title }}
+    </h4>
+    <button
+      type="button"
+      class="close"
+      aria-label="Close"
+      (click)="modal.dismiss('Cross click')"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div
+    class="modal-body"
+    [innerHTML]="blockDef.info"
+  ></div>
+</ng-template>

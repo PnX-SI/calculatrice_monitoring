@@ -1,0 +1,27 @@
+mat-card {
+  max-width: 1170px;
+  margin: auto;
+}
+
+mat-card strong {
+  font-size: 3rem;
+}
+
+mat-card-title h1 {
+  padding: 0.3rem 1rem;
+}
+
+/* ::ng-deep is required to style elements inserted with [innerHTML] binding */
+::ng-deep .description img {
+  display: block;
+  margin: auto;
+}
+
+.graphics-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: center;
+  margin: 1.8rem;
+  align-items: center;
+}
