@@ -1,0 +1,40 @@
+.container {
+  background: white;
+  padding: 1rem;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sites-group-form-container {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.sites-group-form-container ng-select {
+  width: 350px;
+}
+
+.campaigns-form-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.campaigns-form-container h4 {
+  display: inline-block;
+  margin: 0;
+}
+
+.campaigns-form-container button {
+  margin: 0;
+}
+
+.alert {
+  margin-top: 1rem;
+}
