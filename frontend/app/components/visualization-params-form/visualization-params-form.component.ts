@@ -20,14 +20,14 @@ export class VisualizationParamsFormComponent implements OnInit {
   private protocolCode: string = undefined;
 
   constructor(
-    private fb: FormBuilder,
+    private _formBuilder: FormBuilder,
     private _data: DataService,
     private _router: Router,
     private _route: ActivatedRoute
   ) {
-    this.campaignForm = this.fb.group({
+    this.campaignForm = this._formBuilder.group({
       sitesGroup: [null],
-      campaigns: this.fb.array([]),
+      campaigns: this._formBuilder.array([]),
     });
   }
 
@@ -56,7 +56,7 @@ export class VisualizationParamsFormComponent implements OnInit {
    * Crée un nouveau FormGroup pour une campagne.
    */
   newCampaign(): FormGroup {
-    return this.fb.group({
+    return this._formBuilder.group({
       startDate: ['', Validators.required],
       endDate: ['', Validators.required],
     });
