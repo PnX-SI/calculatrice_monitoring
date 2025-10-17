@@ -4,10 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Indicator, Protocol, SitesGroup } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 
-type Campaign = {
+interface Campaign {
   startDate: string;
   endDate: string;
-};
+}
 
 @Component({
   selector: 'pnx-calc-viz-params-form',

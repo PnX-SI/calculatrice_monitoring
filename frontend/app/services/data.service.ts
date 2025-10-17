@@ -5,22 +5,22 @@ import { ParamsDict } from '@geonature_common/form/data-form.service';
 import { from } from 'rxjs';
 import { Indicator, Protocol, Site, SitesGroup } from '../interfaces';
 
-type MonitoringSitesGroup = {
+interface MonitoringSitesGroup {
   id_sites_group: number;
   sites_group_name: string;
-};
+}
 
-type MonitoringSite = {
+interface MonitoringSite {
   id_base_site: number;
   base_site_name: string;
-};
+}
 
-type PaginatedList = {
+interface PaginatedList {
   count: number;
   items: Array<unknown>;
   limit: number;
   page: number;
-};
+}
 
 @Injectable()
 export class DataService {

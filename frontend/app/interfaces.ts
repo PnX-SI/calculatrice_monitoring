@@ -1,22 +1,22 @@
-export type Indicator = {
+export interface Indicator {
   id: number;
   name: string;
   description: string;
   protocolId: number;
-};
+}
 
-export type Protocol = {
+export interface Protocol {
   id: number;
   label: string;
   code: string;
-};
+}
 
-export type SitesGroup = {
+export interface SitesGroup {
   name: string;
   groupId: number;
-};
+}
 
-export type Site = {
+export interface Site {
   id: number;
   name: string;
-};
+}
