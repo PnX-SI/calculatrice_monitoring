@@ -69,6 +69,12 @@
               </div>
             </div>
           </div>
+          <div
+            *ngIf="campaign.errors?.['endIsBeforeStart']"
+            class="alert alert-danger"
+          >
+            La fin de la campagne doit être après son début.
+          </div>
         </div>
       </div>
     </div>

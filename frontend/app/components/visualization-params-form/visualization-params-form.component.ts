@@ -1,5 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
 import { Indicator, Protocol, SitesGroup } from '../../interfaces';
@@ -9,6 +18,13 @@ interface Campaign {
   startDate: string;
   endDate: string;
 }
+
+const endAfterStartValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const format = 'YYYY-MM-DD';
+  const start = moment(control.value.startDate, format);
+  const end = moment(control.value.endDate, format);
+  return end.isBefore(start) ? { endIsBeforeStart: true } : null;
+};
 
 @Component({
   selector: 'pnx-calc-viz-params-form',
@@ -57,10 +73,13 @@ export class VisualizationParamsFormComponent implements OnInit {
    * Crée un nouveau FormGroup pour une campagne.
    */
   newCampaign(): FormGroup {
-    return this._formBuilder.group({
-      startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
-    });
+    return this._formBuilder.group(
+      {
+        startDate: ['', Validators.required],
+        endDate: ['', Validators.required],
+      },
+      { validators: endAfterStartValidator }
+    );
   }
 
   /**
