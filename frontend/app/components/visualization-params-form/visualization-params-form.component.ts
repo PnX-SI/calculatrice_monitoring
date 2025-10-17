@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as moment from 'moment';
 import { Indicator, Protocol, SitesGroup } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 
@@ -66,7 +67,17 @@ export class VisualizationParamsFormComponent implements OnInit {
    * Ajoute une nouvelle campagne au FormArray.
    */
   addCampaign() {
-    this.campaigns.push(this.newCampaign());
+    let newCampaign = this.newCampaign();
+    this.campaigns.push(newCampaign);
+    const nbCampaigns = this.campaigns.value.length;
+    if (nbCampaigns > 1) {
+      const previousCampaign: Campaign = this.campaigns.value[nbCampaigns - 2];
+      const newCampaignStart = this.getNextDay(previousCampaign.endDate);
+      newCampaign.patchValue({
+        startDate: newCampaignStart,
+        endDate: this.getNextYear(newCampaignStart),
+      });
+    }
   }
 
   /**
@@ -74,6 +85,12 @@ export class VisualizationParamsFormComponent implements OnInit {
    */
   removeCampaign(campaignIndex: number) {
     this.campaigns.removeAt(campaignIndex);
+  }
+
+  onStartDateChange(campaignForm: FormControl) {
+    if (!campaignForm.value.endDate) {
+      campaignForm.patchValue({ endDate: this.getNextYear(campaignForm.value.startDate) });
+    }
   }
 
   /**
@@ -98,5 +115,17 @@ export class VisualizationParamsFormComponent implements OnInit {
     } else {
       console.error('Le formulaire contient des erreurs.');
     }
+  }
+
+  private getNextDay(date: string) {
+    const format = 'YYYY-MM-DD';
+    const dateObj = moment(date, format);
+    return dateObj.add(1, 'day').format(format);
+  }
+
+  private getNextYear(date: string) {
+    const format = 'YYYY-MM-DD';
+    const dateObj = moment(date, format);
+    return dateObj.add(1, 'year').subtract(1, 'day').format(format);
   }
 }
