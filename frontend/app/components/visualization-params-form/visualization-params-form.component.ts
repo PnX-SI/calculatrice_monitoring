@@ -71,7 +71,6 @@ export class VisualizationParamsFormComponent implements OnInit {
 
   /**
    * Supprime une campagne à un index spécifique.
-   * @param campaignIndex L'index de la campagne à supprimer.
    */
   removeCampaign(campaignIndex: number) {
     this.campaigns.removeAt(campaignIndex);
@@ -102,8 +101,8 @@ export class VisualizationParamsFormComponent implements OnInit {
   }
 
   /**
-   * Helper : transforme les campagnes saisies dans le formulaire en un texte à passer
-   * en query param. Exemple : 20230601-20240531,20240601-20250531
+   * Helper : transforme une liste de campagnes en une représentation textuelle.
+   * Exemple : 20230601-20240531,20240601-20250531
    *
    * @param campaigns Les valeurs du FormArray campaigns
    * @private
