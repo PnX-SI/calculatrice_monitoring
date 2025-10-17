@@ -76,8 +76,8 @@ export class DataService {
     };
     function transform(items: Array<MonitoringSitesGroup>): Array<SitesGroup> {
       return items.map<SitesGroup>((item) => ({
+        id: item.id_sites_group,
         name: item.sites_group_name,
-        groupId: item.id_sites_group,
       }));
     }
     return from(
@@ -95,7 +95,7 @@ export class DataService {
     const params = {
       sort_dir: 'asc',
       sort: 'base_site_name',
-      id_sites_group: sitesGroup.groupId,
+      id_sites_group: sitesGroup.id,
     };
     function transform(items: Array<MonitoringSite>): Array<Site> {
       return items.map<Site>((item) => ({

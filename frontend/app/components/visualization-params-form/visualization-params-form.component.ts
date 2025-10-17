@@ -85,7 +85,7 @@ export class VisualizationParamsFormComponent implements OnInit {
       this._data
         .getSites(
           this.protocolCode,
-          this.sitesGroups.find((item) => item.groupId === this.campaignForm.value.sitesGroup)
+          this.sitesGroups.find((item) => item.id === this.campaignForm.value.sitesGroup)
         )
         .subscribe((sites) => {
           this._router.navigate(['..'], {

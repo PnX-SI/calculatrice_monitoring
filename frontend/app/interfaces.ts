@@ -12,8 +12,8 @@ export interface Protocol {
 }
 
 export interface SitesGroup {
+  id: number;
   name: string;
-  groupId: number;
 }
 
 export interface Site {
