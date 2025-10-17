@@ -34,3 +34,7 @@
 .campaigns-form-container button {
   margin: 0;
 }
+
+.alert {
+  margin-top: 1rem;
+}

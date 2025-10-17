@@ -19,6 +19,33 @@ interface Campaign {
   endDate: string;
 }
 
+const noOverlappedCampaignsValidator: ValidatorFn = (
+  control: AbstractControl
+): ValidationErrors | null => {
+  const format = 'YYYY-MM-DD';
+  const campaigns: Campaign[] = control.value;
+  let overlapSpotted = false;
+  campaigns.forEach((camp1) => {
+    campaigns.forEach((camp2) => {
+      if (camp1 !== camp2) {
+        const start1 = moment(camp1.startDate, format);
+        const end1 = moment(camp1.endDate, format);
+        const start2 = moment(camp2.startDate, format);
+        const end2 = moment(camp2.endDate, format);
+        if (
+          !(
+            (start1.isBefore(start2) && end1.isBefore(start2)) ||
+            (start2.isBefore(start1) && end2.isBefore(start1))
+          )
+        ) {
+          overlapSpotted = true;
+        }
+      }
+    });
+  });
+  return overlapSpotted ? { campaignsOverlap: true } : null;
+};
+
 const endAfterStartValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const format = 'YYYY-MM-DD';
   const start = moment(control.value.startDate, format);
@@ -44,7 +71,7 @@ export class VisualizationParamsFormComponent implements OnInit {
   ) {
     this.campaignForm = this._formBuilder.group({
       sitesGroup: [null, Validators.required],
-      campaigns: this._formBuilder.array([]),
+      campaigns: this._formBuilder.array([], { validators: noOverlappedCampaignsValidator }),
     });
   }
 

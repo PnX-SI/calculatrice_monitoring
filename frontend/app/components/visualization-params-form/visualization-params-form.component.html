@@ -89,4 +89,10 @@
       Visualiser
     </button>
   </form>
+  <div
+    *ngIf="campaigns.errors?.['campaignsOverlap']"
+    class="alert alert-danger"
+  >
+    Les campagnes ne doivent pas se chevaucher.
+  </div>
 </div>
