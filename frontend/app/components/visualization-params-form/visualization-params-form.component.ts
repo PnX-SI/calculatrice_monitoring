@@ -89,31 +89,14 @@ export class VisualizationParamsFormComponent implements OnInit {
         .subscribe((sites) => {
           this._router.navigate(['..'], {
             relativeTo: this._route,
-            queryParams: {
-              sites: sites.map((item) => item.id).join(),
-              campaigns: this.getCampaignsParam(this.campaignForm.value.campaigns),
+            state: {
+              sites: sites,
+              campaigns: this.campaignForm.value.campaigns,
             },
           });
         });
     } else {
       console.error('Le formulaire contient des erreurs.');
     }
-  }
-
-  /**
-   * Helper : transforme une liste de campagnes en une représentation textuelle.
-   * Exemple : 20230601-20240531,20240601-20250531
-   *
-   * @param campaigns Les valeurs du FormArray campaigns
-   * @private
-   */
-  private getCampaignsParam(campaigns: Array<Campaign>): string {
-    let params = [];
-    campaigns.forEach((campaign) => {
-      const start = campaign.startDate.replaceAll('-', '');
-      const end = campaign.endDate.replaceAll('-', '');
-      params.push(`${start}-${end}`);
-    });
-    return params.join(',');
   }
 }

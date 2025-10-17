@@ -7,16 +7,18 @@ import { MatListModule } from '@angular/material/list';
 import { RouterModule, Routes } from '@angular/router';
 import { GN2CommonModule } from '@geonature_common/GN2Common.module';
 import { ModuleComponent } from './components/module/module.component';
+import { VisualizationPageComponent } from './components/visualization-page/visualization-page.component';
 import { VisualizationParamsFormComponent } from './components/visualization-params-form/visualization-params-form.component';
 import { DataService } from './services/data.service';
 
 const routes: Routes = [
   { path: '', component: ModuleComponent },
   { path: 'visualization/:indicatorId/params', component: VisualizationParamsFormComponent },
+  { path: 'visualization/:indicatorId', component: VisualizationPageComponent },
 ];
 
 @NgModule({
-  declarations: [ModuleComponent, VisualizationParamsFormComponent],
+  declarations: [ModuleComponent, VisualizationParamsFormComponent, VisualizationPageComponent],
   imports: [
     CommonModule,
     RouterModule.forChild(routes),
