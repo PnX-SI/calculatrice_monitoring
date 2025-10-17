@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, request
 from flask_login import login_required
-from flask_parameter_validation import Query, ValidateParameters
+from flask_parameter_validation import Json, Query, Route, ValidateParameters
 from geonature.core.gn_permissions.decorators import check_cruved_scope
 from geonature.core.gn_permissions.tools import get_scopes_by_action
 from geonature.utils.env import db
@@ -78,3 +78,94 @@ def get_protocols(with_indicators_only: bool = Query(False)):
         if scopes["R"] > 0:
             modules.append(module)
     return ProtocolSchema().jsonify(modules, many=True)
+
+
+# The method is POST in order to pass parameters with the body. Since two parameters are
+# lists of unknown size (sites IDs and campaigns) we want to avoid reaching the URL max length
+# limit at some point.
+@blueprint.route("/indicator/<int:indicator_id>/visualize", methods=["POST"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALCULATRICE_INDICATOR")
+@ValidateParameters()
+def get_indicator_visualization(
+    indicator_id: int = Route(),
+    sites_ids: list[int] = Json(),  # noqa: B008  # Calling Json function for a default parameter is
+    campaigns: list[str] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
+    viz_type: str = Json(),  # noqa: B008
+):
+    if len(campaigns) > 1:
+        return [
+            {
+                "title": "Un bloc représentant un résultat scalaire",
+                "info": "foobar",
+                "description": f"""
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ac tempor felis. Cras ut
+blandit ipsum, rutrum blandit justo. Sed accumsan est ut consequat rhoncus. Nunc luctus rutrum
+eros a suscipit.</p>
+<ul>
+    <li>indicator ID : {indicator_id}</li>
+    <li>sites IDs : {sites_ids}</li>
+    <li>campaigns : {campaigns}</li>
+    <li>type : {viz_type}</li>
+</ul>
+<img src="https://geonature.fr/img/geonature-logo.jpg"/>
+<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
+                "type": "scalaire",
+                "data": {
+                    "figure": 6.2,
+                },
+            },
+            {
+                "title": "Valeur HE pour chaque quadrat",
+                "type": "barChart",
+                "info": """
+<p>In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit odio efficitur magna,
+nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus pellentesque. Aenean sit amet
+erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula laoreet sollicitudin. Morbi
+at condimentum enim.</p>
+<img src="https://geonature.fr/img/geonature-logo.jpg"/>
+<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
+                "description": f"""
+<p>Maecenas ultricies, metus eget porta tincidunt, velit odio efficitur magna,
+nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus pellentesque. Aenean
+sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula laoreet sollicitudin.
+Morbi at condimentum enim.</p>
+<ul>
+    <li>indicator ID : {indicator_id}</li>
+    <li>sites IDs : {sites_ids}</li>
+    <li>campaigns : {campaigns}</li>
+    <li>type : {viz_type}</li>
+</ul>
+<img src="https://geonature.fr/img/geonature-logo.jpg"/>
+<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
+                "data": {
+                    "labels": ["Q1", "Q2", "Q3"],
+                    "datasets": [{"data": [5.5, 6.7, 4.9], "label": "Series A"}],
+                },
+            },
+        ]
+    else:
+        return [
+            {
+                "title": "Un bloc représentant un résultat scalaire",
+                "info": "foobar",
+                "description": f"""
+<p>Aliquam varius vestibulum
+ante ut tincidunt. In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit
+odio efficitur magna, nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus
+pellentesque. Aenean sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula
+laoreet sollicitudin. Morbi at condimentum enim.</p>
+<ul>
+    <li>indicator ID : {indicator_id}</li>
+    <li>sites IDs : {sites_ids}</li>
+    <li>campaigns : {campaigns}</li>
+    <li>type : {viz_type}</li>
+</ul>
+<img src="https://geonature.fr/img/geonature-logo.jpg"/>
+<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.Mauris dapibus elit
+at ligula laoree sollicitudin. Morbi at condimentum enim.</p>""",
+                "type": "scalaire",
+                "data": {
+                    "figure": 7.9,
+                },
+            },
+        ]

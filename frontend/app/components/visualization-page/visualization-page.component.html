@@ -1,0 +1,33 @@
+<div class="visualization-page">
+  <div class="visualization-nav">
+    <mat-selection-list
+      role="list"
+      hideSingleSelectionIndicator
+      #selectionsList
+      [multiple]="false"
+      (selectionChange)="onSelectionsChange(selectionsList.selectedOptions.selected)"
+    >
+      <mat-list-option
+        *ngFor="let selection of selections; index as i"
+        [value]="selection"
+        [selected]="selection && i === 0"
+        class="mat-elevation-z2"
+      >
+        {{ selection.label }}
+      </mat-list-option>
+    </mat-selection-list>
+  </div>
+  <div class="blocks-container">
+    <pnx-calc-visualization-block
+      *ngFor="let block of vizBlocks"
+      [blockDef]="block"
+    ></pnx-calc-visualization-block>
+  </div>
+  <div class="visualization-toc">
+    <ul>
+      <li *ngFor="let block of vizBlocks">
+        <a href="#{{ block.title }}">{{ block.title }}</a>
+      </li>
+    </ul>
+  </div>
+</div>
