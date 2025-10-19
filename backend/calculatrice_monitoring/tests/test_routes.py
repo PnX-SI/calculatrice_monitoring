@@ -18,7 +18,7 @@ class TestGetIndicators:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_indicators(self, client, users, protocol_with_indicators):
         set_logged_user(client, users["gestionnaire"])
-        id_protocol = protocol_with_indicators.id_module
+        id_protocol = protocol_with_indicators["protocol"].id_module
         response = client.get(url_for("calculatrice.get_indicators", id_protocol=id_protocol))
         assert response.status_code == 200
         expected_names = ["Another Test Indicator", "Test Indicator", "Yet Another Test Indicator"]
@@ -41,7 +41,7 @@ class TestGetIndicators:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_error_endpoint_needs_read_permission(self, client, users, protocol_with_indicators):
         set_logged_user(client, users["public"])
-        id_protocol = protocol_with_indicators.id_module
+        id_protocol = protocol_with_indicators["protocol"].id_module
         response = client.get(url_for("calculatrice.get_indicators", id_protocol=id_protocol))
         assert response.status_code == 403
 

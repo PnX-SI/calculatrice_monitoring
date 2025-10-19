@@ -36,15 +36,20 @@ def protocol():
 def protocol_with_indicators(protocol):
     with db.session.begin_nested():
         indicator_names = ["Test Indicator", "Another Test Indicator", "Yet Another Test Indicator"]
+        indicators = []
         for name in indicator_names:
             indicator = Indicator(
                 name=name,
                 id_protocol=protocol.id_module,
                 description=f"This is the {name} indicator description.",
             )
+            indicators.append(indicator)
             db.session.add(indicator)
 
-    return protocol
+    return {
+        "protocol": protocol,
+        "indicators": indicators,
+    }
 
 
 @pytest.fixture()
