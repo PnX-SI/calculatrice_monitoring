@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, abort, request
 from flask_login import login_required
 from flask_parameter_validation import Query, ValidateParameters
 from geonature.core.gn_permissions.decorators import check_cruved_scope
@@ -12,6 +12,28 @@ from calculatrice_monitoring.models import Indicator
 from calculatrice_monitoring.schemas import IndicatorSchema, ProtocolSchema
 
 blueprint = Blueprint("calculatrice", __name__)
+
+
+@blueprint.route("/protocol/<int:protocol_id>", methods=["GET"])
+@login_required
+def get_protocol(protocol_id: int):
+    protocol = db.get_or_404(
+        TMonitoringModules, protocol_id, description=f"Protocol {protocol_id} not found"
+    )
+    scopes = get_scopes_by_action(
+        module_code=protocol.module_code, object_code="MONITORINGS_MODULES"
+    )
+    if scopes["R"] == 0:
+        abort(403, description=f"Missing permission to read protocol {protocol_id}")
+    return ProtocolSchema().jsonify(protocol)
+
+
+@blueprint.route("/indicator/<int:indicator_id>", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALCULATRICE_INDICATOR")
+def get_indicator(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    return IndicatorSchema().jsonify(indicator)
 
 
 @blueprint.route("/indicators", methods=["GET"])

@@ -1,0 +1,98 @@
+<div class="container mt-4">
+  <form
+    [formGroup]="campaignForm"
+    (ngSubmit)="onSubmit()"
+  >
+    <div class="form-container">
+      <div class="sites-group-form-container">
+        <h5>Groupe de sites</h5>
+        <ng-select
+          #sitesGroupSelect
+          id="sitesGroupSelect"
+          [items]="sitesGroupChoices"
+          bindLabel="name"
+          bindValue="id"
+          placeholder="Sélectionner un groupe de sites"
+          formControlName="sitesGroup"
+        ></ng-select>
+      </div>
+      <div formArrayName="campaigns">
+        <div class="campaigns-form-container">
+          <h4>Campagnes</h4>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="addCampaign()"
+          >
+            + Ajouter une campagne
+          </button>
+        </div>
+        <div
+          *ngFor="let campaign of campaigns.controls; let i = index"
+          [formGroupName]="i"
+          class="campaign-item mb-3 p-3 border rounded"
+        >
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5>Campagne #{{ i + 1 }}</h5>
+            <button
+              *ngIf="campaigns.controls.length > 1"
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="removeCampaign(i)"
+            >
+              Supprimer
+            </button>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label [for]="'startDate-' + i">Date de début</label>
+                <input
+                  [id]="'startDate-' + i"
+                  type="date"
+                  class="form-control"
+                  formControlName="startDate"
+                  (change)="onStartDateChange(campaign)"
+                />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label [for]="'endDate-' + i">Date de fin</label>
+                <input
+                  [id]="'endDate-' + i"
+                  type="date"
+                  class="form-control"
+                  formControlName="endDate"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            *ngIf="campaign.errors?.['endIsBeforeStart']"
+            class="alert alert-danger"
+          >
+            La fin de la campagne doit être après son début.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <button
+      type="submit"
+      class="btn btn-success"
+      [disabled]="!campaignForm.valid"
+    >
+      Visualiser
+    </button>
+  </form>
+  <div
+    *ngIf="campaigns.errors?.['campaignsOverlap']"
+    class="alert alert-danger"
+  >
+    Les campagnes ne doivent pas se chevaucher.
+  </div>
+</div>
