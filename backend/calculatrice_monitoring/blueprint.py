@@ -8,6 +8,7 @@ from gn_module_monitoring.monitoring.models import TMonitoringModules
 from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
+from calculatrice_monitoring.eval import visualize
 from calculatrice_monitoring.models import Indicator
 from calculatrice_monitoring.schemas import IndicatorSchema, ProtocolSchema
 
@@ -93,32 +94,14 @@ def get_indicator_visualization(
     viz_type: str = Json(),  # noqa: B008
 ):
     if viz_type == "campaign":
-        return [
-            {
-                "title": "Un bloc représentant un résultat scalaire",
-                "info": "foobar",
-                "description": f"""
-<p>Aliquam varius vestibulum
-ante ut tincidunt. In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit
-odio efficitur magna, nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus
-pellentesque. Aenean sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula
-laoreet sollicitudin. Morbi at condimentum enim.</p>
-<ul>
-    <li>indicator ID : {indicator_id}</li>
-    <li>sites IDs : {sites_ids}</li>
-    <li>campaigns : {campaigns}</li>
-    <li>type : {viz_type}</li>
-</ul>
-<img src="https://geonature.fr/img/geonature-logo.jpg"/>
-<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.Mauris dapibus elit
-at ligula laoree sollicitudin. Morbi at condimentum enim.</p>""",
-                "type": "scalaire",
-                "data": {
-                    "figure": 7.9,
-                },
-            },
-        ]
+        return visualize(
+            indicator_id,
+            sites_ids,
+            campaigns,
+            viz_type,
+        )
     else:
+        # for now hard-coded vizblocks are returned for other visualization types
         return [
             {
                 "title": "Bloc visualisation type scalaire",

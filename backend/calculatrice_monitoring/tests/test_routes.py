@@ -184,3 +184,21 @@ def test_monitoring_objects_fixture(monitoring_objects):
 
 def test_indicators_fixture(indicators):
     assert len(indicators) == 5
+
+
+@pytest.mark.usefixtures("calculatrice_permissions", "protocols", "monitoring_objects")
+def test_get_indicator_visualization(client, users):
+    set_logged_user(client, users["admin"])
+    response = client.post(
+        url_for("calculatrice.get_indicator_visualization", indicator_id=42),
+        data={
+            "sites_ids": [1, 2, 3],
+            "campaigns": [{"start_date": "2024-10-31", "end_date": "2025-10-30"}],
+            "viz_type": "campaign",
+        },
+    )
+    assert response.status_code == 200
+    viz_blocks = response.json
+    assert len(viz_blocks) == 1
+    viz_block = viz_blocks[0]
+    assert viz_block["data"]["figure"] == 1.4102564102564104

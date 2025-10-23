@@ -7,6 +7,7 @@ from gn_module_monitoring.monitoring.models import (
 )
 from sqlalchemy import select
 
+from calculatrice_monitoring.eval import create_context, create_monitoring_collections
 from calculatrice_monitoring.migrations.data.install_mheo import (
     install_test_indicators,
     install_test_monitoring_objects,
@@ -77,3 +78,9 @@ def indicators(protocols):
 @pytest.fixture
 def monitoring_objects(protocols, users):
     return install_test_monitoring_objects(protocols, users)
+
+
+@pytest.fixture
+def eval_context(monitoring_objects):
+    collections = create_monitoring_collections(monitoring_objects["observations"])
+    return create_context(collections)
