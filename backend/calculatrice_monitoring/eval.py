@@ -1,5 +1,6 @@
 from collections import defaultdict
 import datetime
+import statistics
 import sys
 
 from geonature.app import create_app
@@ -232,7 +233,7 @@ def fetch_prop_value(prop_collection, entity_id):
     return None
 
 
-def Moyenne(prop_collection: PropertyCollection, scope: str="global", weights: PropertyCollection=None):
+def Moyenne(prop_collection: PropertyCollection, scope: str = "global", weights: PropertyCollection = None):
     if scope == "global":
         sums = 0
         for prop_value in prop_collection.values:
@@ -271,6 +272,22 @@ def Moyenne(prop_collection: PropertyCollection, scope: str="global", weights: P
             ],
             scope=scope
         )
+
+
+def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
+    median = statistics.median(
+        [prop_value.value for prop_value in prop_collection.values]
+    )
+    values = [
+        PropertyValue(
+            value=median,
+            entity=ROOT,
+        )
+    ]
+    return PropertyCollection(
+        values=values,
+        scope="global"
+    )
 
 
 # ---------- TEST AVEC MOYENNE ABONDANCE TOUTES OBSERVATIONS -------------
@@ -474,6 +491,7 @@ for expected_value in [
 code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 moyenne = Moyenne(valeurs_he, scope="site")
+médiane = Médiane(moyenne)
 labels = [v.entity.base_site_name for v in moyenne.values]
 values = [v.value for v in moyenne.values]
 """
@@ -491,7 +509,8 @@ for symbol in [
     PropertyValue,
     MonitoringCollection,
     PropertyCollection,
-    get_he_prop_collection
+    get_he_prop_collection,
+    Médiane,
 ]:
     add_to_ctx(symbol)
 global_context["observations"] = observations
@@ -499,6 +518,10 @@ global_context["observations"] = observations
 exec(code, global_context, context)
 
 assert "moyenne" in context
+assert "médiane" in context
+médiane = context["médiane"]
+assert len(médiane.values) == 1
+assert médiane.values[0].value == 6.5
 assert "labels" in context
 labels = context["labels"]
 for expected_label in [
@@ -518,13 +541,13 @@ for expected_value in [7.833333333333333, 7.5, 5.769230769230769, 6.5, 6.0]:
     else:
         raise AssertionError(f"{expected_value} not found in {values}")
 
-
 # ---------- TEST AVEC MOYENNE HE PONDÉRÉE AVEC ABONDANCE PAR SITE -------------
 
 code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
 moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+médiane = Médiane(moyenne)
 labels = [v.entity.base_site_name for v in moyenne.values]
 values = [v.value for v in moyenne.values]
 """
@@ -544,6 +567,7 @@ for symbol in [
     PropertyCollection,
     get_he_prop_collection,
     create_abondance_perc,
+    Médiane,
 ]:
     add_to_ctx(symbol)
 global_context["observations"] = observations
@@ -551,6 +575,16 @@ global_context["observations"] = observations
 exec(code, global_context, context)
 
 assert "moyenne" in context
+assert "médiane" in context
+médiane = context["médiane"]
+assert len(médiane.values) == 1
+
+
+def almostEqual(value, expected):
+    return abs(value - expected) < sys.float_info.epsilon
+
+
+assert almostEqual(médiane.values[0].value, 0.6034615384615386) is True
 assert "labels" in context
 labels = context["labels"]
 for expected_label in [
