@@ -51,21 +51,22 @@ def getHE(cd_nom):
 config = get_config("mheo_flore_test")
 
 
-# class Site:
-#     def __init__(self, site_model_instance):
-#         self.id_base_site = site_model_instance.id_base_site
-#         self.base_site_name = site_model_instance.base_site_name
-#
-#
-# def get_site(site_id):
-#     site_model_instance = db.session.scalar(db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id))
-#     return Site(site_model_instance)
+class Site:
+    def __init__(self, site_model_instance):
+        self.id_base_site = site_model_instance.id_base_site
+        self.base_site_name = site_model_instance.base_site_name
+
+
+def get_site(site_id):
+    site_model_instance = db.session.scalar(db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id))
+    return Site(site_model_instance)
 
 
 class Visit:
     def __init__(self, visit_model_instance):
         self.id_base_visit = visit_model_instance.id_base_visit
         self.visit_date_min = visit_model_instance.visit_date_min
+        self.id_base_site = visit_model_instance.id_base_site
 
 
 def get_visit(visit_id):
@@ -78,6 +79,8 @@ class Observation:
     def __init__(self, observation_model_instance):
         self.abondance = observation_model_instance.data["abondance"]
         self.visit = get_visit(observation_model_instance.id_base_visit)
+        self.site = get_site(self.visit.id_base_site)
+
 
 
 class PropertyCollection:
@@ -155,8 +158,8 @@ def create_abondance_perc(observations: MonitoringCollection):
 
 
 # TODO: ajouter un scope="site" !
-def Moyenne(prop_collection, scope_visit=False):
-    if not scope_visit:
+def Moyenne(prop_collection, scope="global"):
+    if scope != "visit":
         sum = 0
         for prop_value in prop_collection.values:
             sum += int(prop_value.value)
@@ -229,7 +232,7 @@ assert context["moyenne"].values[0].value == 10.333333333333334
 # ---------- TEST AVEC MOYENNE ABONDANCE PAR VISITE -------------
 
 code = """
-moyenne = Moyenne(observations.abondance, scope_visit=True)
+moyenne = Moyenne(observations.abondance, scope="visit")
 labels = [v.entity.visit_date_min for v in moyenne.values]
 values = [v.value for v in moyenne.values]
 """
@@ -293,8 +296,7 @@ def create_abondance_perc(observations: MonitoringCollection):
         values=values,
         scope="observation",
     )
-#moyenne = Moyenne(observations.abondance, scope_visit=True)
-moyenne = Moyenne(create_abondance_perc(observations), scope_visit=True)
+moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
 labels = [v.entity.visit_date_min for v in moyenne.values]
 values = [v.value for v in moyenne.values]
 """
