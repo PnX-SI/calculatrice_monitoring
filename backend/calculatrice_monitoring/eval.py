@@ -146,6 +146,7 @@ class Observation:
         self.visit = get_visit(observation_model_instance.id_base_visit)
         self.site = get_site(self.visit.id_base_site)
         self.cd_nom = observation_model_instance.cd_nom
+        self.id = observation_model_instance.id_observation
 
 
 class PropertyCollection:
@@ -224,7 +225,14 @@ def create_abondance_perc(observations: MonitoringCollection):
     )
 
 
-def Moyenne(prop_collection, scope="global"):
+def fetch_prop_value(prop_collection, entity_id):
+    for prop_value in prop_collection.values:
+        if prop_value.entity.id == entity_id:
+            return prop_value.value
+    return None
+
+
+def Moyenne(prop_collection: PropertyCollection, scope: str="global", weights: PropertyCollection=None):
     if scope == "global":
         sums = 0
         for prop_value in prop_collection.values:
@@ -246,7 +254,13 @@ def Moyenne(prop_collection, scope="global"):
                 continue  # for now we just skip it
             scope_entity = getattr(prop_value.entity, scope)
             scope_entities[scope_entity.id] = scope_entity
-            sums[scope_entity.id] += int(prop_value.value)
+            if weights:
+                weight = fetch_prop_value(weights, prop_value.entity.id)
+                if weight is None:
+                    continue
+                sums[scope_entity.id] += int(prop_value.value) * weight / 100
+            else:
+                sums[scope_entity.id] += int(prop_value.value)
             lengths[scope_entity.id] += 1
         return PropertyCollection(
             values=[
@@ -498,6 +512,58 @@ for expected_label in [
 assert "values" in context
 values = context["values"]
 for expected_value in [7.833333333333333, 7.5, 5.769230769230769, 6.5, 6.0]:
+    for value in values:
+        if abs(value - expected_value) < sys.float_info.epsilon:
+            break
+    else:
+        raise AssertionError(f"{expected_value} not found in {values}")
+
+
+# ---------- TEST AVEC MOYENNE HE PONDÉRÉE AVEC ABONDANCE PAR SITE -------------
+
+code = """
+valeurs_he = get_he_prop_collection(observations.cd_nom)
+abondance_perc = create_abondance_perc(observations)
+moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+labels = [v.entity.base_site_name for v in moyenne.values]
+values = [v.value for v in moyenne.values]
+"""
+observations = get_observation_collection()
+global_context = dict()
+context = dict()
+
+
+def add_to_ctx(obj):
+    global_context[obj.__name__] = obj
+
+
+for symbol in [
+    Moyenne,
+    PropertyValue,
+    MonitoringCollection,
+    PropertyCollection,
+    get_he_prop_collection,
+    create_abondance_perc,
+]:
+    add_to_ctx(symbol)
+global_context["observations"] = observations
+
+exec(code, global_context, context)
+
+assert "moyenne" in context
+assert "labels" in context
+labels = context["labels"]
+for expected_label in [
+    "Transect 1 Quadrat 1",
+    "Transect 1 Quadrat 2",
+    "Transect 1 Quadrat 3",
+    "Transect 2 Quadrat 4",
+    "Transect 2 Quadrat 5",
+]:
+    assert expected_label in labels
+assert "values" in context
+values = context["values"]
+for expected_value in [0.615, 2.9625, 0.6034615384615386, 0.195, 0.5296153846153847]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
             break
