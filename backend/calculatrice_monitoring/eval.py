@@ -33,11 +33,11 @@ ctx.push()
 # - I02 (avec abondance si temps)
 
 # TODO:
-# - gérer scope site pour la Moyenne
-# - gérer plusieurs types de valeurs pour les MonitoringObjects
-# - gérer la conversion entre l'ID d'une valeur (pour l'abondance) et la valeur numérique à utiliser pour les calculs
+# - [ok] gérer scope site pour la Moyenne
+# - [ok] gérer la conversion entre l'ID d'une valeur (pour l'abondance) et la valeur numérique à utiliser pour les calculs
 #   + c'est forcément qqchose qui doit pouvoir être configurable dans le code de l'indicateur !
 #   + idéalement il faudrait que la définition soit partageable mais ça va être compliqué car je n'avais pas vu ce besoin arriver
+# - gérer plusieurs types de valeurs pour les MonitoringObjects
 # - start to look at way to report meaningful errors which happened in indicator's code
 # - extraire les variables créées sans les variables du contexte original
 
