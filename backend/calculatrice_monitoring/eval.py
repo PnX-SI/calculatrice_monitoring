@@ -157,9 +157,8 @@ def create_abondance_perc(observations: MonitoringCollection):
     )
 
 
-# TODO: ajouter un scope="site" !
 def Moyenne(prop_collection, scope="global"):
-    if scope != "visit":
+    if scope == "global":
         sum = 0
         for prop_value in prop_collection.values:
             sum += int(prop_value.value)
@@ -170,13 +169,13 @@ def Moyenne(prop_collection, scope="global"):
             ],
             scope="global"
         )
-    else:
+    elif scope == "visit":
         sum = defaultdict(lambda: 0)
         length = defaultdict(lambda: 0)
         visits = {}
         for prop_value in prop_collection.values:
             visit = prop_value.entity.visit
-            visit_id = visit.id_base_visit  # TODO : link an observation's site
+            visit_id = visit.id_base_visit
             visits[visit_id] = visit
             sum[visit_id] += int(prop_value.value)
             length[visit_id] += 1
@@ -188,6 +187,25 @@ def Moyenne(prop_collection, scope="global"):
                 ) for visit_id, visit in visits.items()
             ],
             scope="visit"
+        )
+    elif scope == "site":
+        sum = defaultdict(lambda: 0)
+        length = defaultdict(lambda: 0)
+        sites = {}
+        for prop_value in prop_collection.values:
+            site = prop_value.entity.site
+            site_id = site.id_base_site
+            sites[site_id] = site
+            sum[site_id] += int(prop_value.value)
+            length[site_id] += 1
+        return PropertyCollection(
+            values=[
+                PropertyValue(
+                    value=sum[site_id] / length[site_id],
+                    entity=site,
+                ) for site_id, site in sites.items()
+            ],
+            scope="site"
         )
 
 
@@ -332,63 +350,49 @@ for expected_value in [7.0, 41.0, 10.0, 3.0, 9.285714285714286]:
 
 # ---------- TEST AVEC MOYENNE ABONDANCE PAR SITE -------------
 
-# code = """
-# moyenne = Moyenne(observations.abondance, scope_visit=True)
-# labels = [v.entity.visit_date_min for v in moyenne.values]
-# values = [v.value for v in moyenne.values]
-# """
-# observations = get_observation_collection()
-# global_context = dict()
-# context = dict()
-# def add_to_ctx(obj):
-#     global_context[obj.__name__] = obj
-# for symbol in [
-#     Moyenne,
-#     PropertyValue,
-#     MonitoringCollection,
-#     PropertyCollection,
-# ]:
-#     add_to_ctx(symbol)
-# global_context["observations"] = observations
-#
-#
-# exec(code, global_context, context)
-#
-# assert "moyenne" in context
-# assert "labels" in context
-# labels = context["labels"]
-# # for expected_label in [
-# #     "Transect 1 Quadrat 1",
-# #     "Transect 1 Quadrat 2",
-# #     "Transect 1 Quadrat 3",
-# #     "Transect 2 Quadrat 4",
-# #     "Transect 2 Quadrat 5",
-# # ]:
-# #     assert expected_label in labels
-# import datetime
-#
-# assert [datetime.date(2023, 5, 22)] * 5 == labels
-# assert "values" in context
-# values = context["values"]
-# # from
-# # select tbs.base_site_name, avg((data->>'abondance')::int)
-# # from
-# #     gn_monitoring.t_observation_complements obs
-# #     join gn_monitoring.t_observations t on obs.id_observation = t.id_observation
-# #     join gn_monitoring.t_base_visits tbv on t.id_base_visit = tbv.id_base_visit
-# #     join gn_monitoring.t_base_sites tbs on tbv.id_base_site = tbs.id_base_site
-# # group by tbs.base_site_name;
-# import sys
-#
-# for expected_value in [
-#     1.3333333333333333,
-#     3,
-#     1.3571428571428571,
-#     1,
-#     1.3571428571428571,
-# ]:
-#     for value in values:
-#         if abs(value - expected_value) < sys.float_info.epsilon:
-#             break
-#     else:
-#         raise AssertionError(f"{expected_value} not found in {values}")
+code = """
+moyenne = Moyenne(observations.abondance, scope="site")
+labels = [v.entity.base_site_name for v in moyenne.values]
+values = [v.value for v in moyenne.values]
+"""
+observations = get_observation_collection()
+global_context = dict()
+context = dict()
+def add_to_ctx(obj):
+    global_context[obj.__name__] = obj
+for symbol in [
+    Moyenne,
+    PropertyValue,
+    MonitoringCollection,
+    PropertyCollection,
+]:
+    add_to_ctx(symbol)
+global_context["observations"] = observations
+
+exec(code, global_context, context)
+
+assert "moyenne" in context
+assert "labels" in context
+labels = context["labels"]
+for expected_label in [
+    "Transect 1 Quadrat 1",
+    "Transect 1 Quadrat 2",
+    "Transect 1 Quadrat 3",
+    "Transect 2 Quadrat 4",
+    "Transect 2 Quadrat 5",
+]:
+    assert expected_label in labels
+assert "values" in context
+values = context["values"]
+for expected_value in [
+    1.3333333333333333,
+    3,
+    1.3571428571428571,
+    1,
+    1.3571428571428571,
+]:
+    for value in values:
+        if abs(value - expected_value) < sys.float_info.epsilon:
+            break
+    else:
+        raise AssertionError(f"{expected_value} not found in {values}")
