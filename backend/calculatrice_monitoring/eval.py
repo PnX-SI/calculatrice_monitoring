@@ -51,10 +51,18 @@ def getHE(cd_nom):
 config = get_config("mheo_flore_test")
 
 
+class Root:
+    pass
+
+
+ROOT = Root()
+
+
 class Site:
     def __init__(self, site_model_instance):
         self.id_base_site = site_model_instance.id_base_site
         self.base_site_name = site_model_instance.base_site_name
+        self.id = self.id_base_site
 
 
 def get_site(site_id):
@@ -67,6 +75,7 @@ class Visit:
         self.id_base_visit = visit_model_instance.id_base_visit
         self.visit_date_min = visit_model_instance.visit_date_min
         self.id_base_site = visit_model_instance.id_base_site
+        self.id = self.id_base_visit
 
 
 def get_visit(visit_id):
@@ -159,53 +168,33 @@ def create_abondance_perc(observations: MonitoringCollection):
 
 def Moyenne(prop_collection, scope="global"):
     if scope == "global":
-        sum = 0
+        sums = 0
         for prop_value in prop_collection.values:
-            sum += int(prop_value.value)
-        moyenne = sum / len(prop_collection.values)
+            sums += int(prop_value.value)
+        moyenne = sums / len(prop_collection.values)
         return PropertyCollection(
             values=[
-                PropertyValue(value=moyenne, entity="globale")
+                PropertyValue(value=moyenne, entity=ROOT)
             ],
             scope="global"
         )
-    elif scope == "visit":
-        sum = defaultdict(lambda: 0)
-        length = defaultdict(lambda: 0)
-        visits = {}
+    else:
+        sums = defaultdict(lambda: 0)
+        lengths = defaultdict(lambda: 0)
+        scope_entities = {}
         for prop_value in prop_collection.values:
-            visit = prop_value.entity.visit
-            visit_id = visit.id_base_visit
-            visits[visit_id] = visit
-            sum[visit_id] += int(prop_value.value)
-            length[visit_id] += 1
+            scope_entity = getattr(prop_value.entity, scope)
+            scope_entities[scope_entity.id] = scope_entity
+            sums[scope_entity.id] += int(prop_value.value)
+            lengths[scope_entity.id] += 1
         return PropertyCollection(
             values=[
                 PropertyValue(
-                    value=sum[visit_id] / length[visit_id],
-                    entity=visit,
-                ) for visit_id, visit in visits.items()
+                    value=sums[scope_entity_id] / lengths[scope_entity_id],
+                    entity=scope_entity,
+                ) for scope_entity_id, scope_entity in scope_entities.items()
             ],
-            scope="visit"
-        )
-    elif scope == "site":
-        sum = defaultdict(lambda: 0)
-        length = defaultdict(lambda: 0)
-        sites = {}
-        for prop_value in prop_collection.values:
-            site = prop_value.entity.site
-            site_id = site.id_base_site
-            sites[site_id] = site
-            sum[site_id] += int(prop_value.value)
-            length[site_id] += 1
-        return PropertyCollection(
-            values=[
-                PropertyValue(
-                    value=sum[site_id] / length[site_id],
-                    entity=site,
-                ) for site_id, site in sites.items()
-            ],
-            scope="site"
+            scope=scope
         )
 
 
