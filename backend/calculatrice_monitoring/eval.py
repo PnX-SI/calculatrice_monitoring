@@ -1,11 +1,15 @@
-from collections import defaultdict
 import datetime
 import statistics
 import sys
+from collections import defaultdict
 
 from geonature.app import create_app
 from gn_module_monitoring.config.repositories import get_config
-from gn_module_monitoring.monitoring.models import TMonitoringObservations, TMonitoringSites, TMonitoringVisits
+from gn_module_monitoring.monitoring.models import (
+    TMonitoringObservations,
+    TMonitoringSites,
+    TMonitoringVisits,
+)
 
 app = create_app()
 
@@ -53,6 +57,7 @@ ctx.push()
 # - d'autres points d'entrée que 'observations'
 # - il faudra un 2ème zone humide pour les tests (sélection des observations de la zone humide cible)
 
+
 # TODO: function to emulate reference table lookup
 def get_he(cd_nom):
     map = {
@@ -97,10 +102,7 @@ def get_he_prop_collection(cd_nom_props):
                 entity=prop.entity,
             )
         )
-    return PropertyCollection(
-        values=he_values,
-        scope=cd_nom_props.scope
-    )
+    return PropertyCollection(values=he_values, scope=cd_nom_props.scope)
 
 
 # TODO: given the protocol create object with generic and specific properties
@@ -123,7 +125,8 @@ class Site:
 
 def get_site(site_id):
     site_model_instance = db.session.scalar(
-        db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id))
+        db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id)
+    )
     return Site(site_model_instance)
 
 
@@ -137,7 +140,8 @@ class Visit:
 
 def get_visit(visit_id):
     visit_model_instance = db.session.scalar(
-        db.select(TMonitoringVisits).filter(TMonitoringVisits.id_base_visit == visit_id))
+        db.select(TMonitoringVisits).filter(TMonitoringVisits.id_base_visit == visit_id)
+    )
     return Visit(visit_model_instance)
 
 
@@ -151,14 +155,12 @@ class Observation:
 
 
 class PropertyCollection:
-
     def __init__(self, values, scope):
         self.values = values
         self.scope = scope
 
 
 class PropertyValue:
-
     def __init__(self, value, entity):
         self.value = value
         self.entity = entity
@@ -192,8 +194,12 @@ def get_observations():
 
 def get_observation_collection():
     observations = get_observations()
-    abondance = create_prop_collection_from_entities(instances=observations, scope="observation", property="abondance")
-    cd_nom = create_prop_collection_from_entities(instances=observations, scope="observation", property="cd_nom")
+    abondance = create_prop_collection_from_entities(
+        instances=observations, scope="observation", property="abondance"
+    )
+    cd_nom = create_prop_collection_from_entities(
+        instances=observations, scope="observation", property="cd_nom"
+    )
     coll = MonitoringCollection(scope="observation")  # TODO: miss passing entities here
     coll.abondance = abondance
     coll.cd_nom = cd_nom
@@ -204,14 +210,7 @@ def get_observation_collection():
 # - avec la fonction ci-dessous directement dans le code de l'indicateur
 # - ou en utilisant un tableau de référence !
 def create_abondance_perc(observations: MonitoringCollection):
-    map = {
-        "+": 0.5,
-        "1": 3,
-        "2": 15,
-        "3": 37.5,
-        "4": 67.5,
-        "5": 87.5
-    }
+    map = {"+": 0.5, "1": 3, "2": 15, "3": 37.5, "4": 67.5, "5": 87.5}
     values: list[PropertyValue] = []
     for abondance in observations.abondance.values:  # PropertyCollection
         values.append(
@@ -233,21 +232,20 @@ def fetch_prop_value(prop_collection, entity_id):
     return None
 
 
-def Moyenne(prop_collection: PropertyCollection, scope: str = "global", weights: PropertyCollection = None):
+def Moyenne(
+    prop_collection: PropertyCollection, scope: str = "global", weights: PropertyCollection = None
+):
     if scope == "global":
         sums = 0
         for prop_value in prop_collection.values:
             sums += int(prop_value.value)
         moyenne = sums / len(prop_collection.values)
         return PropertyCollection(
-            values=[
-                PropertyValue(value=moyenne, entity=ROOT)
-            ],
-            scope="global"
+            values=[PropertyValue(value=moyenne, entity=ROOT)], scope="global"
         )
     else:
         sums = defaultdict(lambda: 0)
-        lengths = defaultdict(lambda: 0)
+        weights_sums = defaultdict(lambda: 0)
         scope_entities = {}
         for prop_value in prop_collection.values:
             if prop_value.value is None:
@@ -260,34 +258,31 @@ def Moyenne(prop_collection: PropertyCollection, scope: str = "global", weights:
                 if weight is None:
                     continue
                 sums[scope_entity.id] += int(prop_value.value) * weight / 100
+                weights_sums[scope_entity.id] += weight / 100
             else:
                 sums[scope_entity.id] += int(prop_value.value)
-            lengths[scope_entity.id] += 1
+                weights_sums[scope_entity.id] += 1
         return PropertyCollection(
             values=[
                 PropertyValue(
-                    value=sums[scope_entity_id] / lengths[scope_entity_id],
+                    value=sums[scope_entity_id] / weights_sums[scope_entity_id],
                     entity=scope_entity,
-                ) for scope_entity_id, scope_entity in scope_entities.items()
+                )
+                for scope_entity_id, scope_entity in scope_entities.items()
             ],
-            scope=scope
+            scope=scope,
         )
 
 
 def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
-    median = statistics.median(
-        [prop_value.value for prop_value in prop_collection.values]
-    )
+    median = statistics.median([prop_value.value for prop_value in prop_collection.values])
     values = [
         PropertyValue(
             value=median,
             entity=ROOT,
         )
     ]
-    return PropertyCollection(
-        values=values,
-        scope="global"
-    )
+    return PropertyCollection(values=values, scope="global")
 
 
 # ---------- TEST AVEC MOYENNE ABONDANCE TOUTES OBSERVATIONS -------------
@@ -584,7 +579,7 @@ def almostEqual(value, expected):
     return abs(value - expected) < sys.float_info.epsilon
 
 
-assert almostEqual(médiane.values[0].value, 0.6034615384615386) is True
+assert almostEqual(médiane.values[0].value, 6.500000000000001) is True
 assert "labels" in context
 labels = context["labels"]
 for expected_label in [
@@ -597,7 +592,13 @@ for expected_label in [
     assert expected_label in labels
 assert "values" in context
 values = context["values"]
-for expected_value in [0.615, 2.9625, 0.6034615384615386, 0.195, 0.5296153846153847]:
+for expected_value in [
+    8.785714285714285,
+    7.181818181818181,
+    5.684782608695652,
+    6.500000000000001,
+    5.3999999999999995,
+]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
             break
