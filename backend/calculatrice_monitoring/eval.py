@@ -2,6 +2,7 @@ import datetime
 import statistics
 import sys
 from collections import defaultdict
+from decimal import Decimal
 
 from geonature.app import create_app
 from gn_module_monitoring.config.repositories import get_config
@@ -244,8 +245,8 @@ def Moyenne(
             values=[PropertyValue(value=moyenne, entity=ROOT)], scope="global"
         )
     else:
-        sums = defaultdict(lambda: 0)
-        weights_sums = defaultdict(lambda: 0)
+        sums = defaultdict(lambda: Decimal(0))
+        weights_sums = defaultdict(lambda: Decimal(0))
         scope_entities = {}
         for prop_value in prop_collection.values:
             if prop_value.value is None:
@@ -257,11 +258,12 @@ def Moyenne(
                 weight = fetch_prop_value(weights, prop_value.entity.id)
                 if weight is None:
                     continue
-                sums[scope_entity.id] += int(prop_value.value) * weight / 100
-                weights_sums[scope_entity.id] += weight / 100
+                dweight = Decimal(weight) / Decimal(100)
+                sums[scope_entity.id] += Decimal(prop_value.value) * dweight
+                weights_sums[scope_entity.id] += dweight
             else:
-                sums[scope_entity.id] += int(prop_value.value)
-                weights_sums[scope_entity.id] += 1
+                sums[scope_entity.id] += Decimal(prop_value.value)
+                weights_sums[scope_entity.id] += Decimal(1)
         return PropertyCollection(
             values=[
                 PropertyValue(
@@ -275,7 +277,7 @@ def Moyenne(
 
 
 def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
-    median = statistics.median([prop_value.value for prop_value in prop_collection.values])
+    median = statistics.median([Decimal(prop_value.value) for prop_value in prop_collection.values])
     values = [
         PropertyValue(
             value=median,
@@ -355,11 +357,11 @@ assert [datetime.date(2023, 5, 22)] * 5 == labels
 assert "values" in context
 values = context["values"]
 for expected_value in [
-    1.3333333333333333,
-    3,
-    1.3571428571428571,
-    1,
-    1.3571428571428571,
+    Decimal(1.3333333333333333),
+    Decimal(3),
+    Decimal(1.3571428571428571),
+    Decimal(1),
+    Decimal(1.3571428571428571),
 ]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
@@ -421,7 +423,13 @@ labels = context["labels"]
 assert [datetime.date(2023, 5, 22)] * 5 == labels
 assert "values" in context
 values = context["values"]
-for expected_value in [7.0, 41.0, 10.0, 3.0, 9.285714285714286]:
+for expected_value in [
+    Decimal('7'),
+    Decimal('41.25'),
+    Decimal('10.07142857142857142857142857'),
+    Decimal('3'),
+    Decimal('9.321428571428571428571428571'),
+]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
             break
@@ -469,11 +477,11 @@ for expected_label in [
 assert "values" in context
 values = context["values"]
 for expected_value in [
-    1.3333333333333333,
-    3,
-    1.3571428571428571,
-    1,
-    1.3571428571428571,
+    Decimal('1.333333333333333333333333333'),
+    Decimal('3'),
+    Decimal('1.357142857142857142857142857'),
+    Decimal('1'),
+    Decimal('1.357142857142857142857142857'),
 ]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
@@ -529,7 +537,13 @@ for expected_label in [
     assert expected_label in labels
 assert "values" in context
 values = context["values"]
-for expected_value in [7.833333333333333, 7.5, 5.769230769230769, 6.5, 6.0]:
+for expected_value in [
+    Decimal('7.833333333333333333333333333'),
+    Decimal('7.5'),
+    Decimal('5.769230769230769230769230769'),
+    Decimal('6.5'),
+    Decimal('6'),
+]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
             break
@@ -579,7 +593,7 @@ def almostEqual(value, expected):
     return abs(value - expected) < sys.float_info.epsilon
 
 
-assert almostEqual(médiane.values[0].value, 6.500000000000001) is True
+assert médiane.values[0].value == Decimal('6.5')
 assert "labels" in context
 labels = context["labels"]
 for expected_label in [
@@ -593,11 +607,11 @@ for expected_label in [
 assert "values" in context
 values = context["values"]
 for expected_value in [
-    8.785714285714285,
-    7.181818181818181,
-    5.684782608695652,
-    6.500000000000001,
-    5.3999999999999995,
+    Decimal('8.785714285714285714285714286'),
+    Decimal('7.181818181818181818181818182'),
+    Decimal('5.684782608695652173913043478'),
+    Decimal('6.5'),
+    Decimal('5.4'),
 ]:
     for value in values:
         if abs(value - expected_value) < sys.float_info.epsilon:
