@@ -50,8 +50,10 @@ ctx.push()
 
 
 # architecture :
-# - continuer à implémenter I02 pour voir => tableau de référence
+# - [ok] continuer à implémenter I02 pour voir => tableau de référence
+# - aller au bout de la connexion avec l'application avant ?
 # - de vrais tests pytest avec fixtures
+#   + réfléchir à la tête des tests et des fixtures
 # - factoriser les classes => Obs, Site, Visit, ... ==> Entity
 # - récupérer properties dynamiquement avec la config
 #   + ne pas prendre les propriétés cachées ?
