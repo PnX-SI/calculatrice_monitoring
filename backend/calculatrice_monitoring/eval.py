@@ -51,7 +51,7 @@ ctx.push()
 # - récupérer properties dynamiquement avec la config
 #   + ne pas prendre les propriétés cachées ?
 # - d'autres points d'entrée que 'observations'
-
+# - il faudra un 2ème zone humide pour les tests (sélection des observations de la zone humide cible)
 
 # TODO: function to emulate reference table lookup
 def get_he(cd_nom):
