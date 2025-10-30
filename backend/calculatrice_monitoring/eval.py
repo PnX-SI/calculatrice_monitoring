@@ -51,6 +51,8 @@ ctx.push()
 
 # architecture :
 # - [ok] continuer à implémenter I02 pour voir => tableau de référence
+# - ajout fonction pour lancer un calcul et pousser le contexte
+# - factoriser tests en pytest
 # - aller au bout de la connexion avec l'application avant ?
 #   + ajouter un autre groupe de sites et des observations
 #   + filtrer observations selon groupe sélectionné
@@ -59,6 +61,7 @@ ctx.push()
 #   + modéliser les blocs de visualisation
 #   + préparer une fixture pour les blocs de visualisation
 #   + créer les blocs avec les résultats du calcul et retourner au frontend
+#   + lire code indicateur depuis BD
 # - de vrais tests pytest avec fixtures
 #   + réfléchir à la tête des tests et des fixtures
 # - factoriser les classes => Obs, Site, Visit, ... ==> Entity
@@ -235,7 +238,12 @@ def create_abondance_perc(observations: MonitoringCollection):
     )
 
 
+# renommer en PrendreValeurEntité ?
 def fetch_prop_value(prop_collection, entity_id):
+    """Cherche dans prop_collection pour la valeur correspondant à entity.
+
+    :return: la valeur de la PropertyValue trouvée, None sinon
+    """
     for prop_value in prop_collection.values:
         if prop_value.entity.id == entity_id:
             return prop_value.value
