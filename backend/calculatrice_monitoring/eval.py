@@ -52,6 +52,13 @@ ctx.push()
 # architecture :
 # - [ok] continuer à implémenter I02 pour voir => tableau de référence
 # - aller au bout de la connexion avec l'application avant ?
+#   + ajouter un autre groupe de sites et des observations
+#   + filtrer observations selon groupe sélectionné
+#   + ajouter une autre campagne sur étang de Botte
+#   + filtrer observations selon campagne sélectionnée
+#   + modéliser les blocs de visualisation
+#   + préparer une fixture pour les blocs de visualisation
+#   + créer les blocs avec les résultats du calcul et retourner au frontend
 # - de vrais tests pytest avec fixtures
 #   + réfléchir à la tête des tests et des fixtures
 # - factoriser les classes => Obs, Site, Visit, ... ==> Entity
