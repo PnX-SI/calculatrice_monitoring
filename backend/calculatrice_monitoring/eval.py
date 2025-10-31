@@ -47,6 +47,12 @@ from gn_module_monitoring.monitoring.models import (
 # - [ok] continuer à implémenter I02 pour voir => tableau de référence
 # - [ok] ajout fonction pour lancer un calcul et pousser le contexte
 # - [ok] factoriser tests en pytest
+
+# - brancher endpoint
+# - un code indicateur en dur
+# - mettre en forme la sortie du calcul
+# - pytest sur le endpoint
+
 # - réduire la précision des Decimals
 # - réduire le nombre de tests
 # - aller au bout de la connexion avec l'application avant ?
@@ -315,3 +321,33 @@ def evaluate(code):
     exec(code, global_context, context)
 
     return context
+
+
+def visualize():
+    code = """
+moyenne = Moyenne(observations.abondance)
+    """
+    variables = evaluate(code)
+    viz_config = [
+        {
+            "type": "scalaire",
+            "variable": "moyenne",
+            "title": "Moyenne des abondances",
+            "info": """Il s'agit de la moyenne des ID des catégories d'abondance
+ce qui n'a vraiment pas de sens.""",
+            "description": """<h1>Moyenne des abondances</h1>
+<p>La moyenne des ID d'abondance</p>""",
+        }
+    ]
+    viz_blocks = []
+    for viz_conf_item in viz_config:
+        viz_blocks.append(
+            {
+                "type": viz_conf_item["type"],
+                "title": viz_conf_item["title"],
+                "info": viz_conf_item["info"],
+                "description": viz_conf_item["description"],
+                "data": {"figure": variables["moyenne"].values[0].value},
+            }
+        )
+    return viz_blocks
