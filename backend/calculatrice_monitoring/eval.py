@@ -329,34 +329,66 @@ def evaluate(code, context):
     return local_context
 
 
-def visualize():
-    code = """
-moyenne = Moyenne(observations.abondance)
-    """
-    observations = db.session.scalars(db.select(TMonitoringObservations)).all()
-    collections = create_monitoring_collections(observations)
-    context = create_context(collections)
-    variables = evaluate(code, context)
+def build_viz_blocks(variables):
     viz_config = [
         {
             "type": "scalaire",
+            "variable": "médiane",
+            "title": "Médiane HE",
+            "info": """???""",
+            "description": """???""",
+        },
+        {
+            "type": "barChart",
             "variable": "moyenne",
-            "title": "Moyenne des abondances",
-            "info": """Il s'agit de la moyenne des ID des catégories d'abondance
-ce qui n'a vraiment pas de sens.""",
-            "description": """<h1>Moyenne des abondances</h1>
-<p>La moyenne des ID d'abondance</p>""",
-        }
+            "title": "Moyenne HE (pondérée par abondance)",
+            "info": """???""",
+            "description": """???""",
+        },
     ]
     viz_blocks = []
     for viz_conf_item in viz_config:
+        vizblock_type = viz_conf_item["type"]
+        data = None
+        if vizblock_type == "scalaire":
+            varname = viz_conf_item["variable"]
+            data = {"figure": variables[varname].values[0].value}
+        elif vizblock_type == "barChart":
+            varname = viz_conf_item["variable"]
+            prop_values = variables[varname].values
+            values = [prop.value for prop in prop_values]
+            data = {
+                "labels": [prop.entity.base_site_name for prop in prop_values],
+                "datasets": [{"data": values, "label": "Moyenne HE par quadrat"}],
+            }
+        else:
+            raise Exception(f"not implemented viz block type {vizblock_type}")
         viz_blocks.append(
             {
                 "type": viz_conf_item["type"],
                 "title": viz_conf_item["title"],
                 "info": viz_conf_item["info"],
                 "description": viz_conf_item["description"],
-                "data": {"figure": variables["moyenne"].values[0].value},
+                "data": data,
             }
         )
     return viz_blocks
+
+
+def visualize(
+    indicator_id,  # noqa: ARG001
+    sites_ids,  # noqa: ARG001
+    campaigns,  # noqa: ARG001
+    viz_type,  # noqa: ARG001
+):
+    code = """
+valeurs_he = get_he_prop_collection(observations.cd_nom)
+abondance_perc = create_abondance_perc(observations)
+moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+médiane = Médiane(moyenne)
+    """
+    observations = db.session.scalars(db.select(TMonitoringObservations)).all()
+    collections = create_monitoring_collections(observations)
+    context = create_context(collections)
+    variables = evaluate(code, context)
+    return build_viz_blocks(variables)

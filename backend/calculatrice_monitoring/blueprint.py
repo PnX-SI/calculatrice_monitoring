@@ -94,7 +94,12 @@ def get_indicator_visualization(
     viz_type: str = Json(),  # noqa: B008
 ):
     if viz_type == "campaign":
-        return visualize()
+        return visualize(
+            indicator_id,
+            sites_ids,
+            campaigns,
+            viz_type,
+        )
     else:
         # for now hard-coded vizblocks are returned for other visualization types
         return [
