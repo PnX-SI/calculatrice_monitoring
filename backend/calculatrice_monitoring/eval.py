@@ -333,7 +333,10 @@ def visualize():
     code = """
 moyenne = Moyenne(observations.abondance)
     """
-    variables = evaluate(code)
+    observations = db.session.scalars(db.select(TMonitoringObservations)).all()
+    collections = create_monitoring_collections(observations)
+    context = create_context(collections)
+    variables = evaluate(code, context)
     viz_config = [
         {
             "type": "scalaire",
