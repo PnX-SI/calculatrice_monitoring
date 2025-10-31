@@ -81,6 +81,6 @@ def monitoring_objects(protocols, users):
 
 
 @pytest.fixture
-def eval_context(monitoring_objects):  # noqa: ARG001  # unsused argument
-    collections = create_monitoring_collections()
+def eval_context(monitoring_objects):
+    collections = create_monitoring_collections(monitoring_objects["observations"])
     return create_context(collections)

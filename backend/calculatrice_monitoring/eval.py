@@ -199,22 +199,20 @@ def create_prop_collection_from_entities(instances, scope, property):
     return PropertyCollection(values=values, scope=scope)
 
 
-def get_observations():
-    query = db.select(TMonitoringObservations)
-    tmos = db.session.scalars(query).all()
-    observations = []
-    for tmo in tmos:
-        observations.append(Observation(tmo))
-    return observations
+def get_observations(observations: list[TMonitoringObservations]):
+    observation_entities = []
+    for obs in observations:
+        observation_entities.append(Observation(obs))
+    return observation_entities
 
 
-def get_observation_collection():
-    observations = get_observations()
+def get_observation_collection(observations: list[TMonitoringObservations]):
+    observation_entities = get_observations(observations)
     abondance = create_prop_collection_from_entities(
-        instances=observations, scope="observation", property="abondance"
+        instances=observation_entities, scope="observation", property="abondance"
     )
     cd_nom = create_prop_collection_from_entities(
-        instances=observations, scope="observation", property="cd_nom"
+        instances=observation_entities, scope="observation", property="cd_nom"
     )
     coll = MonitoringCollection(scope="observation")  # TODO: miss passing entities here
     coll.abondance = abondance
@@ -308,8 +306,8 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
     return PropertyCollection(values=values, scope="global")
 
 
-def create_monitoring_collections():
-    return {"observations": get_observation_collection()}
+def create_monitoring_collections(observations: list[TMonitoringObservations]):
+    return {"observations": get_observation_collection(observations)}
 
 
 def create_context(collections: dict[str, MonitoringCollection]) -> dict:
