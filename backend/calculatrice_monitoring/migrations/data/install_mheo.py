@@ -1,5 +1,6 @@
 import csv
 import os
+from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
     TMonitoringObservations,
     TMonitoringSites,
+    TMonitoringSitesGroups,
     TMonitoringVisits,
 )
 from pypnnomenclature.models import BibNomenclaturesTypes, TNomenclatures
@@ -92,42 +94,62 @@ def import_data_from_csv():
     datafile = open(filename, newline="")
     data = csv.DictReader(datafile, delimiter=";")
 
-    def get_site(row):
+    def get_group(row):
+        return {
+            "name": row["group_name"],
+            "sites": {},
+        }
+
+    def get_site(row, group):
         return {
             "name": row["site_name"],
             "longitude": row["site_long"],
             "latitude": row["site_lat"],
             "visits": {},
+            "group": group,
         }
 
-    def get_visit(row):
-        return {"date": datetime.strptime(row["date"], "%d/%m/%Y").date(), "observations": []}
+    def get_visit(row, site):
+        return {"date": datetime.strptime(row["date"], "%d/%m/%Y").date(), "observations": [], "site": site}
 
-    def get_observation(row):
-        return {"cd_nom": int(row["cd_nom"]), "abondance": row["abondance"]}
+    def get_observation(row, visit):
+        return {"cd_nom": int(row["cd_nom"]), "abondance": row["abondance"], "visit": visit}
 
-    sites = {}
+    groups = {}
     for row in data:
+        group_name = row["group_name"]
+        if group_name not in groups:
+            groups[group_name] = get_group(row)
+        group = groups[group_name]
         site_name = row["site_name"]
-        if site_name not in sites:
-            sites[site_name] = get_site(row)
-        site = sites[site_name]
+        if site_name not in group["sites"]:
+            group["sites"][site_name] = get_site(row, group)
+        site = group["sites"][site_name]
         visit_date = row["date"]
         if visit_date not in site["visits"]:
-            site["visits"][visit_date] = get_visit(row)
+            site["visits"][visit_date] = get_visit(row, site)
         visit = site["visits"][visit_date]
-        visit["observations"].append(get_observation(row))
+        visit["observations"].append(get_observation(row, visit))
 
-    # Convert sites and visits dicts to lists
-    sites_data = sites.values()
-    for site in sites_data:
-        site["visits"] = site["visits"].values()
+    # Convert groups, sites and visits dicts to lists
+    objects_data = defaultdict(list)
+    objects_data["groups"] = list(groups.values())
 
-    return sites_data
+    groups_data = objects_data["groups"]
+    for group in groups_data:
+        group["sites"] = list(group["sites"].values())
+        objects_data["sites"].extend(group["sites"])
+        for site in group["sites"]:
+            site["visits"] = list(site["visits"].values())
+            objects_data["visits"].extend(site["visits"])
+            for visit in site["visits"]:
+                objects_data["observations"].extend(visit["observations"])
+
+    return objects_data
 
 
 def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave unused param to show dependency
-    sites_data = import_data_from_csv()
+    objects_data = import_data_from_csv()
 
     site_quadrat_flore_type = db.session.scalar(
         select(BibTypeSite)
@@ -143,22 +165,40 @@ def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave u
             + "installation script (see the doc)"
         )
 
-    sites = []
+    flore_protocol = db.session.scalar(
+        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
+    )
+
     with db.session.begin_nested():
-        for site_data in sites_data:
-            geom_4326 = from_shape(Point(site_data["longitude"], site_data["latitude"]), srid=4326)
+        for group_data in objects_data["groups"]:
+            group = TMonitoringSitesGroups(
+                sites_group_name=group_data["name"],
+                sites_group_code=group_data["name"].replace(" ", "-").lower(),
+            )
+            group.modules = [flore_protocol]
+            group_data["model"] = group
+            db.session.add(group)
+
+    with db.session.begin_nested():
+        for site_data in objects_data["sites"]:
+            geom_4326 = from_shape(
+                Point(site_data["longitude"], site_data["latitude"]), srid=4326
+            )
             site = TMonitoringSites(
                 base_site_name=site_data["name"],
                 base_site_code=site_data["name"].replace(" ", "-").lower(),
                 geom=geom_4326,
                 types_site=[site_quadrat_flore_type],
             )
-            sites.append(site)
+            site_data["model"] = site
             db.session.add(site)
 
-    flore_protocol = db.session.scalar(
-        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
-    )
+    with db.session.begin_nested():
+        for group_data in objects_data["groups"]:
+            group = group_data["model"]
+            sites = [site_data["model"] for site_data in group_data["sites"]]
+            group.sites = sites
+            db.session.add(group)
 
     with db.session.begin_nested():
         af = TAcquisitionFramework(
@@ -179,38 +219,42 @@ def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave u
         )
         db.session.add(ds)
 
-    visits = []
-    observations = []
-    for site in sites:
-        for site_data in sites_data:
-            if site_data["name"] == site.base_site_name:
-                break
-        with db.session.begin_nested():
-            for visit_data in site_data["visits"]:
-                visit = TMonitoringVisits(
-                    id_base_site=site.id_base_site,
-                    dataset=ds,
-                    module=flore_protocol,
-                    visit_date_min=visit_data["date"],
-                )
-                visits.append(visit)
-                db.session.add(visit)
-                db.session.commit()
+    with db.session.begin_nested():
+        flore_protocol.types_site = [site_quadrat_flore_type]
+        flore_protocol.datasets = [ds]
+        flore_protocol.taxonomy_display_field_name = "nom_vern,lb_nom"
+        db.session.add(flore_protocol)
 
-                for obs_data in visit_data["observations"]:
-                    observation = TMonitoringObservations(
-                        id_base_visit=visit.id_base_visit,
-                        cd_nom=obs_data["cd_nom"],
-                        digitiser=users["gestionnaire"],
-                        data={"abondance": obs_data["abondance"]},
-                    )
-                    observations.append(observation)
-                    db.session.add(observation)
+
+    with db.session.begin_nested():
+        for visit_data in objects_data["visits"]:
+            site = visit_data["site"]["model"]
+            visit = TMonitoringVisits(
+                id_base_site=site.id_base_site,
+                dataset=ds,
+                module=flore_protocol,
+                visit_date_min=visit_data["date"],
+            )
+            visit_data["model"] = visit
+            db.session.add(visit)
+
+    with db.session.begin_nested():
+        for obs_data in objects_data["observations"]:
+            visit = obs_data["visit"]["model"]
+            observation = TMonitoringObservations(
+                id_base_visit=visit.id_base_visit,
+                cd_nom=obs_data["cd_nom"],
+                digitiser=users["gestionnaire"],
+                data={"abondance": obs_data["abondance"]},
+            )
+            obs_data["model"] = observation
+            db.session.add(observation)
 
     return {
-        "sites": sites,
-        "visits": visits,
-        "observations": observations,
+        "sites_groups": [group_data["model"] for group_data in objects_data["groups"]],
+        "sites": [site_data["model"] for site_data in objects_data["sites"]],
+        "visits": [visit_data["model"] for visit_data in objects_data["visits"]],
+        "observations": [observation_data["model"] for observation_data in objects_data["observations"]],
     }
 
 

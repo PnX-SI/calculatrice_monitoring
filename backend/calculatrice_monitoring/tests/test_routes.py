@@ -176,9 +176,10 @@ class TestGetProtocol:
 
 
 def test_monitoring_objects_fixture(monitoring_objects):
-    assert len(monitoring_objects["sites"]) == 5
-    assert len(monitoring_objects["visits"]) == 5
-    assert len(monitoring_objects["observations"]) == 39
+    assert len(monitoring_objects["sites_groups"]) == 2
+    assert len(monitoring_objects["sites"]) == 8
+    assert len(monitoring_objects["visits"]) == 8
+    assert len(monitoring_objects["observations"]) == 46
 
 
 def test_indicators_fixture(indicators):
