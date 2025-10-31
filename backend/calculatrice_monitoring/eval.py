@@ -306,7 +306,9 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
     return PropertyCollection(values=values, scope="global")
 
 
-def create_monitoring_collections(observations: list[TMonitoringObservations]):
+def create_monitoring_collections(
+    observations: list[TMonitoringObservations],
+) -> dict[str, MonitoringCollection]:
     return {"observations": get_observation_collection(observations)}
 
 
