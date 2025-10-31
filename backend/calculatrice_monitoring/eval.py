@@ -4,20 +4,14 @@ import sys
 from collections import defaultdict
 from decimal import Decimal
 
-from geonature.app import create_app
+from geonature.utils.env import db
+
 from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import (
     TMonitoringObservations,
     TMonitoringSites,
     TMonitoringVisits,
 )
-
-app = create_app()
-
-from geonature.utils.env import db
-
-ctx = app.app_context()
-ctx.push()
 
 
 # given:
@@ -51,8 +45,10 @@ ctx.push()
 
 # architecture :
 # - [ok] continuer à implémenter I02 pour voir => tableau de référence
-# - ajout fonction pour lancer un calcul et pousser le contexte
-# - factoriser tests en pytest
+# - [ok] ajout fonction pour lancer un calcul et pousser le contexte
+# - [ok] factoriser tests en pytest
+# - réduire la précision des Decimals
+# - réduire le nombre de tests
 # - aller au bout de la connexion avec l'application avant ?
 #   + ajouter un autre groupe de sites et des observations
 #   + filtrer observations selon groupe sélectionné
@@ -119,7 +115,7 @@ def get_he_prop_collection(cd_nom_props):
 
 
 # TODO: given the protocol create object with generic and specific properties
-config = get_config("mheo_flore_test")
+# config = get_config("mheo_flore_test")
 
 
 class Root:
@@ -304,334 +300,16 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
     return PropertyCollection(values=values, scope="global")
 
 
-# ---------- TEST AVEC MOYENNE ABONDANCE TOUTES OBSERVATIONS -------------
+def evaluate(code):
+    observations = get_observation_collection()
+    global_context = dict()
+    context = dict()
+    global_context["Moyenne"] = Moyenne
+    global_context["create_abondance_perc"] = create_abondance_perc
+    global_context["observations"] = observations
+    global_context["get_he_prop_collection"] = get_he_prop_collection
+    global_context["Médiane"] = Médiane
 
-code = """
-moyenne = Moyenne(observations.abondance)
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-context["Moyenne"] = Moyenne
-context["create_abondance_perc"] = create_abondance_perc
-context["observations"] = observations
+    exec(code, global_context, context)
 
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert len(context["moyenne"].values) == 1
-assert context["moyenne"].values[0].value == 1.4102564102564104
-
-# ---------- TEST AVEC MOYENNE ABONDANCE POURCENTAGE TOUTES OBSERVATIONS -------------
-
-code = """
-moyenne = Moyenne(create_abondance_perc(observations))
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-context["Moyenne"] = Moyenne
-context["create_abondance_perc"] = create_abondance_perc
-context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert len(context["moyenne"].values) == 1
-assert context["moyenne"].values[0].value == 10.333333333333334
-
-# ---------- TEST AVEC MOYENNE ABONDANCE PAR VISITE -------------
-
-code = """
-moyenne = Moyenne(observations.abondance, scope="visit")
-labels = [v.entity.visit_date_min for v in moyenne.values]
-values = [v.value for v in moyenne.values]
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-
-
-def add_to_ctx(obj):
-    global_context[obj.__name__] = obj
-
-
-for symbol in [
-    Moyenne,
-    PropertyValue,
-    MonitoringCollection,
-    PropertyCollection,
-]:
-    add_to_ctx(symbol)
-global_context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert "labels" in context
-labels = context["labels"]
-assert [datetime.date(2023, 5, 22)] * 5 == labels
-assert "values" in context
-values = context["values"]
-for expected_value in [
-    Decimal(1.3333333333333333),
-    Decimal(3),
-    Decimal(1.3571428571428571),
-    Decimal(1),
-    Decimal(1.3571428571428571),
-]:
-    for value in values:
-        if abs(value - expected_value) < sys.float_info.epsilon:
-            break
-    else:
-        raise AssertionError(f"{expected_value} not found in {values}")
-
-# ---------- TEST AVEC CONVERSION ABONDANCE EN POURCENTAGE -------------
-
-code = """
-def create_abondance_perc(observations: MonitoringCollection):
-    map = {
-        "+": 0.5,
-        "1": 3,
-        "2": 15,
-        "3": 37.5,
-        "4": 67.5,
-        "5": 87.5
-    }
-    values = []
-    for abondance in observations.abondance.values:  # PropertyCollection
-        values.append(
-            PropertyValue(
-                value=map[abondance.value],
-                entity=abondance.entity,
-            )
-        )
-    return PropertyCollection(
-        values=values,
-        scope="observation",
-    )
-moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
-labels = [v.entity.visit_date_min for v in moyenne.values]
-values = [v.value for v in moyenne.values]
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-
-
-def add_to_ctx(obj):
-    global_context[obj.__name__] = obj
-
-
-for symbol in [
-    Moyenne,
-    PropertyValue,
-    MonitoringCollection,
-    PropertyCollection,
-]:
-    add_to_ctx(symbol)
-global_context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert "labels" in context
-labels = context["labels"]
-assert [datetime.date(2023, 5, 22)] * 5 == labels
-assert "values" in context
-values = context["values"]
-for expected_value in [
-    Decimal('7'),
-    Decimal('41.25'),
-    Decimal('10.07142857142857142857142857'),
-    Decimal('3'),
-    Decimal('9.321428571428571428571428571'),
-]:
-    for value in values:
-        if abs(value - expected_value) < sys.float_info.epsilon:
-            break
-    else:
-        raise AssertionError(f"{expected_value} not found in {values}")
-
-# ---------- TEST AVEC MOYENNE ABONDANCE PAR SITE -------------
-
-code = """
-moyenne = Moyenne(observations.abondance, scope="site")
-labels = [v.entity.base_site_name for v in moyenne.values]
-values = [v.value for v in moyenne.values]
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-
-
-def add_to_ctx(obj):
-    global_context[obj.__name__] = obj
-
-
-for symbol in [
-    Moyenne,
-    PropertyValue,
-    MonitoringCollection,
-    PropertyCollection,
-]:
-    add_to_ctx(symbol)
-global_context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert "labels" in context
-labels = context["labels"]
-for expected_label in [
-    "Transect 1 Quadrat 1",
-    "Transect 1 Quadrat 2",
-    "Transect 1 Quadrat 3",
-    "Transect 2 Quadrat 4",
-    "Transect 2 Quadrat 5",
-]:
-    assert expected_label in labels
-assert "values" in context
-values = context["values"]
-for expected_value in [
-    Decimal('1.333333333333333333333333333'),
-    Decimal('3'),
-    Decimal('1.357142857142857142857142857'),
-    Decimal('1'),
-    Decimal('1.357142857142857142857142857'),
-]:
-    for value in values:
-        if abs(value - expected_value) < sys.float_info.epsilon:
-            break
-    else:
-        raise AssertionError(f"{expected_value} not found in {values}")
-
-# ---------- TEST AVEC MOYENNE HE PAR SITE -------------
-
-code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope="site")
-médiane = Médiane(moyenne)
-labels = [v.entity.base_site_name for v in moyenne.values]
-values = [v.value for v in moyenne.values]
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-
-
-def add_to_ctx(obj):
-    global_context[obj.__name__] = obj
-
-
-for symbol in [
-    Moyenne,
-    PropertyValue,
-    MonitoringCollection,
-    PropertyCollection,
-    get_he_prop_collection,
-    Médiane,
-]:
-    add_to_ctx(symbol)
-global_context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert "médiane" in context
-médiane = context["médiane"]
-assert len(médiane.values) == 1
-assert médiane.values[0].value == 6.5
-assert "labels" in context
-labels = context["labels"]
-for expected_label in [
-    "Transect 1 Quadrat 1",
-    "Transect 1 Quadrat 2",
-    "Transect 1 Quadrat 3",
-    "Transect 2 Quadrat 4",
-    "Transect 2 Quadrat 5",
-]:
-    assert expected_label in labels
-assert "values" in context
-values = context["values"]
-for expected_value in [
-    Decimal('7.833333333333333333333333333'),
-    Decimal('7.5'),
-    Decimal('5.769230769230769230769230769'),
-    Decimal('6.5'),
-    Decimal('6'),
-]:
-    for value in values:
-        if abs(value - expected_value) < sys.float_info.epsilon:
-            break
-    else:
-        raise AssertionError(f"{expected_value} not found in {values}")
-
-# ---------- TEST AVEC MOYENNE HE PONDÉRÉE AVEC ABONDANCE PAR SITE -------------
-
-code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
-médiane = Médiane(moyenne)
-labels = [v.entity.base_site_name for v in moyenne.values]
-values = [v.value for v in moyenne.values]
-"""
-observations = get_observation_collection()
-global_context = dict()
-context = dict()
-
-
-def add_to_ctx(obj):
-    global_context[obj.__name__] = obj
-
-
-for symbol in [
-    Moyenne,
-    PropertyValue,
-    MonitoringCollection,
-    PropertyCollection,
-    get_he_prop_collection,
-    create_abondance_perc,
-    Médiane,
-]:
-    add_to_ctx(symbol)
-global_context["observations"] = observations
-
-exec(code, global_context, context)
-
-assert "moyenne" in context
-assert "médiane" in context
-médiane = context["médiane"]
-assert len(médiane.values) == 1
-
-
-def almostEqual(value, expected):
-    return abs(value - expected) < sys.float_info.epsilon
-
-
-assert médiane.values[0].value == Decimal('6.5')
-assert "labels" in context
-labels = context["labels"]
-for expected_label in [
-    "Transect 1 Quadrat 1",
-    "Transect 1 Quadrat 2",
-    "Transect 1 Quadrat 3",
-    "Transect 2 Quadrat 4",
-    "Transect 2 Quadrat 5",
-]:
-    assert expected_label in labels
-assert "values" in context
-values = context["values"]
-for expected_value in [
-    Decimal('8.785714285714285714285714286'),
-    Decimal('7.181818181818181818181818182'),
-    Decimal('5.684782608695652173913043478'),
-    Decimal('6.5'),
-    Decimal('5.4'),
-]:
-    for value in values:
-        if abs(value - expected_value) < sys.float_info.epsilon:
-            break
-    else:
-        raise AssertionError(f"{expected_value} not found in {values}")
+    return context
