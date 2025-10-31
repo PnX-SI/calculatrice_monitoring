@@ -1,18 +1,16 @@
-import datetime
+# ruff: noqa: N802  # (N802=Function name should be lowercase)
+# ruff: noqa: PLC2401  # (PLC2401=Function name contains a non-ASCII character)
+
 import statistics
-import sys
 from collections import defaultdict
 from decimal import Decimal
 
 from geonature.utils.env import db
-
-from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import (
     TMonitoringObservations,
     TMonitoringSites,
     TMonitoringVisits,
 )
-
 
 # given:
 # - sites IDs
@@ -34,9 +32,11 @@ from gn_module_monitoring.monitoring.models import (
 
 # TODO:
 # - [ok] gérer scope site pour la Moyenne
-# - [ok] gérer la conversion entre l'ID d'une valeur (pour l'abondance) et la valeur numérique à utiliser pour les calculs
+# - [ok] gérer la conversion entre l'ID d'une valeur (pour l'abondance) et la valeur
+#   numérique à utiliser pour les calculs
 #   + c'est forcément qqchose qui doit pouvoir être configurable dans le code de l'indicateur !
-#   + idéalement il faudrait que la définition soit partageable mais ça va être compliqué car je n'avais pas vu ce besoin arriver
+#   + idéalement il faudrait que la définition soit partageable mais ça va être compliqué
+#     car je n'avais pas vu ce besoin arriver
 # - gérer plusieurs types de valeurs pour les MonitoringObjects
 # - start to look at way to report meaningful errors which happened in indicator's code
 # - extraire les variables créées sans les variables du contexte original
@@ -64,7 +64,8 @@ from gn_module_monitoring.monitoring.models import (
 # - récupérer properties dynamiquement avec la config
 #   + ne pas prendre les propriétés cachées ?
 # - d'autres points d'entrée que 'observations'
-# - il faudra un 2ème zone humide pour les tests (sélection des observations de la zone humide cible)
+# - il faudra un 2ème zone humide pour les tests (sélection des observations
+#   de la zone humide cible)
 
 
 # TODO: function to emulate reference table lookup
@@ -215,7 +216,8 @@ def get_observation_collection():
     return coll
 
 
-# comment ajouter une propriété `abondance_perc` à toutes les observations, définie dans l'indicateur ?
+# comment ajouter une propriété `abondance_perc` à toutes les observations,
+# (la propriété doit être définie dans l'indicateur) ?
 # - avec la fonction ci-dessous directement dans le code de l'indicateur
 # - ou en utilisant un tableau de référence !
 def create_abondance_perc(observations: MonitoringCollection):
@@ -246,7 +248,7 @@ def fetch_prop_value(prop_collection, entity_id):
     return None
 
 
-def Moyenne(
+def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
     prop_collection: PropertyCollection, scope: str = "global", weights: PropertyCollection = None
 ):
     if scope == "global":
@@ -302,8 +304,8 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
 
 def evaluate(code):
     observations = get_observation_collection()
-    global_context = dict()
-    context = dict()
+    global_context = {}
+    context = {}
     global_context["Moyenne"] = Moyenne
     global_context["create_abondance_perc"] = create_abondance_perc
     global_context["observations"] = observations
