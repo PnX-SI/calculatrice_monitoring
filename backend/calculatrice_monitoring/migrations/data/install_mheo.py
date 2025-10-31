@@ -104,7 +104,7 @@ def import_data_from_csv():
         return {"date": datetime.strptime(row["date"], "%d/%m/%Y").date(), "observations": []}
 
     def get_observation(row):
-        return {"cd_nom": row["cd_nom"], "abondance": row["abondance"]}
+        return {"cd_nom": int(row["cd_nom"]), "abondance": row["abondance"]}
 
     sites = {}
     for row in data:
