@@ -308,19 +308,25 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
     return PropertyCollection(values=values, scope="global")
 
 
-def evaluate(code):
-    observations = get_observation_collection()
-    global_context = {}
+def create_monitoring_collections():
+    return {"observations": get_observation_collection()}
+
+
+def create_context(collections: dict[str, MonitoringCollection]) -> dict:
     context = {}
-    global_context["Moyenne"] = Moyenne
-    global_context["create_abondance_perc"] = create_abondance_perc
-    global_context["observations"] = observations
-    global_context["get_he_prop_collection"] = get_he_prop_collection
-    global_context["Médiane"] = Médiane
-
-    exec(code, global_context, context)
-
+    context["Moyenne"] = Moyenne
+    context["create_abondance_perc"] = create_abondance_perc
+    context["observations"] = collections["observations"]
+    context["get_he_prop_collection"] = get_he_prop_collection
+    context["Médiane"] = Médiane
     return context
+
+
+def evaluate(code, context):
+    global_context = context
+    local_context = {}
+    exec(code, global_context, local_context)
+    return local_context
 
 
 def visualize():

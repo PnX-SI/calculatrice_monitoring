@@ -8,6 +8,7 @@ import pytest
 from calculatrice_monitoring.eval import evaluate
 
 from .fixtures import (
+    eval_context,
     monitoring_objects,
     # FIXME: is there a way no to import those "unused" fixtures
     protocols,
@@ -17,36 +18,36 @@ from .fixtures import (
 
 class TestEvalIndicator:
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_abondance_all_observations(self):
+    def test_eval_code_moyenne_abondance_all_observations(self, eval_context):
         code = """
 moyenne = Moyenne(observations.abondance)
         """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
         assert variables["moyenne"].values[0].value == 1.4102564102564104
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_abondance_percentages_all_observations(self):
+    def test_eval_code_moyenne_abondance_percentages_all_observations(self, eval_context):
         code = """
 moyenne = Moyenne(create_abondance_perc(observations))
         """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
         assert variables["moyenne"].values[0].value == 10.333333333333334
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_abondance_per_visit_all_observations(self):
+    def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):
         code = """
 moyenne = Moyenne(observations.abondance, scope="visit")
             """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "moyenne" in variables
         properties = variables["moyenne"].values
@@ -63,12 +64,12 @@ moyenne = Moyenne(observations.abondance, scope="visit")
         assert values == pytest.approx(expected_values)
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self):
+    def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self, eval_context):
         code = """
 moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
             """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "moyenne" in variables
         properties = variables["moyenne"].values
@@ -85,12 +86,12 @@ moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
         assert values == pytest.approx(expected_values)
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_abondance_per_site_all_observations(self):
+    def test_eval_code_moyenne_abondance_per_site_all_observations(self, eval_context):
         code = """
 moyenne = Moyenne(observations.abondance, scope="site")
                 """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "moyenne" in variables
         properties = variables["moyenne"].values
@@ -114,14 +115,14 @@ moyenne = Moyenne(observations.abondance, scope="site")
         assert values == pytest.approx(expected_values)
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self):
+    def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 moyenne = Moyenne(valeurs_he, scope="site")
 médiane = Médiane(moyenne)
 """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
@@ -152,7 +153,9 @@ médiane = Médiane(moyenne)
         assert values == pytest.approx(expected_values)
 
     @pytest.mark.usefixtures("monitoring_objects")
-    def test_eval_code_moyenne_he_pondérée_abondance_per_site_and_médiane_all_observations(self):
+    def test_eval_code_moyenne_he_pondérée_abondance_per_site_and_médiane_all_observations(
+        self, eval_context
+    ):
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
@@ -160,7 +163,7 @@ moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
 médiane = Médiane(moyenne)
 """
 
-        variables = evaluate(code)
+        variables = evaluate(code, eval_context)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
