@@ -3,18 +3,6 @@ from flask import url_for
 from flask_login import logout_user
 from pypnusershub.tests.utils import set_logged_user
 
-from .fixtures import (
-    calculatrice_permissions,
-    indicators,
-    metadata,
-    monitoring_objects,
-    more_monitoring_objects,
-    protocol,
-    protocol_with_indicators,
-    protocols,
-    users,
-)
-
 
 class TestGetIndicators:
     @pytest.mark.usefixtures("calculatrice_permissions")
