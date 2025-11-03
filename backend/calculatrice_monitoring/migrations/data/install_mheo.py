@@ -89,9 +89,9 @@ def install_test_permissions(protocols, users):
             )
 
 
-def import_data_from_csv():
+def import_data_from_csv(csv_filename):
     """Reads the CSV data file and returns a list of site data."""
-    filename = os.path.join(Path(__file__).parent, "./mheo_data.csv")
+    filename = os.path.join(Path(__file__).parent, f"./{csv_filename}")
     datafile = open(filename, newline="")
     data = csv.DictReader(datafile, delimiter=";")
 
@@ -111,7 +111,11 @@ def import_data_from_csv():
         }
 
     def get_visit(row, site):
-        return {"date": datetime.strptime(row["date"], "%d/%m/%Y").date(), "observations": [], "site": site}
+        return {
+            "date": datetime.strptime(row["date"], "%d/%m/%Y").date(),
+            "observations": [],
+            "site": site,
+        }
 
     def get_observation(row, visit):
         return {"cd_nom": int(row["cd_nom"]), "abondance": row["abondance"], "visit": visit}
@@ -149,8 +153,60 @@ def import_data_from_csv():
     return objects_data
 
 
-def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave unused param to show dependency
-    objects_data = import_data_from_csv()
+def install_metadata():
+    with db.session.begin_nested():
+        af = TAcquisitionFramework(
+            acquisition_framework_name="Données d'observation des protocoles MhéO",
+            acquisition_framework_desc="Données d'observation des protocoles MhéO",
+            acquisition_framework_start_date=date(2025, 9, 30),
+        )
+        db.session.add(af)
+
+    with db.session.begin_nested():
+        ds = TDatasets(
+            acquisition_framework=af,
+            dataset_name="Jeu de données MhéO Flore",
+            dataset_shortname="Jeu de données MhéO Flore",
+            dataset_desc="Description du jeu de données MhéO Flore",
+            marine_domain=False,
+            terrestrial_domain=True,
+        )
+        db.session.add(ds)
+
+    return {
+        "acquisition_framework": af,
+        "dataset": ds,
+    }
+
+
+def configure_mheo_flore_test_protocol(ds):
+    site_quadrat_flore_type = db.session.scalar(
+        select(BibTypeSite)
+        .join(TNomenclatures)
+        .join(BibNomenclaturesTypes)
+        .where(BibNomenclaturesTypes.mnemonique == "TYPE_SITE")
+        .where(TNomenclatures.cd_nomenclature == "MHEO_QUADRAT_FLORE_TEST")
+    )
+
+    if not site_quadrat_flore_type:
+        raise Exception(
+            "MhéO test protocols should be installed before running this sample "
+            + "installation script (see the doc)"
+        )
+
+    flore_protocol = db.session.scalar(
+        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
+    )
+
+    with db.session.begin_nested():
+        flore_protocol.types_site = [site_quadrat_flore_type]
+        flore_protocol.datasets = [ds]
+        flore_protocol.taxonomy_display_field_name = "nom_vern,lb_nom"
+        db.session.add(flore_protocol)
+
+
+def install_test_monitoring_objects_from_csv(csv_filename, users, ds):
+    objects_data = import_data_from_csv(csv_filename)
 
     site_quadrat_flore_type = db.session.scalar(
         select(BibTypeSite)
@@ -182,9 +238,7 @@ def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave u
 
     with db.session.begin_nested():
         for site_data in objects_data["sites"]:
-            geom_4326 = from_shape(
-                Point(site_data["longitude"], site_data["latitude"]), srid=4326
-            )
+            geom_4326 = from_shape(Point(site_data["longitude"], site_data["latitude"]), srid=4326)
             site = TMonitoringSites(
                 base_site_name=site_data["name"],
                 base_site_code=site_data["name"].replace(" ", "-").lower(),
@@ -200,32 +254,6 @@ def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave u
             sites = [site_data["model"] for site_data in group_data["sites"]]
             group.sites = sites
             db.session.add(group)
-
-    with db.session.begin_nested():
-        af = TAcquisitionFramework(
-            acquisition_framework_name="Données d'observation des protocoles MhéO",
-            acquisition_framework_desc="Données d'observation des protocoles MhéO",
-            acquisition_framework_start_date=date(2025, 9, 30),
-        )
-        db.session.add(af)
-
-    with db.session.begin_nested():
-        ds = TDatasets(
-            acquisition_framework=af,
-            dataset_name="Jeu de données MhéO Flore",
-            dataset_shortname="Jeu de données MhéO Flore",
-            dataset_desc="Description du jeu de données MhéO Flore",
-            marine_domain=False,
-            terrestrial_domain=True,
-        )
-        db.session.add(ds)
-
-    with db.session.begin_nested():
-        flore_protocol.types_site = [site_quadrat_flore_type]
-        flore_protocol.datasets = [ds]
-        flore_protocol.taxonomy_display_field_name = "nom_vern,lb_nom"
-        db.session.add(flore_protocol)
-
 
     with db.session.begin_nested():
         for visit_data in objects_data["visits"]:
@@ -255,8 +283,18 @@ def install_test_monitoring_objects(protocols, users):  # noqa: ARG001 # Leave u
         "sites_groups": [group_data["model"] for group_data in objects_data["groups"]],
         "sites": [site_data["model"] for site_data in objects_data["sites"]],
         "visits": [visit_data["model"] for visit_data in objects_data["visits"]],
-        "observations": [observation_data["model"] for observation_data in objects_data["observations"]],
+        "observations": [
+            observation_data["model"] for observation_data in objects_data["observations"]
+        ],
     }
+
+
+def install_test_monitoring_objects(protocols, users, dataset):  # noqa: ARG001 # Leave unused param to show dependency
+    return install_test_monitoring_objects_from_csv("mheo_data.csv", users, dataset)
+
+
+def install_more_fake_data(protocols, users, dataset):  # noqa: ARG001 # Leave unused param to show dependency
+    return install_test_monitoring_objects_from_csv("more_fake_data.csv", users, dataset)
 
 
 def install_test_indicators(protocols):  # noqa: ARG001 # Leave unused param to show dependency
@@ -305,5 +343,9 @@ def install_all_test_sample_objects():
     users = install_test_users()
     protocols = db.session.scalars(select(TMonitoringModules))
     install_test_permissions(protocols, users)
-    install_test_monitoring_objects(protocols, users)
+    metadata = install_metadata()
+    dataset = metadata["dataset"]
+    configure_mheo_flore_test_protocol(dataset)
+    install_test_monitoring_objects(protocols, users, dataset)
+    install_more_fake_data(protocols, users, dataset)
     install_test_indicators(protocols)

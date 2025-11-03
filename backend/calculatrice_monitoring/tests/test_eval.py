@@ -9,6 +9,7 @@ from calculatrice_monitoring.eval import evaluate
 
 from .fixtures import (
     eval_context,
+    metadata,
     monitoring_objects,
     # FIXME: is there a way no to import those "unused" fixtures
     protocols,

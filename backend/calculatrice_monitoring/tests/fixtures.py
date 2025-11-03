@@ -12,7 +12,7 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     install_test_indicators,
     install_test_monitoring_objects,
     install_test_permissions,
-    install_test_users,
+    install_test_users, install_metadata, install_more_fake_data,
 )
 from calculatrice_monitoring.models import Indicator
 
@@ -76,8 +76,23 @@ def indicators(protocols):
 
 
 @pytest.fixture
-def monitoring_objects(protocols, users):
-    return install_test_monitoring_objects(protocols, users)
+def metadata():
+    return install_metadata()
+
+
+@pytest.fixture
+def configure_test_protocol(metadata):
+    return configure_test_protocol(metadata["dataset"])
+
+
+@pytest.fixture
+def monitoring_objects(protocols, users, metadata):
+    return install_test_monitoring_objects(protocols, users, metadata["dataset"])
+
+
+@pytest.fixture
+def more_monitoring_objects(protocols, users, metadata):
+    return install_more_fake_data(protocols, users, metadata["dataset"])
 
 
 @pytest.fixture

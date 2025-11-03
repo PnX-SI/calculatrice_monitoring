@@ -6,7 +6,9 @@ from pypnusershub.tests.utils import set_logged_user
 from .fixtures import (
     calculatrice_permissions,
     indicators,
+    metadata,
     monitoring_objects,
+    more_monitoring_objects,
     protocol,
     protocol_with_indicators,
     protocols,
@@ -176,10 +178,17 @@ class TestGetProtocol:
 
 
 def test_monitoring_objects_fixture(monitoring_objects):
-    assert len(monitoring_objects["sites_groups"]) == 2
-    assert len(monitoring_objects["sites"]) == 8
-    assert len(monitoring_objects["visits"]) == 8
-    assert len(monitoring_objects["observations"]) == 46
+    assert len(monitoring_objects["sites_groups"]) == 1
+    assert len(monitoring_objects["sites"]) == 5
+    assert len(monitoring_objects["visits"]) == 5
+    assert len(monitoring_objects["observations"]) == 39
+
+
+def test_more_monitoring_objects_fixture(more_monitoring_objects):
+    assert len(more_monitoring_objects["sites_groups"]) == 1
+    assert len(more_monitoring_objects["sites"]) == 3
+    assert len(more_monitoring_objects["visits"]) == 3
+    assert len(more_monitoring_objects["observations"]) == 7
 
 
 def test_indicators_fixture(indicators):
@@ -199,6 +208,14 @@ def test_get_indicator_visualization(client, users):
     )
     assert response.status_code == 200
     viz_blocks = response.json
-    assert len(viz_blocks) == 1
-    viz_block = viz_blocks[0]
-    assert viz_block["data"]["figure"] == 1.4102564102564104
+    assert len(viz_blocks) == 2
+    scalar_viz_block = viz_blocks[0]
+    assert scalar_viz_block["data"]["figure"] == "6.5"
+    barchart_viz_block = viz_blocks[1]
+    assert barchart_viz_block["data"]["datasets"][0]["data"] == [
+        "8.785714285714285714285714286",
+        "7.181818181818181818181818182",
+        "5.684782608695652173913043478",
+        "6.5",
+        "5.4",
+    ]
