@@ -24,6 +24,46 @@ from shapely import Point
 from sqlalchemy import select
 
 
+def get_test_protocols():
+    # Protocols are installed in test database beforehand (see the documentation)
+    protocols = db.session.scalars(select(TMonitoringModules)).all()
+    result = {}
+    for module_code in [
+        "mheo_amphibiens_test",
+        "mheo_flore_test",
+        "mheo_odonate_test",
+        "mheo_pedologie_test",
+        "mheo_piezometrie_test",
+    ]:
+        found_protocols = list(
+            filter(lambda protocol: protocol.module_code == module_code, protocols)
+        )
+        if len(found_protocols) != 1:
+            raise Exception(
+                f"{module_code} protocol should be installed before runninng this fixture"
+            )
+        result[module_code] = found_protocols[0]
+    return result
+
+
+def get_quadrat_flore_site_type():
+    site_quadrat_flore_type = db.session.scalar(
+        select(BibTypeSite)
+        .join(TNomenclatures)
+        .join(BibNomenclaturesTypes)
+        .where(BibNomenclaturesTypes.mnemonique == "TYPE_SITE")
+        .where(TNomenclatures.cd_nomenclature == "MHEO_QUADRAT_FLORE_TEST")
+    )
+
+    if not site_quadrat_flore_type:
+        raise Exception(
+            "MhéO test protocols should be installed before running this sample "
+            + "installation script (see the doc)"
+        )
+
+    return site_quadrat_flore_type
+
+
 def install_test_users():
     def create_user(username, organisme=None):
         with db.session.begin_nested():
@@ -83,7 +123,7 @@ def install_test_permissions(protocols, users):
         add_permission(
             users["gestionnaire"], "mheo_odonate_test", "R", "MONITORINGS_MODULES", scope=2
         )
-        for protocol in protocols:
+        for protocol in protocols.values():
             add_permission(
                 users["admin"], protocol.module_code, "R", "MONITORINGS_MODULES", scope=None
             )
@@ -179,52 +219,18 @@ def install_metadata():
     }
 
 
-def configure_mheo_flore_test_protocol(ds):
-    site_quadrat_flore_type = db.session.scalar(
-        select(BibTypeSite)
-        .join(TNomenclatures)
-        .join(BibNomenclaturesTypes)
-        .where(BibNomenclaturesTypes.mnemonique == "TYPE_SITE")
-        .where(TNomenclatures.cd_nomenclature == "MHEO_QUADRAT_FLORE_TEST")
-    )
-
-    if not site_quadrat_flore_type:
-        raise Exception(
-            "MhéO test protocols should be installed before running this sample "
-            + "installation script (see the doc)"
-        )
-
-    flore_protocol = db.session.scalar(
-        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
-    )
-
+def configure_mheo_flore_test_protocol(flore_protocol, dataset, flore_site_type):
     with db.session.begin_nested():
-        flore_protocol.types_site = [site_quadrat_flore_type]
-        flore_protocol.datasets = [ds]
+        flore_protocol.types_site = [flore_site_type]
+        flore_protocol.datasets = [dataset]
         flore_protocol.taxonomy_display_field_name = "nom_vern,lb_nom"
         db.session.add(flore_protocol)
 
+    return flore_protocol
 
-def install_test_monitoring_objects_from_csv(csv_filename, users, ds):
+
+def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore_site_type, users):
     objects_data = import_data_from_csv(csv_filename)
-
-    site_quadrat_flore_type = db.session.scalar(
-        select(BibTypeSite)
-        .join(TNomenclatures)
-        .join(BibNomenclaturesTypes)
-        .where(BibNomenclaturesTypes.mnemonique == "TYPE_SITE")
-        .where(TNomenclatures.cd_nomenclature == "MHEO_QUADRAT_FLORE_TEST")
-    )
-
-    if not site_quadrat_flore_type:
-        raise Exception(
-            "MhéO test protocols should be installed before running this sample "
-            + "installation script (see the doc)"
-        )
-
-    flore_protocol = db.session.scalar(
-        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
-    )
 
     with db.session.begin_nested():
         for group_data in objects_data["groups"]:
@@ -243,7 +249,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, users, ds):
                 base_site_name=site_data["name"],
                 base_site_code=site_data["name"].replace(" ", "-").lower(),
                 geom=geom_4326,
-                types_site=[site_quadrat_flore_type],
+                types_site=[flore_site_type],
             )
             site_data["model"] = site
             db.session.add(site)
@@ -260,7 +266,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, users, ds):
             site = visit_data["site"]["model"]
             visit = TMonitoringVisits(
                 id_base_site=site.id_base_site,
-                dataset=ds,
+                dataset=flore_protocol.datasets[0],
                 module=flore_protocol,
                 visit_date_min=visit_data["date"],
             )
@@ -289,15 +295,19 @@ def install_test_monitoring_objects_from_csv(csv_filename, users, ds):
     }
 
 
-def install_test_monitoring_objects(protocols, users, dataset):  # noqa: ARG001 # Leave unused param to show dependency
-    return install_test_monitoring_objects_from_csv("mheo_data.csv", users, dataset)
+def install_test_monitoring_objects(flore_protocol, flore_site_type, users):
+    return install_test_monitoring_objects_from_csv(
+        "mheo_data.csv", flore_protocol, flore_site_type, users
+    )
 
 
-def install_more_fake_data(protocols, users, dataset):  # noqa: ARG001 # Leave unused param to show dependency
-    return install_test_monitoring_objects_from_csv("more_fake_data.csv", users, dataset)
+def install_more_fake_data(flore_protocol, flore_site_type, users):
+    return install_test_monitoring_objects_from_csv(
+        "more_fake_data.csv", flore_protocol, flore_site_type, users
+    )
 
 
-def install_test_indicators(protocols):  # noqa: ARG001 # Leave unused param to show dependency
+def install_test_indicators(protocols):
     indicators = []
 
     def create_indicators(indicator_names, protocol):
@@ -311,9 +321,7 @@ def install_test_indicators(protocols):  # noqa: ARG001 # Leave unused param to 
                 indicators.append(indicator)
                 db.session.add(indicator)
 
-    flore_protocol = db.session.scalar(
-        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_flore_test")
-    )
+    flore_protocol = protocols["mheo_flore_test"]
 
     create_indicators(
         indicator_names=[
@@ -341,11 +349,14 @@ def install_test_indicators(protocols):  # noqa: ARG001 # Leave unused param to 
 
 def install_all_test_sample_objects():
     users = install_test_users()
-    protocols = db.session.scalars(select(TMonitoringModules))
+    protocols = get_test_protocols()
     install_test_permissions(protocols, users)
     metadata = install_metadata()
     dataset = metadata["dataset"]
-    configure_mheo_flore_test_protocol(dataset)
-    install_test_monitoring_objects(protocols, users, dataset)
-    install_more_fake_data(protocols, users, dataset)
+    flore_site_type = get_quadrat_flore_site_type()
+    flore_protocol = configure_mheo_flore_test_protocol(
+        protocols["mheo_flore_test"], dataset, flore_site_type
+    )
+    install_test_monitoring_objects(flore_protocol, flore_site_type, users)
+    install_more_fake_data(flore_protocol, flore_site_type, users)
     install_test_indicators(protocols)

@@ -7,10 +7,12 @@ from geonature.utils.env import db
 from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
 )
-from sqlalchemy import select
 
 from calculatrice_monitoring.eval import create_context, create_monitoring_collections
 from calculatrice_monitoring.migrations.data.install_mheo import (
+    configure_mheo_flore_test_protocol,
+    get_quadrat_flore_site_type,
+    get_test_protocols,
     install_metadata,
     install_more_fake_data,
     install_test_indicators,
@@ -59,8 +61,7 @@ def protocol_with_indicators(protocol):
 
 @pytest.fixture()
 def protocols():
-    # Protocols are installed in test database beforehand (see the documentation)
-    return db.session.scalars(select(TMonitoringModules)).all()
+    return get_test_protocols()
 
 
 @pytest.fixture(scope="session")
@@ -85,18 +86,25 @@ def metadata():
 
 
 @pytest.fixture
-def configure_test_protocol(metadata):
-    return configure_test_protocol(metadata["dataset"])
+def flore_site_type():
+    return get_quadrat_flore_site_type()
 
 
 @pytest.fixture
-def monitoring_objects(protocols, users, metadata):
-    return install_test_monitoring_objects(protocols, users, metadata["dataset"])
+def flore_protocol(protocols, flore_site_type, metadata):
+    return configure_mheo_flore_test_protocol(
+        protocols["mheo_flore_test"], metadata["dataset"], flore_site_type
+    )
 
 
 @pytest.fixture
-def more_monitoring_objects(protocols, users, metadata):
-    return install_more_fake_data(protocols, users, metadata["dataset"])
+def monitoring_objects(flore_protocol, flore_site_type, users):
+    return install_test_monitoring_objects(flore_protocol, flore_site_type, users)
+
+
+@pytest.fixture
+def more_monitoring_objects(flore_protocol, flore_site_type, users):
+    return install_more_fake_data(flore_protocol, flore_site_type, users)
 
 
 @pytest.fixture

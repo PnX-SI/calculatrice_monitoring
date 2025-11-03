@@ -137,25 +137,28 @@ class TestGetProtocols:
 
 class TestGetProtocol:
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_get_protocol(self, client, users, protocols):
+    def test_get_protocol(self, client, users, flore_protocol):
         set_logged_user(client, users["gestionnaire"])
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 200
-        assert response.json["code"] == protocol.module_code
+        assert response.json["code"] == flore_protocol.module_code
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
-    def test_get_protocol_login_required_error(self, client, protocols):
+    def test_get_protocol_login_required_error(self, client, flore_protocol):
         logout_user()
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 401
 
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_get_protocol_needs_permission_error(self, client, users, protocols):
+    def test_get_protocol_needs_permission_error(self, client, users, flore_protocol):
         set_logged_user(client, users["public"])
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 403
 
     @pytest.mark.usefixtures("calculatrice_permissions", "protocols")
