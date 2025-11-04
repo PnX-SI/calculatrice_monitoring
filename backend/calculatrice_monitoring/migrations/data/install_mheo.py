@@ -384,6 +384,20 @@ def install_test_indicators(protocols):
     return indicators
 
 
+def install_i02_abondance_code(indicators):
+    i02_name = "I02 - indice floristique d'engorgement (avec abondance)"
+    i02_abondance = next(indic for indic in indicators if indic.name == i02_name)
+    with db.session.begin_nested():
+        i02_abondance.code = """
+valeurs_he = get_he_prop_collection(observations.cd_nom)
+abondance_perc = create_abondance_perc(observations)
+moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+médiane = Médiane(moyenne)
+        """
+        db.session.add(i02_abondance)
+    return i02_abondance
+
+
 def install_all_test_sample_objects():
     users = install_test_users()
     protocols = get_test_protocols()

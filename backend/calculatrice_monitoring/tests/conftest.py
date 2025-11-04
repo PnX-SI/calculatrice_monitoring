@@ -13,6 +13,7 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     configure_mheo_flore_test_protocol,
     get_quadrat_flore_site_type,
     get_test_protocols,
+    install_i02_abondance_code,
     install_metadata,
     install_more_fake_data,
     install_test_indicators,
@@ -78,6 +79,11 @@ def calculatrice_permissions(protocols, users):
 @pytest.fixture
 def indicators(protocols):
     return install_test_indicators(protocols)
+
+
+@pytest.fixture
+def i02_abondance(indicators):
+    return install_i02_abondance_code(indicators)
 
 
 @pytest.fixture

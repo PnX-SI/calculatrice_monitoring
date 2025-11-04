@@ -188,11 +188,13 @@ def test_indicators_fixture(indicators):
 
 class TestGetIndicatorVisualization:
     @pytest.mark.usefixtures("calculatrice_permissions", "protocols", "more_monitoring_objects")
-    def test_get_indicator_visualization(self, client, users, monitoring_objects):
+    def test_get_indicator_visualization(self, client, users, monitoring_objects, i02_abondance):
         set_logged_user(client, users["admin"])
         sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
         response = client.post(
-            url_for("calculatrice.get_indicator_visualization", indicator_id=42),
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=i02_abondance.id_indicator
+            ),
             data={
                 "sites_ids": sites_ids,
                 "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],

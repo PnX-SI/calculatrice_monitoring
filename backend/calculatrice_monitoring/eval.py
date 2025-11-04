@@ -14,6 +14,8 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringVisits,
 )
 
+from calculatrice_monitoring.models import Indicator
+
 
 class Entity:
     pass
@@ -378,18 +380,16 @@ def build_viz_blocks(variables):
 
 
 def visualize(
-    indicator_id,  # noqa: ARG001
+    indicator_id,
     sites_ids,
     campaigns,
     viz_type,  # noqa: ARG001
 ):
     campaign = campaigns[0]
-    code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
-médiane = Médiane(moyenne)
-    """
+    indicator = db.session.scalar(
+        db.select(Indicator).filter(Indicator.id_indicator == indicator_id)
+    )
+    code = indicator.code
     visits_query = (
         db.select(TMonitoringVisits)
         .filter(TMonitoringVisits.id_base_site.in_(sites_ids))
