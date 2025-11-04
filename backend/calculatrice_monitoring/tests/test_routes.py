@@ -187,7 +187,12 @@ def test_indicators_fixture(indicators):
 
 
 class TestGetIndicatorVisualization:
-    @pytest.mark.usefixtures("calculatrice_permissions", "protocols", "more_monitoring_objects")
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "protocols",
+        "more_monitoring_objects",
+        "i02_abondance_viz_blocks",
+    )
     def test_get_indicator_visualization(self, client, users, monitoring_objects, i02_abondance):
         set_logged_user(client, users["admin"])
         sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]

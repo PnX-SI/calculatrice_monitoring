@@ -14,6 +14,7 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     get_quadrat_flore_site_type,
     get_test_protocols,
     install_i02_abondance_code,
+    install_i02_abondance_visualization_config,
     install_metadata,
     install_more_fake_data,
     install_test_indicators,
@@ -84,6 +85,11 @@ def indicators(protocols):
 @pytest.fixture
 def i02_abondance(indicators):
     return install_i02_abondance_code(indicators)
+
+
+@pytest.fixture
+def i02_abondance_viz_blocks(i02_abondance):
+    return install_i02_abondance_visualization_config(i02_abondance)
 
 
 @pytest.fixture
