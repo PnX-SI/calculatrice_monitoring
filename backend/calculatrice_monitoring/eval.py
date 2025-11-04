@@ -380,17 +380,21 @@ def build_viz_blocks(variables):
 def visualize(
     indicator_id,  # noqa: ARG001
     sites_ids,
-    campaigns,  # noqa: ARG001
+    campaigns,
     viz_type,  # noqa: ARG001
 ):
+    campaign = campaigns[0]
     code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
 moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
 médiane = Médiane(moyenne)
     """
-    visits_query = db.select(TMonitoringVisits).filter(
-        TMonitoringVisits.id_base_site.in_(sites_ids)
+    visits_query = (
+        db.select(TMonitoringVisits)
+        .filter(TMonitoringVisits.id_base_site.in_(sites_ids))
+        .filter(TMonitoringVisits.visit_date_min >= campaign["start_date"])
+        .filter(TMonitoringVisits.visit_date_min <= campaign["end_date"])
     )
     visits = db.session.scalars(visits_query).unique().all()
 

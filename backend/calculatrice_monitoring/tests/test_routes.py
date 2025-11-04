@@ -176,10 +176,10 @@ def test_monitoring_objects_fixture(monitoring_objects):
 
 
 def test_more_monitoring_objects_fixture(more_monitoring_objects):
-    assert len(more_monitoring_objects["sites_groups"]) == 1
-    assert len(more_monitoring_objects["sites"]) == 3
-    assert len(more_monitoring_objects["visits"]) == 3
-    assert len(more_monitoring_objects["observations"]) == 7
+    assert len(more_monitoring_objects["sites_groups"]) == 2
+    assert len(more_monitoring_objects["sites"]) == 8
+    assert len(more_monitoring_objects["visits"]) == 8
+    assert len(more_monitoring_objects["observations"]) == 21
 
 
 def test_indicators_fixture(indicators):
@@ -195,7 +195,7 @@ class TestGetIndicatorVisualization:
             url_for("calculatrice.get_indicator_visualization", indicator_id=42),
             data={
                 "sites_ids": sites_ids,
-                "campaigns": [{"start_date": "2024-10-31", "end_date": "2025-10-30"}],
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
                 "viz_type": "campaign",
             },
         )
