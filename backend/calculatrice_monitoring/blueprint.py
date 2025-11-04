@@ -95,18 +95,21 @@ def get_indicator_visualization(
     if len(campaigns) > 1:
         return [
             {
-                "title": "Un bloc représentant un résultat scalaire",
-                "info": "foobar",
-                "description": f"""
+                "title": "Bloc visualisation type scalaire",
+                "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
+<p>Pour celui-ci la valeur est statique, il n'y a pas de calcul</p>""",
+                "description": f"""<h3>Description</h3>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ac tempor felis. Cras ut
 blandit ipsum, rutrum blandit justo. Sed accumsan est ut consequat rhoncus. Nunc luctus rutrum
 eros a suscipit.</p>
+<h3>Paramètres reçus</h3>
 <ul>
     <li>indicator ID : {indicator_id}</li>
     <li>sites IDs : {sites_ids}</li>
     <li>campaigns : {campaigns}</li>
     <li>type : {viz_type}</li>
 </ul>
+<h3>Un paragraphe avec une image</h3>
 <img src="https://geonature.fr/img/geonature-logo.jpg"/>
 <p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
                 "type": "scalaire",
@@ -115,28 +118,12 @@ eros a suscipit.</p>
                 },
             },
             {
-                "title": "Valeur HE pour chaque quadrat",
+                "title": "Bloc visualisation type bar chart",
                 "type": "barChart",
-                "info": """
-<p>In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit odio efficitur magna,
-nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus pellentesque. Aenean sit amet
-erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula laoreet sollicitudin. Morbi
-at condimentum enim.</p>
-<img src="https://geonature.fr/img/geonature-logo.jpg"/>
-<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
-                "description": f"""
-<p>Maecenas ultricies, metus eget porta tincidunt, velit odio efficitur magna,
-nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus pellentesque. Aenean
-sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula laoreet sollicitudin.
-Morbi at condimentum enim.</p>
-<ul>
-    <li>indicator ID : {indicator_id}</li>
-    <li>sites IDs : {sites_ids}</li>
-    <li>campaigns : {campaigns}</li>
-    <li>type : {viz_type}</li>
-</ul>
-<img src="https://geonature.fr/img/geonature-logo.jpg"/>
-<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
+                "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
+<p>Pour celui-ci la valeur est statique, il n'y a pas de calcul</p>""",
+                "description": """<h3>Description</h3>
+<p>Un exemple de représentation avec un diagramme à barres. Les valeurs sont statiques.</p>""",
                 "data": {
                     "labels": ["Q1", "Q2", "Q3"],
                     "datasets": [{"data": [5.5, 6.7, 4.9], "label": "Series A"}],
