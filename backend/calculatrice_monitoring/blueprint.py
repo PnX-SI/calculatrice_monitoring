@@ -92,7 +92,33 @@ def get_indicator_visualization(
     campaigns: list[str] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
     viz_type: str = Json(),  # noqa: B008
 ):
-    if viz_type != "campaign":
+    if viz_type == "campaign":
+        return [
+            {
+                "title": "Un bloc représentant un résultat scalaire",
+                "info": "foobar",
+                "description": f"""
+<p>Aliquam varius vestibulum
+ante ut tincidunt. In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit
+odio efficitur magna, nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus
+pellentesque. Aenean sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula
+laoreet sollicitudin. Morbi at condimentum enim.</p>
+<ul>
+    <li>indicator ID : {indicator_id}</li>
+    <li>sites IDs : {sites_ids}</li>
+    <li>campaigns : {campaigns}</li>
+    <li>type : {viz_type}</li>
+</ul>
+<img src="https://geonature.fr/img/geonature-logo.jpg"/>
+<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.Mauris dapibus elit
+at ligula laoree sollicitudin. Morbi at condimentum enim.</p>""",
+                "type": "scalaire",
+                "data": {
+                    "figure": 7.9,
+                },
+            },
+        ]
+    else:
         return [
             {
                 "title": "Bloc visualisation type scalaire",
@@ -127,32 +153,6 @@ eros a suscipit.</p>
                 "data": {
                     "labels": ["Q1", "Q2", "Q3"],
                     "datasets": [{"data": [5.5, 6.7, 4.9], "label": "Series A"}],
-                },
-            },
-        ]
-    else:
-        return [
-            {
-                "title": "Un bloc représentant un résultat scalaire",
-                "info": "foobar",
-                "description": f"""
-<p>Aliquam varius vestibulum
-ante ut tincidunt. In eu ultrices ex. Maecenas ultricies, metus eget porta tincidunt, velit
-odio efficitur magna, nec aliquet erat orci sed elit. Vivamus elementum ante eget maximus
-pellentesque. Aenean sit amet erat nec tortor vestibulum auctor. Mauris dapibus elit at ligula
-laoreet sollicitudin. Morbi at condimentum enim.</p>
-<ul>
-    <li>indicator ID : {indicator_id}</li>
-    <li>sites IDs : {sites_ids}</li>
-    <li>campaigns : {campaigns}</li>
-    <li>type : {viz_type}</li>
-</ul>
-<img src="https://geonature.fr/img/geonature-logo.jpg"/>
-<p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.Mauris dapibus elit
-at ligula laoree sollicitudin. Morbi at condimentum enim.</p>""",
-                "type": "scalaire",
-                "data": {
-                    "figure": 7.9,
                 },
             },
         ]
