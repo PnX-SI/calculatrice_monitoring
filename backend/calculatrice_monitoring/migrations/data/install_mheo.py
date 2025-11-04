@@ -440,4 +440,6 @@ def install_all_test_sample_objects():
     )
     install_test_monitoring_objects(flore_protocol, flore_site_type, users)
     install_more_fake_data(flore_protocol, flore_site_type, users)
-    install_test_indicators(protocols)
+    indicators = install_test_indicators(protocols)
+    i02_abondance = install_i02_abondance_code(indicators)
+    install_i02_abondance_visualization_config(i02_abondance)
