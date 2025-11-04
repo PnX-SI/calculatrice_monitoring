@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
-from calculatrice_monitoring.models import Indicator
+from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 from geoalchemy2.shape import from_shape
 from geonature.core.gn_commons.models import TModules
 from geonature.core.gn_meta.models import TAcquisitionFramework, TDatasets
@@ -396,6 +396,36 @@ médiane = Médiane(moyenne)
         """
         db.session.add(i02_abondance)
     return i02_abondance
+
+
+def install_i02_abondance_visualization_config(i02_abondance):
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Médiane HE",
+            info="???",
+            description="???",
+            type=VizBlockType.scalar,
+            params={
+                "variable": "médiane",
+            },
+        )
+        db.session.add(scalar_block)
+        barchart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.bar_chart,
+            params={
+                "variable": "moyenne",
+                "entity_prop": "base_site_name",
+                "dataset_label": "Moyenne HE par quadrat",
+            },
+        )
+        db.session.add(barchart_block)
+
+    return scalar_block, barchart_block
 
 
 def install_all_test_sample_objects():

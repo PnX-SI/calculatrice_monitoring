@@ -14,7 +14,7 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringVisits,
 )
 
-from calculatrice_monitoring.models import Indicator
+from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 
 
 class Entity:
@@ -333,46 +333,36 @@ def evaluate(code, context):
     return local_context
 
 
-def build_viz_blocks(variables):
-    viz_config = [
-        {
-            "type": "scalaire",
-            "variable": "médiane",
-            "title": "Médiane HE",
-            "info": """???""",
-            "description": """???""",
-        },
-        {
-            "type": "barChart",
-            "variable": "moyenne",
-            "title": "Moyenne HE (pondérée par abondance)",
-            "info": """???""",
-            "description": """???""",
-        },
-    ]
+def build_viz_blocks(variables, indicator):
+    viz_config = db.session.scalars(
+        db.select(VizBlockConfig).filter(VizBlockConfig.id_indicator == indicator.id_indicator)
+    ).all()
     viz_blocks = []
     for viz_conf_item in viz_config:
-        vizblock_type = viz_conf_item["type"]
+        vizblock_type = viz_conf_item.type
         data = None
-        if vizblock_type == "scalaire":
-            varname = viz_conf_item["variable"]
+        if vizblock_type == VizBlockType.scalar:
+            varname = viz_conf_item.params["variable"]
             data = {"figure": variables[varname].values[0].value}
-        elif vizblock_type == "barChart":
-            varname = viz_conf_item["variable"]
+        elif vizblock_type == VizBlockType.bar_chart:
+            varname = viz_conf_item.params["variable"]
             prop_values = variables[varname].values
             values = [prop.value for prop in prop_values]
             data = {
-                "labels": [prop.entity.base_site_name for prop in prop_values],
-                "datasets": [{"data": values, "label": "Moyenne HE par quadrat"}],
+                "labels": [
+                    getattr(prop.entity, viz_conf_item.params["entity_prop"])
+                    for prop in prop_values
+                ],
+                "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
             }
         else:
             raise Exception(f"not implemented viz block type {vizblock_type}")
         viz_blocks.append(
             {
-                "type": viz_conf_item["type"],
-                "title": viz_conf_item["title"],
-                "info": viz_conf_item["info"],
-                "description": viz_conf_item["description"],
+                "type": viz_conf_item.type.value,
+                "title": viz_conf_item.title,
+                "info": viz_conf_item.info,
+                "description": viz_conf_item.description,
                 "data": data,
             }
         )
@@ -406,4 +396,4 @@ def visualize(
     collections = create_monitoring_collections(observations)
     context = create_context(collections)
     variables = evaluate(code, context)
-    return build_viz_blocks(variables)
+    return build_viz_blocks(variables, indicator)
