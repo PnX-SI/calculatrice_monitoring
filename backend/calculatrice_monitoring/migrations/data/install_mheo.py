@@ -233,26 +233,49 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
     objects_data = import_data_from_csv(csv_filename)
 
     with db.session.begin_nested():
+        existing_groupnames = db.session.scalars(
+            db.select(TMonitoringSitesGroups.sites_group_name)
+        ).all()
         for group_data in objects_data["groups"]:
-            group = TMonitoringSitesGroups(
-                sites_group_name=group_data["name"],
-                sites_group_code=group_data["name"].replace(" ", "-").lower(),
-            )
-            group.modules = [flore_protocol]
+            if group_data["name"] not in existing_groupnames:
+                group = TMonitoringSitesGroups(
+                    sites_group_name=group_data["name"],
+                    sites_group_code=group_data["name"].replace(" ", "-").lower(),
+                )
+                group.modules = [flore_protocol]
+                db.session.add(group)
+            else:
+                group = db.session.scalar(
+                    db.select(TMonitoringSitesGroups).filter(
+                        TMonitoringSitesGroups.sites_group_name == group_data["name"]
+                    )
+                )
             group_data["model"] = group
-            db.session.add(group)
 
     with db.session.begin_nested():
+        existing_sitenames = db.session.scalars(db.select(TMonitoringSites.base_site_name)).all()
         for site_data in objects_data["sites"]:
-            geom_4326 = from_shape(Point(site_data["longitude"], site_data["latitude"]), srid=4326)
-            site = TMonitoringSites(
-                base_site_name=site_data["name"],
-                base_site_code=site_data["name"].replace(" ", "-").lower(),
-                geom=geom_4326,
-                types_site=[flore_site_type],
-            )
+            if site_data["name"] not in existing_sitenames:
+                geom_4326 = from_shape(
+                    Point(site_data["longitude"], site_data["latitude"]), srid=4326
+                )
+                site = TMonitoringSites(
+                    base_site_name=site_data["name"],
+                    base_site_code=site_data["name"].replace(" ", "-").lower(),
+                    geom=geom_4326,
+                    types_site=[flore_site_type],
+                )
+                db.session.add(site)
+            else:
+                site = db.session.scalar(
+                    db.select(TMonitoringSites)
+                    .filter(
+                        TMonitoringSites.id_sites_group
+                        == site_data["group"]["model"].id_sites_group
+                    )
+                    .filter(TMonitoringSites.base_site_name == site_data["name"])
+                )
             site_data["model"] = site
-            db.session.add(site)
 
     with db.session.begin_nested():
         for group_data in objects_data["groups"]:
@@ -263,15 +286,29 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
 
     with db.session.begin_nested():
         for visit_data in objects_data["visits"]:
-            site = visit_data["site"]["model"]
-            visit = TMonitoringVisits(
-                id_base_site=site.id_base_site,
-                dataset=flore_protocol.datasets[0],
-                module=flore_protocol,
-                visit_date_min=visit_data["date"],
-            )
+            existing_visit_dates = db.session.scalars(
+                db.select(TMonitoringVisits.visit_date_min).filter(
+                    TMonitoringVisits.id_base_site == visit_data["site"]["model"].id_base_site
+                )
+            ).all()
+            if visit_data["date"] not in existing_visit_dates:
+                site = visit_data["site"]["model"]
+                visit = TMonitoringVisits(
+                    id_base_site=site.id_base_site,
+                    dataset=flore_protocol.datasets[0],
+                    module=flore_protocol,
+                    visit_date_min=visit_data["date"],
+                )
+                db.session.add(visit)
+            else:
+                visit = db.session.scalar(
+                    db.select(TMonitoringVisits)
+                    .filter(
+                        TMonitoringVisits.id_base_site == visit_data["site"]["model"].id_base_site
+                    )
+                    .filter(TMonitoringVisits.visit_date_min == visit_data["date"])
+                )
             visit_data["model"] = visit
-            db.session.add(visit)
 
     with db.session.begin_nested():
         for obs_data in objects_data["observations"]:
