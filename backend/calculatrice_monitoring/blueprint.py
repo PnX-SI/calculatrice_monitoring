@@ -92,7 +92,7 @@ def get_indicator_visualization(
     campaigns: list[str] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
     viz_type: str = Json(),  # noqa: B008
 ):
-    if len(campaigns) > 1:
+    if viz_type != "campaign":
         return [
             {
                 "title": "Bloc visualisation type scalaire",
