@@ -89,7 +89,7 @@ def get_protocols(with_indicators_only: bool = Query(False)):
 def get_indicator_visualization(
     indicator_id: int = Route(),
     sites_ids: list[int] = Json(),  # noqa: B008  # Calling Json function for a default parameter is
-    campaigns: list[str] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
+    campaigns: list[dict] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
     viz_type: str = Json(),  # noqa: B008
 ):
     if viz_type == "campaign":
