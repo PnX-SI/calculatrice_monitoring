@@ -3,16 +3,6 @@ from flask import url_for
 from flask_login import logout_user
 from pypnusershub.tests.utils import set_logged_user
 
-from .fixtures import (
-    calculatrice_permissions,
-    indicators,
-    monitoring_objects,
-    protocol,
-    protocol_with_indicators,
-    protocols,
-    users,
-)
-
 
 class TestGetIndicators:
     @pytest.mark.usefixtures("calculatrice_permissions")
@@ -147,25 +137,28 @@ class TestGetProtocols:
 
 class TestGetProtocol:
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_get_protocol(self, client, users, protocols):
+    def test_get_protocol(self, client, users, flore_protocol):
         set_logged_user(client, users["gestionnaire"])
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 200
-        assert response.json["code"] == protocol.module_code
+        assert response.json["code"] == flore_protocol.module_code
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
-    def test_get_protocol_login_required_error(self, client, protocols):
+    def test_get_protocol_login_required_error(self, client, flore_protocol):
         logout_user()
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 401
 
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_get_protocol_needs_permission_error(self, client, users, protocols):
+    def test_get_protocol_needs_permission_error(self, client, users, flore_protocol):
         set_logged_user(client, users["public"])
-        protocol = list(filter(lambda p: p.module_code == "mheo_flore_test", protocols))[0]
-        response = client.get(url_for("calculatrice.get_protocol", protocol_id=protocol.id_module))
+        response = client.get(
+            url_for("calculatrice.get_protocol", protocol_id=flore_protocol.id_module)
+        )
         assert response.status_code == 403
 
     @pytest.mark.usefixtures("calculatrice_permissions", "protocols")
@@ -176,10 +169,53 @@ class TestGetProtocol:
 
 
 def test_monitoring_objects_fixture(monitoring_objects):
+    assert len(monitoring_objects["sites_groups"]) == 1
     assert len(monitoring_objects["sites"]) == 5
     assert len(monitoring_objects["visits"]) == 5
     assert len(monitoring_objects["observations"]) == 39
 
 
+def test_more_monitoring_objects_fixture(more_monitoring_objects):
+    assert len(more_monitoring_objects["sites_groups"]) == 2
+    assert len(more_monitoring_objects["sites"]) == 8
+    assert len(more_monitoring_objects["visits"]) == 8
+    assert len(more_monitoring_objects["observations"]) == 21
+
+
 def test_indicators_fixture(indicators):
     assert len(indicators) == 5
+
+
+class TestGetIndicatorVisualization:
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "protocols",
+        "more_monitoring_objects",
+        "i02_abondance_viz_blocks",
+    )
+    def test_get_indicator_visualization(self, client, users, monitoring_objects, i02_abondance):
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=i02_abondance.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        viz_blocks = response.json
+        assert len(viz_blocks) == 2
+        scalar_viz_block = viz_blocks[0]
+        assert scalar_viz_block["data"]["figure"] == "6.5"
+        barchart_viz_block = viz_blocks[1]
+        assert barchart_viz_block["data"]["datasets"][0]["data"] == [
+            "8.785714285714285714285714286",
+            "7.181818181818181818181818182",
+            "5.684782608695652173913043478",
+            "6.5",
+            "5.4",
+        ]

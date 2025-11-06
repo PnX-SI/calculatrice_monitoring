@@ -10,6 +10,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indicator
         include_fk = True
+        exclude = ["code"]
 
 
 class ProtocolSchema(ma.Schema):
