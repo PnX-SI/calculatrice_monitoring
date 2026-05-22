@@ -384,6 +384,19 @@ def install_test_indicators(protocols):
     return indicators
 
 
+def install_i02_code(indicators):
+    i02_name = "I02 - indice floristique d'engorgement"
+    i02 = next(indic for indic in indicators if indic.name == i02_name)
+    with db.session.begin_nested():
+        i02.code = """
+valeurs_he = get_he_prop_collection(observations.cd_nom)
+moyenne = Moyenne(valeurs_he, scope="site")
+médiane = Médiane(moyenne)
+        """
+        db.session.add(i02)
+    return i02
+
+
 def install_i02_abondance_code(indicators):
     i02_name = "I02 - indice floristique d'engorgement (avec abondance)"
     i02_abondance = next(indic for indic in indicators if indic.name == i02_name)
@@ -428,6 +441,36 @@ def install_i02_abondance_visualization_config(i02_abondance):
     return scalar_block, barchart_block
 
 
+def install_i02_visualization_config(i02):
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Médiane HE",
+            info="???",
+            description="???",
+            type=VizBlockType.scalar,
+            params={
+                "variable": "médiane",
+            },
+        )
+        db.session.add(scalar_block)
+        barchart_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Moyenne HE",
+            info="???",
+            description="???",
+            type=VizBlockType.bar_chart,
+            params={
+                "variable": "moyenne",
+                "entity_prop": "base_site_name",
+                "dataset_label": "Moyenne HE par quadrat",
+            },
+        )
+        db.session.add(barchart_block)
+
+    return scalar_block, barchart_block
+
+
 def install_all_test_sample_objects():
     users = install_test_users()
     protocols = get_test_protocols()
@@ -443,3 +486,5 @@ def install_all_test_sample_objects():
     indicators = install_test_indicators(protocols)
     i02_abondance = install_i02_abondance_code(indicators)
     install_i02_abondance_visualization_config(i02_abondance)
+    i02 = install_i02_code(indicators)
+    install_i02_visualization_config(i02)
