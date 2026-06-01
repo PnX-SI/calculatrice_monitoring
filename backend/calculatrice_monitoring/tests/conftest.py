@@ -67,8 +67,9 @@ def protocols():
 
 
 @pytest.fixture(scope="session")
-@pytest.mark.usefixtures("app")
-def users():
+def users(app):  # noqa: ARG001,F811
+    # ARG001 = Unused function argument: `app`
+    # F811 = Redefinition of unused `app`
     return install_test_users()
 
 
