@@ -19,7 +19,7 @@ moyenne = Moyenne(observations.abondance)
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
-        assert variables["moyenne"].values[0].value == 1.4102564102564104
+        assert variables["moyenne"].values[0].value == Decimal("1.410256410256410256410256410")
 
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_all_observations(self, eval_context):
@@ -31,7 +31,7 @@ moyenne = Moyenne(create_abondance_perc(observations))
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
-        assert variables["moyenne"].values[0].value == 10.333333333333334
+        assert variables["moyenne"].values[0].value == Decimal("10.33333333333333333333333333")
 
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):
@@ -184,3 +184,18 @@ médiane = Médiane(moyenne)
             Decimal("5.4"),
         ]
         assert values == pytest.approx(expected_values)
+
+    @pytest.mark.usefixtures("monitoring_objects")
+    def test_eval_code_moyenne_durée_visites(self, eval_context):
+        code = """
+moyenne_durée = Moyenne(visites.durée_secondes)
+"""
+
+        variables = evaluate(code, eval_context)
+
+        assert "moyenne_durée" in variables
+        moyenne_durée = variables["moyenne_durée"]
+        assert moyenne_durée.scope == "global"
+        assert len(moyenne_durée.values) == 1
+        moyenne_durée = moyenne_durée.values[0]
+        assert moyenne_durée.value == 576

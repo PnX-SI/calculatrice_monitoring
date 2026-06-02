@@ -146,6 +146,7 @@ def import_data_from_csv(csv_filename):
             "name": row["site_name"],
             "longitude": row["site_long"],
             "latitude": row["site_lat"],
+            "superficie_mètres_carrés": int(row["superficie_mètres_carrés"]),
             "visits": {},
             "group": group,
         }
@@ -155,10 +156,17 @@ def import_data_from_csv(csv_filename):
             "date": datetime.strptime(row["date"], "%d/%m/%Y").date(),
             "observations": [],
             "site": site,
+            "diffusion_mesure": row["diffusion_mesure"],
+            "durée_secondes": int(row["durée_secondes"]),
         }
 
     def get_observation(row, visit):
-        return {"cd_nom": int(row["cd_nom"]), "abondance": row["abondance"], "visit": visit}
+        return {
+            "cd_nom": int(row["cd_nom"]),
+            "abondance": row["abondance"],
+            "récolte": row["récolte"],
+            "visit": visit,
+        }
 
     groups = {}
     for row in data:
@@ -264,6 +272,9 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                     base_site_code=site_data["name"].replace(" ", "-").lower(),
                     geom=geom_4326,
                     types_site=[flore_site_type],
+                    data={
+                        "superficie_mètres_carrés": site_data["superficie_mètres_carrés"],
+                    },
                 )
                 db.session.add(site)
             else:
@@ -298,6 +309,10 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                     dataset=flore_protocol.datasets[0],
                     module=flore_protocol,
                     visit_date_min=visit_data["date"],
+                    data={
+                        "diffusion_mesure": visit_data["diffusion_mesure"],
+                        "durée_secondes": visit_data["durée_secondes"],
+                    },
                 )
                 db.session.add(visit)
             else:
@@ -317,7 +332,10 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                 id_base_visit=visit.id_base_visit,
                 cd_nom=obs_data["cd_nom"],
                 digitiser=users["gestionnaire"],
-                data={"abondance": obs_data["abondance"]},
+                data={
+                    "abondance": obs_data["abondance"],
+                    "récolte": obs_data["récolte"],
+                },
             )
             obs_data["model"] = observation
             db.session.add(observation)

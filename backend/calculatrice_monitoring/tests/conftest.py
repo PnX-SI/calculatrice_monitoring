@@ -8,7 +8,12 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
 )
 
-from calculatrice_monitoring.eval import create_context, create_monitoring_collections
+from calculatrice_monitoring.eval import (
+    Observation,
+    Visit,
+    create_context,
+    create_monitoring_collections,
+)
 from calculatrice_monitoring.migrations.data.install_mheo import (
     configure_mheo_flore_test_protocol,
     get_quadrat_flore_site_type,
@@ -121,6 +126,9 @@ def more_monitoring_objects(flore_protocol, flore_site_type, users):
 
 
 @pytest.fixture
-def eval_context(monitoring_objects):
-    collections = create_monitoring_collections(monitoring_objects["observations"])
+def eval_context(i02_abondance, monitoring_objects):
+    protocol = i02_abondance.protocol
+    observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
+    visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
+    collections = create_monitoring_collections(protocol, observations, visits)
     return create_context(collections)
