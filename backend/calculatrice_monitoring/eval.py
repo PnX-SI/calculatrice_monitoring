@@ -397,25 +397,27 @@ def create_monitoring_collections(
     observations: list[Observation],
     visits: list[Visit],
     sites: list[Site],
-) -> dict[str, MonitoringCollection]:
+) -> dict[Scope, MonitoringCollection]:
     return {
-        "observations": create_monitoring_collection(
+        Scope.OBSERVATION: create_monitoring_collection(
             protocol=protocol, entities=observations, scope=Scope.OBSERVATION
         ),
-        "visits": create_monitoring_collection(
+        Scope.VISIT: create_monitoring_collection(
             protocol=protocol, entities=visits, scope=Scope.VISIT
         ),
-        "sites": create_monitoring_collection(protocol=protocol, entities=sites, scope=Scope.SITE),
+        Scope.SITE: create_monitoring_collection(
+            protocol=protocol, entities=sites, scope=Scope.SITE
+        ),
     }
 
 
-def create_context(collections: dict[str, MonitoringCollection]) -> dict:
+def create_context(collections: dict[Scope, MonitoringCollection]) -> dict:
     context = {}
     context["Moyenne"] = Moyenne
     context["create_abondance_perc"] = create_abondance_perc
-    context["observations"] = collections["observations"]
-    context["visites"] = collections["visits"]
-    context["sites"] = collections["sites"]
+    context["observations"] = collections[Scope.OBSERVATION]
+    context["visites"] = collections[Scope.VISIT]
+    context["sites"] = collections[Scope.SITE]
     context["get_he_prop_collection"] = get_he_prop_collection
     context["get_ht_prop_collection"] = get_ht_prop_collection
     context["Médiane"] = Médiane
