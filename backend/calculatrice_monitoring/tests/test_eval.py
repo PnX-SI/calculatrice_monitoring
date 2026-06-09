@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from calculatrice_monitoring.eval import evaluate
+from calculatrice_monitoring.eval import Scope, evaluate
 
 
 class TestEvalIndicator:
@@ -36,7 +36,7 @@ moyenne = Moyenne(create_abondance_perc(observations))
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope="visit")
+moyenne = Moyenne(observations.abondance, scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -58,7 +58,7 @@ moyenne = Moyenne(observations.abondance, scope="visit")
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
+moyenne = Moyenne(create_abondance_perc(observations), scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -80,7 +80,7 @@ moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_site_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope="site")
+moyenne = Moyenne(observations.abondance, scope=Scope.SITE)
                 """
 
         variables = evaluate(code, eval_context)
@@ -110,7 +110,7 @@ moyenne = Moyenne(observations.abondance, scope="site")
     def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope="site")
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
 médiane = Médiane(moyenne)
 """
 
@@ -118,7 +118,7 @@ médiane = Médiane(moyenne)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
-        assert médianes.scope == "global"
+        assert médianes.scope == Scope.GLOBAL
         assert len(médianes.values) == 1
         médiane = médianes.values[0]
         assert médiane.value == 6.5
@@ -151,7 +151,7 @@ médiane = Médiane(moyenne)
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)
 """
 
@@ -159,7 +159,7 @@ médiane = Médiane(moyenne)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
-        assert médianes.scope == "global"
+        assert médianes.scope == Scope.GLOBAL
         assert len(médianes.values) == 1
         médiane = médianes.values[0]
         assert médiane.value == 6.5
@@ -195,7 +195,7 @@ moyenne_durée = Moyenne(visites.durée_secondes)
 
         assert "moyenne_durée" in variables
         moyenne_durée = variables["moyenne_durée"]
-        assert moyenne_durée.scope == "global"
+        assert moyenne_durée.scope == Scope.GLOBAL
         assert len(moyenne_durée.values) == 1
         moyenne_durée = moyenne_durée.values[0]
         assert moyenne_durée.value == 576

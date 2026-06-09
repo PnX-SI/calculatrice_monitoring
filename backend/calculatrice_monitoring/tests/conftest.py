@@ -10,6 +10,7 @@ from gn_module_monitoring.monitoring.models import (
 
 from calculatrice_monitoring.eval import (
     Observation,
+    Site,
     Visit,
     create_context,
     create_monitoring_collections,
@@ -130,5 +131,6 @@ def eval_context(i02_abondance, monitoring_objects):
     protocol = i02_abondance.protocol
     observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
     visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
-    collections = create_monitoring_collections(protocol, observations, visits)
+    sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
+    collections = create_monitoring_collections(protocol, observations, visits, sites)
     return create_context(collections)

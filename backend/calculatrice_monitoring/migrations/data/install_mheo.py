@@ -408,7 +408,7 @@ def install_i02_code(indicators):
     with db.session.begin_nested():
         i02.code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope="site")
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
 médiane = Médiane(moyenne)
         """
         db.session.add(i02)
@@ -422,7 +422,7 @@ def install_i02_abondance_code(indicators):
         i02_abondance.code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)
         """
         db.session.add(i02_abondance)
@@ -495,7 +495,7 @@ def install_i06_code(indicators):
     with db.session.begin_nested():
         i06.code = """
 valeurs_ht = get_ht_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_ht, scope="site")
+moyenne = Moyenne(valeurs_ht, scope=Scope.SITE)
 médiane = Médiane(moyenne)
         """
         db.session.add(i06)
@@ -538,7 +538,7 @@ def install_i06_abondance_code(indicators):
     with db.session.begin_nested():
         i06.code = """
 valeurs_ht = get_ht_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_ht, scope="site", weights=valeurs_ht)
+moyenne = Moyenne(valeurs_ht, scope=Scope.SITE, weights=valeurs_ht)
 médiane = Médiane(moyenne)
         """
         db.session.add(i06)

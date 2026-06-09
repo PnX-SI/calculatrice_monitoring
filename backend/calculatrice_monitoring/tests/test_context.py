@@ -2,7 +2,13 @@ import datetime
 
 from gn_module_monitoring.monitoring.models import TMonitoringVisits
 
-from calculatrice_monitoring.eval import Observation, Site, Visit, create_monitoring_collection
+from calculatrice_monitoring.eval import (
+    Observation,
+    Scope,
+    Site,
+    Visit,
+    create_monitoring_collection,
+)
 
 
 class TestObservationCollection:
@@ -10,12 +16,14 @@ class TestObservationCollection:
         # à partir d'observations et d'un protocole test
         protocol = indicators[0].protocol
         observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
-        obs_collections = create_monitoring_collection(protocol, observations, scope="observation")
+        obs_collections = create_monitoring_collection(
+            protocol, observations, scope=Scope.OBSERVATION
+        )
         # tester que le PropCollection sont bien créées
         abondance = obs_collections.abondance
         assert abondance is not None
         scope = abondance.scope
-        assert scope == "observation"
+        assert scope == Scope.OBSERVATION
         prop_values = abondance.values
         assert len(prop_values) == 39
         prop_value = prop_values[0]
@@ -24,7 +32,7 @@ class TestObservationCollection:
         recolte = obs_collections.récolte
         assert recolte is not None
         scope = recolte.scope
-        assert scope == "observation"
+        assert scope == Scope.OBSERVATION
         assert len(recolte.values) == 39
         recolte_value = recolte.values[0]
         assert recolte_value.value == "1"
@@ -34,13 +42,13 @@ class TestObservationCollection:
         # à partir d'observations et d'un protocole test
         protocol = indicators[0].protocol
         visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
-        visit_collection = create_monitoring_collection(protocol, visits, scope="visit")
+        visit_collection = create_monitoring_collection(protocol, visits, scope=Scope.VISIT)
 
         # tester que le PropCollection sont bien créées
         visit_date = visit_collection.visit_date_min
         assert visit_date is not None
         scope = visit_date.scope
-        assert scope == "visit"
+        assert scope == Scope.VISIT
         prop_values = visit_date.values
         assert len(prop_values) == 5
         prop_value = prop_values[0]
@@ -50,7 +58,7 @@ class TestObservationCollection:
         diffusion_mesure = visit_collection.diffusion_mesure
         assert diffusion_mesure is not None
         scope = diffusion_mesure.scope
-        assert scope == "visit"
+        assert scope == Scope.VISIT
         prop_values = diffusion_mesure.values
         assert len(prop_values) == 5
         prop_value = prop_values[0]
@@ -61,7 +69,7 @@ class TestObservationCollection:
         duree_secondes = visit_collection.durée_secondes
         assert duree_secondes is not None
         scope = duree_secondes.scope
-        assert scope == "visit"
+        assert scope == Scope.VISIT
         prop_values = duree_secondes.values
         assert len(prop_values) == 5
         prop_value = prop_values[0]
@@ -71,12 +79,12 @@ class TestObservationCollection:
     def test_context_with_sites(self, indicators, monitoring_objects):
         protocol = indicators[0].protocol
         sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
-        site_collection = create_monitoring_collection(protocol, sites, scope="site")
+        site_collection = create_monitoring_collection(protocol, sites, scope=Scope.SITE)
 
         site_superficies = site_collection.superficie_mètres_carrés
         assert site_superficies is not None
         scope = site_superficies.scope
-        assert scope == "site"
+        assert scope == Scope.SITE
         prop_values = site_superficies.values
         assert len(prop_values) == 5
         prop_value = prop_values[0]
