@@ -4,7 +4,8 @@ from flask_parameter_validation import Json, Query, Route, ValidateParameters
 from geonature.core.gn_permissions.decorators import check_cruved_scope
 from geonature.core.gn_permissions.tools import get_scopes_by_action
 from geonature.utils.env import db
-from gn_module_monitoring.monitoring.models import TMonitoringModules
+from gn_module_monitoring.monitoring.models import TMonitoringModules, TMonitoringSites
+from sqlalchemy import select
 from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
@@ -93,10 +94,14 @@ def get_indicator_visualization(
     campaigns: list[dict] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
     viz_type: str = Json(),  # noqa: B008
 ):
+    indicator = db.one_or_404(select(Indicator).filter(Indicator.id_indicator == indicator_id))
+    monitoring_sites = db.session.scalars(
+        select(TMonitoringSites).filter(TMonitoringSites.id_base_site.in_(sites_ids))
+    )
     if viz_type == "campaign":
         return visualize(
-            indicator_id,
-            sites_ids,
+            indicator,
+            monitoring_sites,
             campaigns,
             viz_type,
         )

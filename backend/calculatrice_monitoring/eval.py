@@ -469,20 +469,16 @@ def build_viz_blocks(variables, indicator):
 
 
 def visualize(
-    indicator_id,
-    sites_ids,
+    indicator: Indicator,
+    monitoring_sites: list[TMonitoringSites],
     campaigns,
     viz_type,  # noqa: ARG001
 ):
     campaign = campaigns[0]
-    indicator = db.session.scalar(
-        db.select(Indicator).filter(Indicator.id_indicator == indicator_id)
-    )
     code = indicator.code
 
-    sites_query = db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site.in_(sites_ids))
-    monitoring_sites = db.session.scalars(sites_query).all()
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
+    sites_ids = [site.id_base_site for site in sites]
 
     visits_query = (
         db.select(TMonitoringVisits)
