@@ -53,6 +53,22 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
+}
+
+.indic-list mat-list-item .list-item-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.25rem;
+}
+
+.indic-list mat-list-item .list-item-actions mat-slide-toggle {
+  padding-left: 1rem;
+}
+
+ .indic-list ::ng-deep .mat-mdc-slide-toggle label {
+  margin-bottom: 0;
 }
 
 .indic-list mat-icon {

@@ -2,6 +2,7 @@ import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { MatListOption } from '@angular/material/list';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
+import { ModuleService } from '@geonature/services/module.service';
 import { Indicator, Protocol } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 
@@ -18,7 +19,8 @@ export class ModuleComponent implements OnInit {
 
   constructor(
     private _data: DataService,
-    private _modalService: NgbModal
+    private _modalService: NgbModal,
+    private _moduleService: ModuleService
   ) {}
 
   ngOnInit() {
@@ -46,5 +48,21 @@ export class ModuleComponent implements OnInit {
     // Those are to avoid navigating to visualization when clicking for information
     event.preventDefault();
     event.stopPropagation();
+  }
+
+  private getAdminPerm(perm: string): number {
+    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
+  }
+
+  canCreateIndicator(): boolean {
+    return this.getAdminPerm('C') > 0;
+  }
+
+  canEditIndicator(): boolean {
+    return this.getAdminPerm('U') > 0;
+  }
+
+  canReadIndicator(): boolean {
+    return this.getAdminPerm('R') > 0;
   }
 }

@@ -33,25 +33,60 @@
             role="listitem"
             *ngFor="let indicator of indicators"
           >
-            <a
+            <div
               matListItemTitle
               class="list-item-container"
-              [routerLink]="['/calculatrice/visualization', indicator.id, 'params']"
             >
-              <span>{{ indicator.name }}</span>
-              <button
-                mat-icon-button
-                (click)="onInformationClick($event, indicator)"
+              <a
+                class="list-item-link"
+                [routerLink]="['/calculatrice/visualization', indicator.id, 'params']"
               >
-                <mat-icon>info</mat-icon>
-              </button>
-            </a>
+                {{ indicator.name }}
+              </a>
+              <span class="list-item-actions">
+                <button
+                  mat-icon-button
+                  (click)="onInformationClick($event, indicator)"
+                >
+                  <mat-icon>info</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  *ngIf="canReadIndicator()"
+                  [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
+                >
+                  <mat-icon>search</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  *ngIf="canEditIndicator()"
+                  [routerLink]="['/calculatrice/indicator', indicator.id, 'edit']"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <mat-slide-toggle
+                  *ngIf="canEditIndicator()"
+                  [checked]="true"
+                >
+                  Publié
+                </mat-slide-toggle>
+              </span>
+            </div>
           </mat-list-item>
         </mat-nav-list>
         <p *ngIf="protocols.length === 0; else elseBlock">Vous n'avez accès à aucun protocole.</p>
         <ng-template #elseBlock>
           <p *ngIf="indicators.length === 0">Le protocole choisi n'a pas d'indicateurs</p>
         </ng-template>
+        <button
+          *ngIf="canCreateIndicator()"
+          [routerLink]="['/calculatrice/indicator/create']"
+          class="uppercase mr-1"
+          mat-raised-button
+          color="primary"
+        >
+          Ajouter un indicateur
+        </button>
       </div>
     </div>
   </div>

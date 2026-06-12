@@ -112,7 +112,9 @@ def install_test_permissions(protocols, users):
         add_permission(users["gestionnaire"], "CALCULATRICE", "R", "ALL", scope=2)
         add_permission(users["admin"], "CALCULATRICE", "R", "ALL", scope=None)
         add_permission(users["gestionnaire"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=2)
+        add_permission(users["admin"], "CALCULATRICE", "C", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(users["admin"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["admin"], "CALCULATRICE", "U", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(
             users["gestionnaire"], "mheo_amphibiens_test", "R", "MONITORINGS_MODULES", scope=2
         )
