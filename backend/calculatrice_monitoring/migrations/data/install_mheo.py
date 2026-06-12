@@ -362,39 +362,74 @@ def install_more_fake_data(flore_protocol, flore_site_type, users):
     )
 
 
-def install_test_indicators(protocols):
-    indicators = []
+CODE_I02 = """valeurs_he = get_he_prop_collection(observations.cd_nom)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
+médiane = Médiane(moyenne)
+"""
 
-    def create_indicators(indicator_names, protocol):
+CODE_I02_ABONDANCE = """valeurs_he = get_he_prop_collection(observations.cd_nom)
+abondance_perc = create_abondance_perc(observations)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = Médiane(moyenne)
+"""
+
+CODE_I06 = """valeurs_ht = get_ht_prop_collection(observations.cd_nom)
+moyenne = Moyenne(valeurs_ht, scope=Scope.SITE)
+médiane = Médiane(moyenne)
+"""
+
+CODE_I06_ABONDANCE = """valeurs_ht = get_ht_prop_collection(observations.cd_nom)
+abondance_perc = create_abondance_perc(observations)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = Médiane(moyenne)
+"""
+
+
+def install_test_indicators(protocols):
+    indicators = {}
+
+    def create_indicators(indicators_data, protocol):
         with db.session.begin_nested():
-            for name in indicator_names:
-                indicator = Indicator(
-                    name=name,
-                    id_protocol=protocol.id_module,
-                    description=f"This is the {name} indicator description.",
-                )
-                indicators.append(indicator)
+            for data in indicators_data:
+                ref = data.pop("ref")
+                data["protocol"] = protocol
+                data["description"] = f"This is the {data['name']} indicator description."
+                indicator = Indicator(**data)
+                indicators[ref] = indicator
                 db.session.add(indicator)
 
+    test_flore_indicators_data = [
+        {
+            "name": "I02 - indice floristique d'engorgement",
+            "code": CODE_I02,
+            "ref": "i02",
+        },
+        {
+            "name": "I02 - indice floristique d'engorgement (avec abondance)",
+            "code": CODE_I02_ABONDANCE,
+            "ref": "i02_abondance",
+        },
+        {
+            "name": "I06 - indice floristique de fertilité du sol",
+            "code": CODE_I06,
+            "ref": "i06",
+        },
+        {
+            "name": "I06 - indice floristique de fertilité du sol (avec abondance)",
+            "code": CODE_I06_ABONDANCE,
+            "ref": "i06_abondance",
+        },
+    ]
     flore_protocol = protocols["mheo_flore_test"]
+    create_indicators(test_flore_indicators_data, flore_protocol)
 
+    odonate_protocol = protocols["mheo_odonate_test"]
     create_indicators(
-        indicator_names=[
-            "I02 - indice floristique d'engorgement",
-            "I02 - indice floristique d'engorgement (avec abondance)",
-            "I06 - indice floristique de fertilité du sol",
-            "I06 - indice floristique de fertilité du sol (avec abondance)",
-        ],
-        protocol=flore_protocol,
-    )
-
-    odonate_protocol = db.session.scalar(
-        select(TMonitoringModules).where(TMonitoringModules.module_code == "mheo_odonate_test")
-    )
-
-    create_indicators(
-        indicator_names=[
-            "I10 - intégrité du peuplement d’odonates",
+        indicators_data=[
+            {
+                "name": "I10 - intégrité du peuplement d’odonates",
+                "ref": "i10",
+            }
         ],
         protocol=odonate_protocol,
     )
@@ -402,34 +437,8 @@ def install_test_indicators(protocols):
     return indicators
 
 
-def install_i02_code(indicators):
-    i02_name = "I02 - indice floristique d'engorgement"
-    i02 = next(indic for indic in indicators if indic.name == i02_name)
-    with db.session.begin_nested():
-        i02.code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
-médiane = Médiane(moyenne)
-        """
-        db.session.add(i02)
-    return i02
-
-
-def install_i02_abondance_code(indicators):
-    i02_name = "I02 - indice floristique d'engorgement (avec abondance)"
-    i02_abondance = next(indic for indic in indicators if indic.name == i02_name)
-    with db.session.begin_nested():
-        i02_abondance.code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
-médiane = Médiane(moyenne)
-        """
-        db.session.add(i02_abondance)
-    return i02_abondance
-
-
-def install_i02_abondance_visualization_config(i02_abondance):
+def install_i02_abondance_visualization_config(indicators):
+    i02_abondance = indicators["i02_abondance"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
@@ -459,7 +468,8 @@ def install_i02_abondance_visualization_config(i02_abondance):
     return scalar_block, barchart_block
 
 
-def install_i02_visualization_config(i02):
+def install_i02_visualization_config(indicators):
+    i02 = indicators["i02"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i02.id_indicator,
@@ -489,20 +499,8 @@ def install_i02_visualization_config(i02):
     return scalar_block, barchart_block
 
 
-def install_i06_code(indicators):
-    i06_name = "I06 - indice floristique de fertilité du sol"
-    i06 = next(indic for indic in indicators if indic.name == i06_name)
-    with db.session.begin_nested():
-        i06.code = """
-valeurs_ht = get_ht_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_ht, scope=Scope.SITE)
-médiane = Médiane(moyenne)
-        """
-        db.session.add(i06)
-    return i06
-
-
-def install_i06_visualization_config(i06):
+def install_i06_visualization_config(indicators):
+    i06 = indicators["i06"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i06.id_indicator,
@@ -532,20 +530,8 @@ def install_i06_visualization_config(i06):
     return scalar_block, barchart_block
 
 
-def install_i06_abondance_code(indicators):
-    i06_name = "I06 - indice floristique de fertilité du sol (avec abondance)"
-    i06 = next(indic for indic in indicators if indic.name == i06_name)
-    with db.session.begin_nested():
-        i06.code = """
-valeurs_ht = get_ht_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_ht, scope=Scope.SITE, weights=valeurs_ht)
-médiane = Médiane(moyenne)
-        """
-        db.session.add(i06)
-    return i06
-
-
-def install_i06_abondance_visualization_config(i06_abondance):
+def install_i06_abondance_visualization_config(indicators):
+    i06_abondance = indicators["i06_abondance"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i06_abondance.id_indicator,
@@ -588,11 +574,7 @@ def install_all_test_sample_objects():
     install_test_monitoring_objects(flore_protocol, flore_site_type, users)
     install_more_fake_data(flore_protocol, flore_site_type, users)
     indicators = install_test_indicators(protocols)
-    i02_abondance = install_i02_abondance_code(indicators)
-    install_i02_abondance_visualization_config(i02_abondance)
-    i02 = install_i02_code(indicators)
-    install_i02_visualization_config(i02)
-    i06 = install_i06_code(indicators)
-    install_i06_visualization_config(i06)
-    i06 = install_i06_abondance_code(indicators)
-    install_i06_abondance_visualization_config(i06)
+    install_i02_abondance_visualization_config(indicators)
+    install_i02_visualization_config(indicators)
+    install_i06_visualization_config(indicators)
+    install_i06_abondance_visualization_config(indicators)
