@@ -1,11 +1,13 @@
 # ruff: noqa: N802  # (N802=Function name should be lowercase)
 # ruff: noqa: PLC2401  # (PLC2401=Function name contains a non-ASCII character)
 
+import csv
 import statistics
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from io import StringIO
 from typing import Any
 
 from geonature.utils.env import db
@@ -17,7 +19,7 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringVisits,
 )
 
-from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
 
 
 class Scope(Enum):
@@ -199,98 +201,30 @@ def create_monitoring_collection(
 # --- UTILITY FUNCTIONS INJECTED IN EVAL CONTEXT ---
 
 
-def get_he_prop_collection(cd_nom_props: PropertyCollection) -> PropertyCollection:
-    """Given a PropertyCollection of cd_nom numbers it returns a new PropertyCollection
-    of the corresponding HE values.
+def _build_table(data, origin_field, target_field):
+    # TODO : how to check for the columns?
+    reader = csv.DictReader(StringIO(data))
+    lookup = {}
+    for row in reader:
+        if not row[origin_field] or not row[target_field]:
+            continue
+        lookup[row[origin_field]] = row[target_field]
+    return lookup
 
-    Temporary dev function to be replaced with the Reference Table system.
-    """
-    map_he = {
-        81610: 9,
-        89200: 5,
-        92501: 5,
-        95463: 6,
-        96271: 6,
-        98910: 7,
-        99373: 5,
-        100310: 6,
-        100387: 9,
-        102900: 5,
-        104173: 7,
-        105431: 10,
-        105966: 4,
-        106581: 5,
-        106918: 7,
-        107038: 8,
-        107117: 7,
-        112741: None,
-        112975: 7,
-        113260: 8,
-        115156: 5,
-        116759: 6,
-        119097: 5,
-        119585: 7,
-        119915: 8,
-        119948: 6,
-        119977: 5,
-        191232: None,
-    }
-    he_values = []
-    for prop in cd_nom_props.values:
-        he_values.append(
+
+def Extraire(
+    ref_table: ReferenceTable, origin_field: str, target_field: str, properties: PropertyCollection
+):
+    values = []
+    lookup_map = _build_table(ref_table.data, origin_field, target_field)
+    for prop in properties.values:
+        values.append(
             PropertyValue(
-                value=map_he[prop.value],
+                value=lookup_map.get(str(prop.value)),
                 entity=prop.entity,
             )
         )
-    return PropertyCollection(values=he_values, scope=cd_nom_props.scope)
-
-
-def get_ht_prop_collection(cd_nom_props: PropertyCollection) -> PropertyCollection:
-    """Given a PropertyCollection of cd_nom numbers it returns a new PropertyCollection
-    of the corresponding HT values.
-
-    Temporary dev function to be replaced with the Reference Table system.
-    """
-    map_ht = {
-        81610: 4,
-        89200: 3,
-        92501: 3,
-        95463: 3,
-        96271: 4,
-        98910: 3,
-        99373: 5,
-        100310: 3,
-        100387: 4,
-        102900: 3,
-        104173: 4,
-        105431: 3,
-        105966: 3,
-        106581: 3,
-        106918: 3,
-        107038: 3,
-        107117: 3,
-        112741: None,
-        112975: 4,
-        113260: 4,
-        115156: 3,
-        116759: 3,
-        119097: 4,
-        119585: 4,
-        119915: 4,
-        119948: 4,
-        119977: 3,
-        191232: None,
-    }
-    ht_values = []
-    for prop in cd_nom_props.values:
-        ht_values.append(
-            PropertyValue(
-                value=map_ht[prop.value],
-                entity=prop.entity,
-            )
-        )
-    return PropertyCollection(values=ht_values, scope=cd_nom_props.scope)
+    return PropertyCollection(values=values, scope=properties.scope)
 
 
 def create_abondance_perc(observations: MonitoringCollection) -> PropertyCollection:
@@ -411,17 +345,20 @@ def create_monitoring_collections(
     }
 
 
-def create_context(collections: dict[Scope, MonitoringCollection]) -> dict:
+def create_context(
+    collections: dict[Scope, MonitoringCollection], reference_tables: list[ReferenceTable]
+) -> dict:
     context = {}
     context["Moyenne"] = Moyenne
     context["create_abondance_perc"] = create_abondance_perc
     context["observations"] = collections[Scope.OBSERVATION]
     context["visites"] = collections[Scope.VISIT]
     context["sites"] = collections[Scope.SITE]
-    context["get_he_prop_collection"] = get_he_prop_collection
-    context["get_ht_prop_collection"] = get_ht_prop_collection
     context["Médiane"] = Médiane
     context["Scope"] = Scope
+    context["Extraire"] = Extraire
+    for rf in reference_tables:
+        context[rf.code] = rf
     return context
 
 
@@ -499,6 +436,6 @@ def visualize(
     visits = [Visit(indicator.protocol, obj) for obj in monitoring_visits]
 
     collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
-    context = create_context(collections)
+    context = create_context(collections, indicator.reference_tables)
     variables = evaluate(code, context)
     return build_viz_blocks(variables, indicator)

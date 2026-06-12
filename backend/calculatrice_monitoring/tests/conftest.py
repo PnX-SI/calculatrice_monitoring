@@ -22,6 +22,7 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     install_i02_abondance_visualization_config,
     install_metadata,
     install_more_fake_data,
+    install_reference_tables,
     install_test_indicators,
     install_test_monitoring_objects,
     install_test_permissions,
@@ -84,8 +85,8 @@ def calculatrice_permissions(protocols, users):
 
 
 @pytest.fixture
-def indicators(protocols):
-    return install_test_indicators(protocols)
+def indicators(protocols, reference_tables):
+    return install_test_indicators(protocols, reference_tables)
 
 
 @pytest.fixture
@@ -121,6 +122,11 @@ def more_monitoring_objects(flore_protocol, flore_site_type, users):
 
 
 @pytest.fixture
+def reference_tables():
+    return install_reference_tables()
+
+
+@pytest.fixture
 def eval_context(indicators, monitoring_objects):
     indicator = indicators["i02_abondance"]
     protocol = indicator.protocol
@@ -128,4 +134,4 @@ def eval_context(indicators, monitoring_objects):
     visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
     sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
     collections = create_monitoring_collections(protocol, observations, visits, sites)
-    return create_context(collections)
+    return create_context(collections, indicator.reference_tables)

@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
-from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
 from geoalchemy2.shape import from_shape
 from geonature.core.gn_commons.models import TModules
 from geonature.core.gn_meta.models import TAcquisitionFramework, TDatasets
@@ -362,60 +362,124 @@ def install_more_fake_data(flore_protocol, flore_site_type, users):
     )
 
 
-CODE_I02 = """valeurs_he = get_he_prop_collection(observations.cd_nom)
+def install_reference_table_from_csv(csv_filename, name, description, code):
+    filename = os.path.join(Path(__file__).parent, f"./{csv_filename}")
+    with open(filename, newline="") as datafile:
+        data = datafile.read()
+        ref_table = ReferenceTable(
+            name=name,
+            description=description,
+            code=code,
+            data=data,
+        )
+    return ref_table
+
+
+def install_reference_tables():
+    with db.session.begin_nested():
+        ref_table_he = install_reference_table_from_csv(
+            "indices_he.csv",
+            name="Indices espèce pour HE",
+            description="Tableau de référence avec indices de référence par espèce pour HE",
+            code="indices_he",
+        )
+        db.session.add(ref_table_he)
+        ref_table_ht = install_reference_table_from_csv(
+            "indices_ht.csv",
+            name="Indices espèce pour HT",
+            description="Tableau de référence avec indices de référence par espèce pour HT",
+            code="indices_ht",
+        )
+        db.session.add(ref_table_ht)
+
+    return {
+        "indices_he": ref_table_he,
+        "indices_ht": ref_table_ht,
+    }
+
+
+CODE_I02 = """valeurs_he = Extraire(
+    ref_table=indices_he,
+    origin_field="cdnom",
+    target_field="indice_he",
+    properties=observations.cd_nom)
 moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
 médiane = Médiane(moyenne)
 """
 
-CODE_I02_ABONDANCE = """valeurs_he = get_he_prop_collection(observations.cd_nom)
+CODE_I02_ABONDANCE = """valeurs_he = Extraire(
+    ref_table=indices_he,
+    origin_field="cdnom",
+    target_field="indice_he",
+    properties=observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
 moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)
 """
 
-CODE_I06 = """valeurs_ht = get_ht_prop_collection(observations.cd_nom)
+CODE_I06 = """valeurs_ht = Extraire(
+    ref_table=indices_ht,
+    origin_field="cdnom",
+    target_field="indice_ht",
+    properties=observations.cd_nom)
 moyenne = Moyenne(valeurs_ht, scope=Scope.SITE)
 médiane = Médiane(moyenne)
 """
 
-CODE_I06_ABONDANCE = """valeurs_ht = get_ht_prop_collection(observations.cd_nom)
+CODE_I06_ABONDANCE = """valeurs_ht = Extraire(
+    ref_table=indices_ht,
+    origin_field="cdnom",
+    target_field="indice_ht",
+    properties=observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+moyenne = Moyenne(valeurs_ht, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)
 """
 
 
-def install_test_indicators(protocols):
+def install_test_indicators(protocols, reference_tables):
     indicators = {}
 
     def create_indicators(indicators_data, protocol):
         with db.session.begin_nested():
             for data in indicators_data:
+                ref_tables = []
+                if "reference_table_codes" in data:
+                    ref_tables = [
+                        reference_tables[rt_code] for rt_code in data["reference_table_codes"]
+                    ]
+                    del data["reference_table_codes"]
                 ref = data.pop("ref")
                 data["protocol"] = protocol
                 data["description"] = f"This is the {data['name']} indicator description."
                 indicator = Indicator(**data)
+                for rt in ref_tables:
+                    indicator.reference_tables.append(rt)
                 indicators[ref] = indicator
                 db.session.add(indicator)
 
     test_flore_indicators_data = [
         {
             "name": "I02 - indice floristique d'engorgement",
+            "reference_table_codes": ["indices_he"],
             "code": CODE_I02,
             "ref": "i02",
         },
         {
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
+            "reference_table_codes": ["indices_he"],
             "code": CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {
             "name": "I06 - indice floristique de fertilité du sol",
+            "reference_table_codes": ["indices_ht"],
             "code": CODE_I06,
             "ref": "i06",
         },
         {
             "name": "I06 - indice floristique de fertilité du sol (avec abondance)",
+            "reference_table_codes": ["indices_ht"],
             "code": CODE_I06_ABONDANCE,
             "ref": "i06_abondance",
         },
@@ -573,7 +637,8 @@ def install_all_test_sample_objects():
     )
     install_test_monitoring_objects(flore_protocol, flore_site_type, users)
     install_more_fake_data(flore_protocol, flore_site_type, users)
-    indicators = install_test_indicators(protocols)
+    reference_tables = install_reference_tables()
+    indicators = install_test_indicators(protocols, reference_tables)
     install_i02_abondance_visualization_config(indicators)
     install_i02_visualization_config(indicators)
     install_i06_visualization_config(indicators)
