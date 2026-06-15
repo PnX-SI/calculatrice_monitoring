@@ -48,4 +48,4 @@ def upgrade():
 
 def downgrade():
     op.drop_table("t_viz_block_configs", schema="gn_calculatrice")
-    op.execute("DROP TYPE vizblocktype")
+    op.execute("DROP TYPE gn_calculatrice.vizblocktype")
