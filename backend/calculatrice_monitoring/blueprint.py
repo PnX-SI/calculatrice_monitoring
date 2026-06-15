@@ -31,7 +31,7 @@ def get_protocol(protocol_id: int):
 
 
 @blueprint.route("/indicator/<int:indicator_id>", methods=["GET"])
-@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALCULATRICE_INDICATOR")
+@check_cruved_scope(action="R", module_code=MODULE_CODE)
 def get_indicator(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
@@ -39,7 +39,7 @@ def get_indicator(indicator_id: int):
 
 
 @blueprint.route("/indicators", methods=["GET"])
-@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALCULATRICE_INDICATOR")
+@check_cruved_scope(action="R", module_code=MODULE_CODE)
 def get_indicators():
     params = MultiDict(request.args)
     id_protocol_param = params.pop("id_protocol")
@@ -86,7 +86,7 @@ def get_protocols(with_indicators_only: bool = Query(False)):
 # lists of unknown size (sites IDs and campaigns) we want to avoid reaching the URL max length
 # limit at some point.
 @blueprint.route("/indicator/<int:indicator_id>/visualize", methods=["POST"])
-@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALCULATRICE_INDICATOR")
+@check_cruved_scope(action="R", module_code=MODULE_CODE)
 @ValidateParameters()
 def get_indicator_visualization(
     indicator_id: int = Route(),
