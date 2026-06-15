@@ -20,7 +20,23 @@ def upgrade():
         """
         INSERT INTO gn_permissions.t_objects(code_object,
                                              description_object)
-        VALUES ('CALCULATRICE_INDICATOR', 'Objet Indicateur du module calculatrice monitoring')
+        VALUES ('CALC_ADMIN_INDICATOR', 'Objet Indicateur du module calculatrice monitoring')
+        """
+    )
+    op.execute(
+        """
+        INSERT INTO gn_permissions.cor_object_module
+            (
+                id_object,
+                id_module
+            )
+        SELECT
+            _to.id_object,
+            (SELECT id_module FROM gn_commons.t_modules WHERE module_code = 'CALCULATRICE')
+        FROM
+            (VALUES ('CALC_ADMIN_INDICATOR')) AS o (object_code)
+            JOIN gn_permissions.t_objects _to
+                ON _to.code_object = o.object_code
         """
     )
     op.execute(
@@ -35,13 +51,13 @@ def upgrade():
                a.id_action,
                v.label,
                v.scope_filter
-        FROM (VALUES ('CALCULATRICE', 'CALCULATRICE_INDICATOR', 'C', False,
+        FROM (VALUES ('CALCULATRICE', 'CALC_ADMIN_INDICATOR', 'C', False,
                       'Créer des indicateurs pour la calculatrice'),
-                     ('CALCULATRICE', 'CALCULATRICE_INDICATOR', 'R', False,
+                     ('CALCULATRICE', 'CALC_ADMIN_INDICATOR', 'R', False,
                       'Accéder aux indicateurs de la calculatrice'),
-                     ('CALCULATRICE', 'CALCULATRICE_INDICATOR', 'U', False,
+                     ('CALCULATRICE', 'CALC_ADMIN_INDICATOR', 'U', False,
                       'Modifier des indicateurs de la calculatrice'),
-                     ('CALCULATRICE', 'CALCULATRICE_INDICATOR', 'D', False,
+                     ('CALCULATRICE', 'CALC_ADMIN_INDICATOR', 'D', False,
                       'Supprimer des indicateurs de la calculatrice'))
                  AS v (module_code, object_code, action_code, scope_filter, label)
                  JOIN
@@ -64,7 +80,7 @@ def downgrade():
                            WHERE module_code = 'CALCULATRICE')
           AND pa.id_object = (SELECT id_object
                               FROM gn_permissions.t_objects
-                              WHERE code_object = 'CALCULATRICE_INDICATOR')
+                              WHERE code_object = 'CALC_ADMIN_INDICATOR')
         """
     )
 
@@ -76,7 +92,7 @@ def downgrade():
         FROM gn_permissions.t_permissions p
             USING gn_commons.t_modules m, gn_permissions.t_objects o, gn_permissions.bib_actions a
         WHERE p.id_object = o.id_object
-          AND o.code_object = 'CALCULATRICE_INDICATOR'
+          AND o.code_object = 'CALC_ADMIN_INDICATOR'
           AND p.id_action = a.id_action
           AND a.code_action IN ('C', 'R', 'U', 'D')
           AND p.id_module = m.id_module
@@ -86,8 +102,23 @@ def downgrade():
 
     op.execute(
         """
+        -- Remove (CALCULATRICE, CALC_ADMIN_INDICATOR) from cor_object_module
+        DELETE FROM gn_permissions.cor_object_module
+        WHERE id_module = (
+            SELECT id_module
+            FROM gn_commons.t_modules
+            WHERE module_code = 'CALCULATRICE')
+        AND id_object = (
+            SELECT id_object
+            FROM gn_permissions.t_objects
+            WHERE code_object = 'CALC_ADMIN_INDICATOR');
+        """
+    )
+
+    op.execute(
+        """
         DELETE
         FROM gn_permissions.t_objects
-        WHERE code_object = 'CALCULATRICE_INDICATOR';
+        WHERE code_object = 'CALC_ADMIN_INDICATOR';
         """
     )
