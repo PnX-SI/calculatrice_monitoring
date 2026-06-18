@@ -296,3 +296,38 @@ moy_durée = Moyenne(visites.durée_secondes)
         assert len(viz_blocks) == 1
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "2"
+
+
+class TestGetIndicatorDetails:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "i02_abondance_viz_blocks",
+    )
+    def test_get_indicator_details(self, client, users, indicators):
+        i02_abondance = indicators["i02_abondance"]
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(
+            url_for("calculatrice.get_indicator_details", indicator_id=i02_abondance.id_indicator)
+        )
+        assert response.status_code == 200
+        data = response.json
+        assert "visualizationBlockConfigs" in data
+        assert len(data["visualizationBlockConfigs"]) == 2
+        assert "referenceTables" in data
+        assert len(data["referenceTables"]) == 1
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_get_indicator_details_login_required_error(self, client, indicators):
+        logout_user()
+        i02_abondance = indicators["i02_abondance"]
+        response = client.get(
+            url_for("calculatrice.get_indicator_details", indicator_id=i02_abondance.id_indicator)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "indicators")
+    def test_get_indicator_details_not_found_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(url_for("calculatrice.get_indicator_details", indicator_id=12345))
+        assert response.status_code == 404

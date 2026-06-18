@@ -6,6 +6,7 @@ import { from } from 'rxjs';
 import {
   Campaign,
   Indicator,
+  IndicatorDetails,
   Protocol,
   Site,
   SitesGroup,
@@ -61,6 +62,12 @@ export class DataService {
   getIndicator(indicatorId: number) {
     return this._http.get<Indicator>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`
+    );
+  }
+
+  getIndicatorDetails(indicatorId: number) {
+    return this._http.get<IndicatorDetails>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/details`
     );
   }
 

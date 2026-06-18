@@ -5,10 +5,40 @@ export interface Indicator {
   protocolId: number;
 }
 
+export interface IndicatorDetails {
+  id: number;
+  name: string;
+  description: string;
+  protocol: Protocol;
+  code: string;
+  visualizationBlockConfigs: VisualizationBlockConfig[];
+  referenceTables: ReferenceTable[];
+}
+
 export interface Protocol {
   id: number;
   label: string;
   code: string;
+}
+
+export interface ReferenceTable {
+  id: number;
+  name: string;
+  code: string;
+}
+
+export interface VisualizationBlockConfig {
+  title: string;
+  info: string;
+  description: string;
+  type: 'scalaire' | 'barChart';
+  params: VisualizationBlockConfigParam[];
+}
+
+export interface VisualizationBlockConfigParam {
+  name: string;
+  value: string;
+  type: 'text' | 'variable';
 }
 
 export interface SitesGroup {
