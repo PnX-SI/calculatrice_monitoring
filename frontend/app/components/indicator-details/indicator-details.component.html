@@ -1,0 +1,115 @@
+<div class="container">
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div
+    *ngIf="indicatorDetails"
+    class="card"
+  >
+    <div class="card-header">
+      <div class="flex-row">
+        <h2>{{ indicatorDetails.name }}</h2>
+        <button
+          [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit']"
+          mat-mini-fab
+          matTooltip="Éditer l'indicateur"
+        >
+          <mat-icon>create</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <section>
+        <table>
+          <tbody>
+            <tr>
+              <th>Identifiant</th>
+              <td>{{ indicatorDetails.id }}</td>
+            </tr>
+            <tr>
+              <th>Description</th>
+              <td>{{ indicatorDetails.description }}</td>
+            </tr>
+            <tr>
+              <th>Protocole</th>
+              <td>{{ indicatorDetails.protocol.label }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <hr />
+      <section>
+        <h3>Code</h3>
+        <pre class="indicator-code">{{ indicatorDetails.code }}</pre>
+      </section>
+      <hr />
+      <section>
+        <h3>Tableaux de référence</h3>
+        <table class="ref-tables">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let refTable of indicatorDetails.referenceTables">
+              <td>{{ refTable.name }}</td>
+              <td class="ref-table-code">{{ refTable.code }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <hr />
+      <section>
+        <h3>Blocs de visualisation</h3>
+        <div class="cards">
+          <div
+            *ngFor="let vizBlockConfig of indicatorDetails.visualizationBlockConfigs"
+            class="card"
+          >
+            <div class="card-header">
+              <h4>{{ vizBlockConfig.title }}</h4>
+            </div>
+            <div class="card-body">
+              <h5>Attributs</h5>
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Info</th>
+                    <td>{{ vizBlockConfig.info }}</td>
+                  </tr>
+                  <tr>
+                    <th>Description</th>
+                    <td>{{ vizBlockConfig.description }}</td>
+                  </tr>
+                  <tr>
+                    <th>Type</th>
+                    <td>{{ vizBlockConfig.type }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <h5>Paramètres</h5>
+              <table>
+                <tbody>
+                  <tr *ngFor="let param of vizBlockConfig.params">
+                    <th>{{ param.name }}</th>
+                    <td>
+                      {{ param.value }}
+                      <span class="param-type">{{ param.type }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>

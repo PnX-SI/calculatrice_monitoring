@@ -11,6 +11,17 @@ class VizBlockType(enum.Enum):
     bar_chart = "barChart"
 
 
+VIZ_BLOCK_CONFIG_PARAMS = {
+    VizBlockType.scalar: [
+        {"name": "variable", "type": "variable"},
+    ],
+    VizBlockType.bar_chart: [
+        {"name": "variable", "type": "variable"},
+        {"name": "entity_prop", "type": "text"},
+        {"name": "dataset_label", "type": "text"},
+    ],
+}
+
 cor_indicator_reference_table = db.Table(
     "cor_indicator_reference_table",
     db.Column(
@@ -41,6 +52,10 @@ class Indicator(db.Model):
         "ReferenceTable",
         secondary=cor_indicator_reference_table,
         back_populates="indicators",
+    )
+    viz_block_configs = db.relationship(
+        "VizBlockConfig",
+        back_populates="indicator",
     )
 
 

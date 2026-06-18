@@ -11,7 +11,7 @@ from werkzeug.datastructures import MultiDict
 from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import visualize
 from calculatrice_monitoring.models import Indicator
-from calculatrice_monitoring.schemas import IndicatorSchema, ProtocolSchema
+from calculatrice_monitoring.schemas import IndicatorDetailsSchema, IndicatorSchema, ProtocolSchema
 
 blueprint = Blueprint("calculatrice", __name__)
 
@@ -36,6 +36,14 @@ def get_indicator(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
     return IndicatorSchema().jsonify(indicator)
+
+
+@blueprint.route("/indicator/<int:indicator_id>/details", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE)
+def get_indicator_details(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    return IndicatorDetailsSchema().jsonify(indicator)
 
 
 @blueprint.route("/indicators", methods=["GET"])
