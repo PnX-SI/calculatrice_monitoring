@@ -213,6 +213,53 @@ def get_he_prop_collection(cd_nom_props: PropertyCollection) -> PropertyCollecti
     return PropertyCollection(values=he_values, scope=cd_nom_props.scope)
 
 
+def get_ht_prop_collection(cd_nom_props: PropertyCollection) -> PropertyCollection:
+    """Given a PropertyCollection of cd_nom numbers it returns a new PropertyCollection
+    of the corresponding HT values.
+
+    Temporary dev function to be replaced with the Reference Table system.
+    """
+    map_ht = {
+        81610: 4,
+        89200: 3,
+        92501: 3,
+        95463: 3,
+        96271: 4,
+        98910: 3,
+        99373: 5,
+        100310: 3,
+        100387: 4,
+        102900: 3,
+        104173: 4,
+        105431: 3,
+        105966: 3,
+        106581: 3,
+        106918: 3,
+        107038: 3,
+        107117: 3,
+        112741: None,
+        112975: 4,
+        113260: 4,
+        115156: 3,
+        116759: 3,
+        119097: 4,
+        119585: 4,
+        119915: 4,
+        119948: 4,
+        119977: 3,
+        191232: None,
+    }
+    ht_values = []
+    for prop in cd_nom_props.values:
+        ht_values.append(
+            PropertyValue(
+                value=map_ht[prop.value],
+                entity=prop.entity,
+            )
+        )
+    return PropertyCollection(values=ht_values, scope=cd_nom_props.scope)
+
+
 def create_abondance_perc(observations: MonitoringCollection) -> PropertyCollection:
     """Given an observations MonitoringCollection it returns a PropertyCollection with
     percentage values for the abondance property.
@@ -322,6 +369,7 @@ def create_context(collections: dict[str, MonitoringCollection]) -> dict:
     context["create_abondance_perc"] = create_abondance_perc
     context["observations"] = collections["observations"]
     context["get_he_prop_collection"] = get_he_prop_collection
+    context["get_ht_prop_collection"] = get_ht_prop_collection
     context["Médiane"] = Médiane
     return context
 
