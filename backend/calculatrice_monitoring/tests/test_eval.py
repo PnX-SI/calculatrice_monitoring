@@ -109,7 +109,7 @@ moyenne = Moyenne(observations.abondance, scope=Scope.SITE)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
+valeurs_he = Extraire(indices_he, "cdnom", "indice_he", observations.cd_nom)
 moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
 médiane = Médiane(moyenne)
 """
@@ -149,7 +149,7 @@ médiane = Médiane(moyenne)
         self, eval_context
     ):
         code = """
-valeurs_he = get_he_prop_collection(observations.cd_nom)
+valeurs_he = Extraire(indices_he, "cdnom", "indice_he", observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
 moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)

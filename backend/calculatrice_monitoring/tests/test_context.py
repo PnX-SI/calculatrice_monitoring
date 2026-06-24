@@ -12,9 +12,8 @@ from calculatrice_monitoring.eval import (
 
 
 class TestObservationCollection:
-    def test_context(self, indicators, monitoring_objects):
-        # à partir d'observations et d'un protocole test
-        protocol = indicators[0].protocol
+    def test_context(self, protocols, monitoring_objects):
+        protocol = protocols["mheo_flore_test"]
         observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
         obs_collections = create_monitoring_collection(
             protocol, observations, scope=Scope.OBSERVATION
@@ -38,9 +37,9 @@ class TestObservationCollection:
         assert recolte_value.value == "1"
         assert recolte_value.entity.cd_nom == 95463
 
-    def test_context_visit(self, indicators, monitoring_objects):
+    def test_context_visit(self, protocols, monitoring_objects):
         # à partir d'observations et d'un protocole test
-        protocol = indicators[0].protocol
+        protocol = protocols["mheo_flore_test"]
         visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
         visit_collection = create_monitoring_collection(protocol, visits, scope=Scope.VISIT)
 
@@ -76,8 +75,8 @@ class TestObservationCollection:
         assert prop_value.value == 360
         assert prop_value.entity.visit_date_min == datetime.date(2023, 5, 22)
 
-    def test_context_with_sites(self, indicators, monitoring_objects):
-        protocol = indicators[0].protocol
+    def test_context_with_sites(self, protocols, monitoring_objects):
+        protocol = protocols["mheo_flore_test"]
         sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
         site_collection = create_monitoring_collection(protocol, sites, scope=Scope.SITE)
 

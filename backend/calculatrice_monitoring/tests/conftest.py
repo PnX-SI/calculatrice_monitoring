@@ -19,10 +19,10 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     configure_mheo_flore_test_protocol,
     get_quadrat_flore_site_type,
     get_test_protocols,
-    install_i02_abondance_code,
     install_i02_abondance_visualization_config,
     install_metadata,
     install_more_fake_data,
+    install_reference_tables,
     install_test_indicators,
     install_test_monitoring_objects,
     install_test_permissions,
@@ -85,18 +85,13 @@ def calculatrice_permissions(protocols, users):
 
 
 @pytest.fixture
-def indicators(protocols):
-    return install_test_indicators(protocols)
+def indicators(protocols, reference_tables):
+    return install_test_indicators(protocols, reference_tables)
 
 
 @pytest.fixture
-def i02_abondance(indicators):
-    return install_i02_abondance_code(indicators)
-
-
-@pytest.fixture
-def i02_abondance_viz_blocks(i02_abondance):
-    return install_i02_abondance_visualization_config(i02_abondance)
+def i02_abondance_viz_blocks(indicators):
+    return install_i02_abondance_visualization_config(indicators)
 
 
 @pytest.fixture
@@ -127,10 +122,16 @@ def more_monitoring_objects(flore_protocol, flore_site_type, users):
 
 
 @pytest.fixture
-def eval_context(i02_abondance, monitoring_objects):
-    protocol = i02_abondance.protocol
+def reference_tables():
+    return install_reference_tables()
+
+
+@pytest.fixture
+def eval_context(indicators, monitoring_objects):
+    indicator = indicators["i02_abondance"]
+    protocol = indicator.protocol
     observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
     visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
     sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
     collections = create_monitoring_collections(protocol, observations, visits, sites)
-    return create_context(collections)
+    return create_context(collections, indicator.reference_tables)
