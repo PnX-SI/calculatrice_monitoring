@@ -1,0 +1,16 @@
+{
+  "specific": {
+    "diffusion_mesure": {
+      "attribut_label": "Diffusion mesure",
+      "type_widget": "select",
+      "values": [
+        "Oui",
+        "Non"
+      ]
+    },
+    "durée_secondes": {
+      "attribut_label": "Durée en seconde",
+      "type_widget": "number"
+    }
+  }
+}

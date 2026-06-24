@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from calculatrice_monitoring.eval import evaluate
+from calculatrice_monitoring.eval import Scope, evaluate
 
 
 class TestEvalIndicator:
@@ -19,7 +19,7 @@ moyenne = Moyenne(observations.abondance)
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
-        assert variables["moyenne"].values[0].value == 1.4102564102564104
+        assert variables["moyenne"].values[0].value == Decimal("1.410256410256410256410256410")
 
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_all_observations(self, eval_context):
@@ -31,12 +31,12 @@ moyenne = Moyenne(create_abondance_perc(observations))
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
-        assert variables["moyenne"].values[0].value == 10.333333333333334
+        assert variables["moyenne"].values[0].value == Decimal("10.33333333333333333333333333")
 
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope="visit")
+moyenne = Moyenne(observations.abondance, scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -58,7 +58,7 @@ moyenne = Moyenne(observations.abondance, scope="visit")
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
+moyenne = Moyenne(create_abondance_perc(observations), scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -80,7 +80,7 @@ moyenne = Moyenne(create_abondance_perc(observations), scope="visit")
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_site_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope="site")
+moyenne = Moyenne(observations.abondance, scope=Scope.SITE)
                 """
 
         variables = evaluate(code, eval_context)
@@ -110,7 +110,7 @@ moyenne = Moyenne(observations.abondance, scope="site")
     def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope="site")
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
 médiane = Médiane(moyenne)
 """
 
@@ -118,7 +118,7 @@ médiane = Médiane(moyenne)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
-        assert médianes.scope == "global"
+        assert médianes.scope == Scope.GLOBAL
         assert len(médianes.values) == 1
         médiane = médianes.values[0]
         assert médiane.value == 6.5
@@ -151,7 +151,7 @@ médiane = Médiane(moyenne)
         code = """
 valeurs_he = get_he_prop_collection(observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope="site", weights=abondance_perc)
+moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = Médiane(moyenne)
 """
 
@@ -159,7 +159,7 @@ médiane = Médiane(moyenne)
 
         assert "médiane" in variables
         médianes = variables["médiane"]
-        assert médianes.scope == "global"
+        assert médianes.scope == Scope.GLOBAL
         assert len(médianes.values) == 1
         médiane = médianes.values[0]
         assert médiane.value == 6.5
@@ -184,3 +184,18 @@ médiane = Médiane(moyenne)
             Decimal("5.4"),
         ]
         assert values == pytest.approx(expected_values)
+
+    @pytest.mark.usefixtures("monitoring_objects")
+    def test_eval_code_moyenne_durée_visites(self, eval_context):
+        code = """
+moyenne_durée = Moyenne(visites.durée_secondes)
+"""
+
+        variables = evaluate(code, eval_context)
+
+        assert "moyenne_durée" in variables
+        moyenne_durée = variables["moyenne_durée"]
+        assert moyenne_durée.scope == Scope.GLOBAL
+        assert len(moyenne_durée.values) == 1
+        moyenne_durée = moyenne_durée.values[0]
+        assert moyenne_durée.value == 576

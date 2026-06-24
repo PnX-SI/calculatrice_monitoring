@@ -1,0 +1,8 @@
+{
+  "specific": {
+    "superficie_mètres_carrés": {
+      "attribut_label": "Superficie en m²",
+      "type_widget": "number"
+    }
+  }
+}

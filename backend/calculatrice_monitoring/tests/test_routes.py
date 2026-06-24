@@ -1,7 +1,10 @@
 import pytest
 from flask import url_for
 from flask_login import logout_user
+from geonature.utils.env import db
 from pypnusershub.tests.utils import set_logged_user
+
+from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 
 
 class TestGetIndicators:
@@ -219,3 +222,93 @@ class TestGetIndicatorVisualization:
             "6.5",
             "5.4",
         ]
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    def test_get_visualization_of_dummy_indicator_to_test_visits_in_context(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing the context",
+                id_protocol=flore_protocol.id_module,
+                code="""
+moy_durée = Moyenne(visites.durée_secondes)
+                """,
+            )
+            db.session.add(indicator)
+
+            scalar_block = VizBlockConfig(
+                indicator=indicator,
+                title="Moyenne durées visites",
+                type=VizBlockType.scalar,
+                params={
+                    "variable": "moy_durée",
+                },
+            )
+            db.session.add(scalar_block)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        viz_blocks = response.json
+        assert len(viz_blocks) == 1
+        scalar_viz_block = viz_blocks[0]
+        assert scalar_viz_block["data"]["figure"] == "576"
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    def test_get_visualization_of_dummy_indicator_to_test_sites_in_context(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing sites in the context",
+                id_protocol=flore_protocol.id_module,
+                code="moy_superficies = Moyenne(sites.superficie_mètres_carrés)",
+            )
+            db.session.add(indicator)
+
+            scalar_block = VizBlockConfig(
+                indicator=indicator,
+                title="Moyenne superficies",
+                type=VizBlockType.scalar,
+                params={
+                    "variable": "moy_superficies",
+                },
+            )
+            db.session.add(scalar_block)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        viz_blocks = response.json
+        assert len(viz_blocks) == 1
+        scalar_viz_block = viz_blocks[0]
+        assert scalar_viz_block["data"]["figure"] == "2"

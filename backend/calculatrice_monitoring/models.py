@@ -1,6 +1,7 @@
 import enum
 
 from geonature.utils.env import db
+from gn_module_monitoring.monitoring.models import TMonitoringModules
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -19,6 +20,7 @@ class Indicator(db.Model):
     id_protocol = db.Column(db.ForeignKey("gn_monitoring.t_module_complements.id_module"))
     description = db.Column(db.Unicode)
     code = db.Column(db.Unicode, nullable=False, default="")
+    protocol = db.relationship(TMonitoringModules)
 
 
 class VizBlockConfig(db.Model):
@@ -32,3 +34,4 @@ class VizBlockConfig(db.Model):
     description = db.Column(db.Unicode, nullable=False, default="")
     type = db.Column(Enum(VizBlockType, inherit_schema=True))
     params = db.Column(JSONB)
+    indicator = db.relationship(Indicator)

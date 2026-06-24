@@ -5,10 +5,13 @@ import statistics
 from collections import defaultdict
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 from typing import Any
 
 from geonature.utils.env import db
+from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import (
+    TMonitoringModules,
     TMonitoringObservations,
     TMonitoringSites,
     TMonitoringVisits,
@@ -17,8 +20,19 @@ from gn_module_monitoring.monitoring.models import (
 from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 
 
+class Scope(Enum):
+    OBSERVATION = "observation"
+    VISIT = "visit"
+    SITE = "site"
+    GLOBAL = "global"
+
+
 class Entity:
-    pass
+    def _create_props_from_model_instance(self, config, model_instance):
+        specific_props = config["specific"]
+        data = model_instance.data if model_instance.data else {}
+        for prop_key, _ in specific_props.items():
+            setattr(self, prop_key, data.get(prop_key))
 
 
 class Root(Entity):
@@ -34,17 +48,19 @@ class Site(Entity):
     id_base_site: int
     base_site_name: str
 
-    def __init__(self, site_model_instance):
+    def __init__(self, protocol, site_model_instance):
         self.id_base_site = site_model_instance.id_base_site
         self.base_site_name = site_model_instance.base_site_name
         self.id = self.id_base_site
+        props = get_config(protocol.module_code)
+        self._create_props_from_model_instance(props[Scope.SITE.value], site_model_instance)
 
 
-def get_site(site_id) -> Site:
+def get_site(protocol, site_id) -> Site:
     site_model_instance = db.session.scalar(
         db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id)
     )
-    return Site(site_model_instance)
+    return Site(protocol, site_model_instance)
 
 
 class Visit(Entity):
@@ -53,33 +69,37 @@ class Visit(Entity):
     id_base_site: int
     visit_date_min: date
 
-    def __init__(self, visit_model_instance):
+    def __init__(self, protocol, visit_model_instance):
         self.id_base_visit = visit_model_instance.id_base_visit
         self.visit_date_min = visit_model_instance.visit_date_min
         self.id_base_site = visit_model_instance.id_base_site
         self.id = self.id_base_visit
+        props = get_config(protocol.module_code)
+        self._create_props_from_model_instance(props[Scope.VISIT.value], visit_model_instance)
 
 
-def get_visit(visit_id) -> Visit:
+def get_visit(protocol, visit_id) -> Visit:
     visit_model_instance = db.session.scalar(
         db.select(TMonitoringVisits).filter(TMonitoringVisits.id_base_visit == visit_id)
     )
-    return Visit(visit_model_instance)
+    return Visit(protocol, visit_model_instance)
 
 
 class Observation(Entity):
     id: Any
     visit: Entity
     site: Entity
-    abondance: str
     cd_nom: int
 
-    def __init__(self, observation_model_instance):
+    def __init__(self, protocol, observation_model_instance):
         self.id = observation_model_instance.id_observation
-        self.visit = get_visit(observation_model_instance.id_base_visit)
-        self.site = get_site(self.visit.id_base_site)
-        self.abondance = observation_model_instance.data["abondance"]
+        self.visit = get_visit(protocol, observation_model_instance.id_base_visit)
+        self.site = get_site(protocol, self.visit.id_base_site)
         self.cd_nom = observation_model_instance.cd_nom
+        props = get_config(protocol.module_code)
+        self._create_props_from_model_instance(
+            props[Scope.OBSERVATION.value], observation_model_instance
+        )
 
 
 class PropertyValue:
@@ -93,7 +113,7 @@ class PropertyValue:
 
 class PropertyCollection:
     values: list[PropertyValue]
-    scope: str
+    scope: Scope
 
     def __init__(self, values, scope):
         self.values = values
@@ -113,15 +133,28 @@ class MonitoringCollection:
     instance 'abondance' and 'cd_nom' for the scope "observations".
     """
 
-    scope: str
+    scope: Scope
 
     def __init__(self, scope):
         self.scope = scope
         # property collections are added in create function.
 
 
-def create_observation_collection(
-    observations: list[TMonitoringObservations],
+generic_props_by_scope = {
+    Scope.OBSERVATION: [
+        "cd_nom",
+    ],
+    Scope.VISIT: [
+        "visit_date_min",
+    ],
+    Scope.SITE: ["base_site_name"],
+}
+
+
+def create_monitoring_collection(
+    protocol: TMonitoringModules,
+    entities: list[Entity],
+    scope: Scope,
 ) -> MonitoringCollection:
     """Given a list of observation model instances it returns the corresponding
     MonitoringCollection object.
@@ -146,20 +179,20 @@ def create_observation_collection(
             )
         return PropertyCollection(values=values, scope=scope)
 
-    observation_entities = []
-    for obs in observations:
-        observation_entities.append(Observation(obs))
+    def install_properties(collection, scope, entities, property_list):
+        for prop_key in property_list:
+            prop_collection = create_prop_collection_from_entities(
+                instances=entities, scope=scope, propname=prop_key
+            )
+            setattr(collection, prop_key, prop_collection)
 
-    abondance = create_prop_collection_from_entities(
-        instances=observation_entities, scope="observation", propname="abondance"
+    generic_props = generic_props_by_scope[scope]
+    specific_props = get_config(protocol.module_code)[scope.value]["specific"].keys()
+    coll = MonitoringCollection(scope=scope)
+    install_properties(collection=coll, scope=scope, entities=entities, property_list=generic_props)
+    install_properties(
+        collection=coll, scope=scope, entities=entities, property_list=specific_props
     )
-    cd_nom = create_prop_collection_from_entities(
-        instances=observation_entities, scope="observation", propname="cd_nom"
-    )
-
-    coll = MonitoringCollection(scope="observation")
-    coll.abondance = abondance
-    coll.cd_nom = cd_nom
     return coll
 
 
@@ -277,7 +310,7 @@ def create_abondance_perc(observations: MonitoringCollection) -> PropertyCollect
         )
     return PropertyCollection(
         values=values,
-        scope="observation",
+        scope=Scope.OBSERVATION,
     )
 
 
@@ -293,7 +326,9 @@ def fetch_prop_value(prop_collection: PropertyCollection, entity_id: Any) -> Any
 
 
 def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
-    prop_collection: PropertyCollection, scope: str = "global", weights: PropertyCollection = None
+    prop_collection: PropertyCollection,
+    scope: Scope = Scope.GLOBAL,
+    weights: PropertyCollection = None,
 ) -> PropertyCollection:
     """Returns a property collection with mean values of the given property at the given scope.
 
@@ -301,13 +336,13 @@ def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
     values. If the input property has values without their corresponding weight those input values
     are silently discarded.
     """
-    if scope == "global":
+    if scope == Scope.GLOBAL:
         sums = 0
         for prop_value in prop_collection.values:
             sums += int(prop_value.value)
-        moyenne = sums / len(prop_collection.values)
+        moyenne = Decimal(sums) / len(prop_collection.values)
         return PropertyCollection(
-            values=[PropertyValue(value=moyenne, entity=ROOT)], scope="global"
+            values=[PropertyValue(value=moyenne, entity=ROOT)], scope=Scope.GLOBAL
         )
     else:
         sums = defaultdict(lambda: Decimal(0))
@@ -317,7 +352,7 @@ def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
             if prop_value.value is None:
                 # FIXME: missing value => we should fail properly here
                 continue  # for now we just skip it
-            scope_entity = getattr(prop_value.entity, scope)
+            scope_entity = getattr(prop_value.entity, scope.value)
             scope_entities[scope_entity.id] = scope_entity
             if weights:
                 weight = fetch_prop_value(weights, prop_value.entity.id)
@@ -351,26 +386,42 @@ def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
             entity=ROOT,
         )
     ]
-    return PropertyCollection(values=values, scope="global")
+    return PropertyCollection(values=values, scope=Scope.GLOBAL)
 
 
 # --- VISUALIZE FUNCTION AND SUB-FUNCTIONS ---
 
 
 def create_monitoring_collections(
-    observations: list[TMonitoringObservations],
-) -> dict[str, MonitoringCollection]:
-    return {"observations": create_observation_collection(observations)}
+    protocol: TMonitoringModules,
+    observations: list[Observation],
+    visits: list[Visit],
+    sites: list[Site],
+) -> dict[Scope, MonitoringCollection]:
+    return {
+        Scope.OBSERVATION: create_monitoring_collection(
+            protocol=protocol, entities=observations, scope=Scope.OBSERVATION
+        ),
+        Scope.VISIT: create_monitoring_collection(
+            protocol=protocol, entities=visits, scope=Scope.VISIT
+        ),
+        Scope.SITE: create_monitoring_collection(
+            protocol=protocol, entities=sites, scope=Scope.SITE
+        ),
+    }
 
 
-def create_context(collections: dict[str, MonitoringCollection]) -> dict:
+def create_context(collections: dict[Scope, MonitoringCollection]) -> dict:
     context = {}
     context["Moyenne"] = Moyenne
     context["create_abondance_perc"] = create_abondance_perc
-    context["observations"] = collections["observations"]
+    context["observations"] = collections[Scope.OBSERVATION]
+    context["visites"] = collections[Scope.VISIT]
+    context["sites"] = collections[Scope.SITE]
     context["get_he_prop_collection"] = get_he_prop_collection
     context["get_ht_prop_collection"] = get_ht_prop_collection
     context["Médiane"] = Médiane
+    context["Scope"] = Scope
     return context
 
 
@@ -418,30 +469,36 @@ def build_viz_blocks(variables, indicator):
 
 
 def visualize(
-    indicator_id,
-    sites_ids,
+    indicator: Indicator,
+    monitoring_sites: list[TMonitoringSites],
     campaigns,
     viz_type,  # noqa: ARG001
 ):
     campaign = campaigns[0]
-    indicator = db.session.scalar(
-        db.select(Indicator).filter(Indicator.id_indicator == indicator_id)
-    )
     code = indicator.code
+
+    sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
+    sites_ids = [site.id_base_site for site in sites]
+
     visits_query = (
         db.select(TMonitoringVisits)
         .filter(TMonitoringVisits.id_base_site.in_(sites_ids))
         .filter(TMonitoringVisits.visit_date_min >= campaign["start_date"])
         .filter(TMonitoringVisits.visit_date_min <= campaign["end_date"])
     )
-    visits = db.session.scalars(visits_query).unique().all()
+    monitoring_visits = db.session.scalars(visits_query).unique().all()
 
     observations_query = db.select(TMonitoringObservations).filter(
-        TMonitoringObservations.id_base_visit.in_([visit.id_base_visit for visit in visits])
+        TMonitoringObservations.id_base_visit.in_(
+            [visit.id_base_visit for visit in monitoring_visits]
+        )
     )
-    observations = db.session.scalars(observations_query).all()
+    observations = [
+        Observation(indicator.protocol, obj) for obj in db.session.scalars(observations_query).all()
+    ]
+    visits = [Visit(indicator.protocol, obj) for obj in monitoring_visits]
 
-    collections = create_monitoring_collections(observations)
+    collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
     context = create_context(collections)
     variables = evaluate(code, context)
     return build_viz_blocks(variables, indicator)

@@ -25,6 +25,20 @@
           "value": "5"
         }
       ]
+    },
+    "récolte": {
+      "attribut_label": "Récolte",
+      "type_widget": "select",
+      "values": [
+        {
+          "label": "Oui",
+          "value": "1"
+        },
+        {
+          "label": "Non",
+          "value": "2"
+        }
+      ]
     }
   }
 }
