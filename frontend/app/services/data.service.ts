@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfigService } from '@geonature/services/config.service';
 import { ParamsDict } from '@geonature_common/form/data-form.service';
@@ -6,10 +6,13 @@ import { from } from 'rxjs';
 import {
   Campaign,
   Indicator,
+  IndicatorAttributes,
   IndicatorDetails,
   Protocol,
+  ReferenceTable,
   Site,
   SitesGroup,
+  VisualizationBlockConfigPayload,
   VisualizationBlockDefinition,
 } from '../interfaces';
 
@@ -59,6 +62,42 @@ export class DataService {
     });
   }
 
+  createIndicator(indicatorAttributes: IndicatorAttributes) {
+    return this._http.post<Indicator>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator`,
+      indicatorAttributes
+    );
+  }
+
+  editIndicator(indicatorId: Number, indicatorAttributes: IndicatorAttributes) {
+    return this._http.put<Indicator>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`,
+      indicatorAttributes
+    );
+  }
+
+  editIndicatorCode(indicatorId: Number, code: String) {
+    return this._http.put<HttpResponse<String>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code`,
+      { code: code },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  updateIndicatorVizBlocks(
+    indicatorId: Number,
+    vizBlocksConfig: VisualizationBlockConfigPayload[]
+  ) {
+    return this._http.put<HttpResponse<String>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/viz-blocks`,
+      vizBlocksConfig,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        responseType: 'json',
+      }
+    );
+  }
+
   getIndicator(indicatorId: number) {
     return this._http.get<Indicator>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`
@@ -68,6 +107,12 @@ export class DataService {
   getIndicatorDetails(indicatorId: number) {
     return this._http.get<IndicatorDetails>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/details`
+    );
+  }
+
+  getIndicatorCodeVariables(indicatorId: number) {
+    return this._http.get<string[]>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code-variables`
     );
   }
 
@@ -141,6 +186,12 @@ export class DataService {
         })),
         viz_type: visualizationType,
       }
+    );
+  }
+
+  getReferenceTables() {
+    return this._http.get<Array<ReferenceTable>>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables`
     );
   }
 
