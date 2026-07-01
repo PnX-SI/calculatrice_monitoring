@@ -1,0 +1,42 @@
+<div
+  *ngIf="indicator"
+  class="container"
+>
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="card">
+    <div class="card-header">
+      <h2>Indicateur: {{ indicator.name }}</h2>
+    </div>
+    <div class="card-body">
+      <form
+        [formGroup]="indicatorForm"
+        (ngSubmit)="onSubmit()"
+      >
+        <div>
+          <label for="code">Code de l'indicateur</label>
+          <textarea
+            id="code"
+            formControlName="code"
+            rows="10"
+            cols="80"
+          ></textarea>
+        </div>
+        <hr />
+        <button
+          type="submit"
+          class="btn btn-success"
+          [disabled]="!indicatorForm.valid"
+        >
+          Suivant
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

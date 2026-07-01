@@ -1,0 +1,79 @@
+<div
+  *ngIf="mode"
+  class="container"
+>
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="card">
+    <div class="card-header">
+      <h2>{{ mode === 'create' ? 'Créer un indicateur' : "Éditer l'indicateur" }}</h2>
+    </div>
+    <div class="card-body">
+      <form
+        [formGroup]="indicatorForm"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="form-container">
+          <div class="form-element">
+            <label for="name">Nom</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-element">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div class="form-element">
+            <label [for]="protocol">Protocole</label>
+            <ng-select
+              #protocol
+              id="protocol"
+              [items]="protocols"
+              bindLabel="label"
+              bindValue="id"
+              placeholder="Sélectionner un protocole"
+              formControlName="protocolId"
+              required
+            ></ng-select>
+          </div>
+          <div class="form-element">
+            <label [for]="referenceTablesSelect">Tables de référence</label>
+            <ng-select
+              #referenceTablesSelect
+              id="referenceTables"
+              [items]="referenceTables"
+              [multiple]="true"
+              bindLabel="name"
+              bindValue="id"
+              placeholder="Sélectionner des tables de référence"
+              formControlName="referenceTableIds"
+            ></ng-select>
+          </div>
+        </div>
+        <hr />
+        <button
+          type="submit"
+          class="btn btn-success"
+          [disabled]="!indicatorForm.valid"
+        >
+          Suivant
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

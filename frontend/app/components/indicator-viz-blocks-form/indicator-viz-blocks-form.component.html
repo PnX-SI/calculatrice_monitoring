@@ -1,0 +1,73 @@
+<div class="container">
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="card">
+    <div class="card-header">
+      <h2>Éditer les blocs de visualisation</h2>
+    </div>
+    <div class="card-body">
+      <div class="action-buttons">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="addVizBlockForm()"
+        >
+          + Ajouter un bloc
+        </button>
+      </div>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+      >
+        <div formArrayName="vizBlocks">
+          <div
+            *ngFor="let vizBlock of vizBlocks.controls; let i = index"
+            class="mb-3 p-3 border rounded"
+          >
+            <div class="vizblock-action-buttons">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+              >
+                Dépl. haut
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+              >
+                Dépl. bas
+              </button>
+              <button
+                *ngIf="vizBlocks.controls.length > 0"
+                type="button"
+                class="btn btn-danger btn-sm"
+                (click)="removeVizBlock(i)"
+              >
+                Supprimer
+              </button>
+            </div>
+            <pnx-calc-viz-block-form
+              [form]="vizBlock"
+              [variables]="variables"
+              [vizBlock]="indicatorDetails.visualizationBlockConfigs[i]"
+            ></pnx-calc-viz-block-form>
+          </div>
+          <hr />
+          <button
+            type="submit"
+            [disabled]="!form.valid"
+            class="btn btn-success"
+          >
+            Valider
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

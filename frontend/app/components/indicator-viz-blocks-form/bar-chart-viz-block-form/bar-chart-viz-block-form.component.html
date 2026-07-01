@@ -1,0 +1,51 @@
+<div>
+  <strong>Paramètres bloc BarChart</strong>
+  <div
+    [formGroup]="form"
+    class="form-container"
+  >
+    <div class="form-element">
+      <label for="variable">Variable:</label>
+      <select
+        id="variable"
+        formControlName="variable"
+        required
+        class="form-control"
+        [class.invalid-variable]="variableControl?.hasError('unknownVariable')"
+      >
+        <option
+          *ngFor="let variable of variableOptions"
+          [disabled]="!variableValueIsValid(variable)"
+          value="{{ variable }}"
+        >
+          {{ variable }}
+        </option>
+      </select>
+      <span
+        *ngIf="variableControl?.hasError('unknownVariable')"
+        class="invalid-variable"
+      >
+        Cette variable n'existe plus dans le code de l'indicateur.
+      </span>
+    </div>
+    <div class="form-element">
+      <label for="entity_prop">entity_prop:</label>
+      <input
+        id="entity_prop"
+        formControlName="entity_prop"
+        type="text"
+        required
+        class="form-control"
+      />
+    </div>
+    <div class="form-element">
+      <label for="dataset_label">dataset_label:</label>
+      <input
+        id="dataset_label"
+        formControlName="dataset_label"
+        type="text"
+        class="form-control"
+      />
+    </div>
+  </div>
+</div>

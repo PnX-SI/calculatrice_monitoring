@@ -5,15 +5,66 @@ from geonature.core.gn_permissions.decorators import check_cruved_scope
 from geonature.core.gn_permissions.tools import get_scopes_by_action
 from geonature.utils.env import db
 from gn_module_monitoring.monitoring.models import TMonitoringModules, TMonitoringSites
+from marshmallow import ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
 from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import visualize
-from calculatrice_monitoring.models import Indicator
-from calculatrice_monitoring.schemas import IndicatorDetailsSchema, IndicatorSchema, ProtocolSchema
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
+from calculatrice_monitoring.schemas import (
+    IndicatorCreationSchema,
+    IndicatorDetailsSchema,
+    IndicatorSchema,
+    ProtocolSchema,
+    ReferenceTableSchema,
+    VizBlockConfigSchema,
+)
+from calculatrice_monitoring.utils import extract_variable_names
 
 blueprint = Blueprint("calculatrice", __name__)
+
+
+def _fetch_reference_tables(reference_table_ids):
+    """Returns the ReferenceTable rows matching the given ids.
+
+    Raises a ValueError with the set of unknown ids if some are not found.
+    """
+    reference_tables = db.session.scalars(
+        select(ReferenceTable).filter(ReferenceTable.id_reference_table.in_(reference_table_ids))
+    ).all()
+    missing_ids = set(reference_table_ids) - {rt.id_reference_table for rt in reference_tables}
+    if missing_ids:
+        raise ValueError(missing_ids)
+    return reference_tables
+
+
+def _validate_indicator_relations(data):
+    """Validates the protocol and reference tables referenced by an indicator payload.
+
+    `data` is mutated: `reference_table_ids` is popped out of it.
+    Returns a tuple `(reference_tables, error_response)`: on failure, `reference_tables`
+    is None and `error_response` is the `(body, status)` tuple to return to the client.
+    """
+    protocol_id = data["id_protocol"]
+    try:
+        db.session.scalars(
+            select(TMonitoringModules).filter(TMonitoringModules.id_module == protocol_id)
+        ).one()
+    except NoResultFound:
+        return None, ({"protocolId": [f"Protocol with ID {protocol_id} not found"]}, 400)
+
+    reference_table_ids = data.pop("reference_table_ids", [])
+    try:
+        reference_tables = _fetch_reference_tables(reference_table_ids)
+    except ValueError as error:
+        missing_ids = sorted(error.args[0])
+        return None, (
+            {"referenceTableIds": [f"Reference table(s) with ID {missing_ids} not found"]},
+            400,
+        )
+    return reference_tables, None
 
 
 @blueprint.route("/protocol/<int:protocol_id>", methods=["GET"])
@@ -30,6 +81,85 @@ def get_protocol(protocol_id: int):
     return ProtocolSchema().jsonify(protocol)
 
 
+@blueprint.route("/indicator", methods=["POST"])
+@check_cruved_scope(action="C", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def create_indicator():
+    try:
+        data = IndicatorCreationSchema().load(request.json)
+    except ValidationError as error:
+        return error.messages, 400
+    reference_tables, error_response = _validate_indicator_relations(data)
+    if error_response:
+        return error_response
+    indicator = Indicator(**data)
+    indicator.reference_tables = reference_tables
+    db.session.add(indicator)
+    db.session.commit()
+    return IndicatorSchema().jsonify(indicator), 201
+
+
+@blueprint.route("/indicator/<int:indicator_id>", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_indicator(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+
+    # TODO: rename schema to IndicAttributsSchema
+    schema = IndicatorCreationSchema()
+    try:
+        data = schema.load(request.json)
+    except ValidationError as error:
+        # TODO: check needed
+        return error.messages, 400
+    reference_tables, error_response = _validate_indicator_relations(data)
+    if error_response:
+        return error_response
+
+    for field in schema.load_fields.keys():
+        if field == "reference_table_ids":
+            continue
+        if field in data:
+            setattr(indicator, field, data[field])
+        else:
+            column_default = getattr(Indicator, field).expression.default
+            setattr(indicator, field, column_default.arg if column_default else None)
+    indicator.reference_tables = reference_tables
+
+    db.session.add(indicator)
+    db.session.commit()
+    return IndicatorSchema().jsonify(indicator), 200
+
+
+@blueprint.route("/indicator/<int:indicator_id>/code", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_indicator_code(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    indicator.code = request.json["code"]
+    db.session.add(indicator)
+    db.session.commit()
+    return "", 204
+
+
+@blueprint.route("/indicator/<int:indicator_id>/viz-blocks", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def update_indicator_viz_blocks(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    data = VizBlockConfigSchema(many=True).load(request.json)
+    # Delete previous vizblock configs
+    for old_vb in indicator.viz_block_configs:
+        db.session.delete(old_vb)
+    indicator.viz_block_configs.clear()
+    # Create and attach new ones
+    for vb_config in data:
+        vb = VizBlockConfig(**vb_config)
+        indicator.viz_block_configs.append(vb)
+    db.session.add(indicator)
+    db.session.commit()
+    return "", 204
+
+
 @blueprint.route("/indicator/<int:indicator_id>", methods=["GET"])
 @check_cruved_scope(action="R", module_code=MODULE_CODE)
 def get_indicator(indicator_id: int):
@@ -44,6 +174,15 @@ def get_indicator_details(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
     return IndicatorDetailsSchema().jsonify(indicator)
+
+
+@blueprint.route("/indicator/<int:indicator_id>/code-variables", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE)
+def get_indicator_code_variables(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    variables = extract_variable_names(indicator.code)
+    return variables, 200
 
 
 @blueprint.route("/indicators", methods=["GET"])
@@ -152,3 +291,10 @@ eros a suscipit.</p>
                 },
             },
         ]
+
+
+@blueprint.route("/reftables", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def get_reference_tables():
+    reftables = db.session.execute(db.select(ReferenceTable)).scalars()
+    return ReferenceTableSchema().jsonify(reftables, many=True)

@@ -11,8 +11,15 @@ export interface IndicatorDetails {
   description: string;
   protocol: Protocol;
   code: string;
-  visualizationBlockConfigs: VisualizationBlockConfig[];
+  visualizationBlockConfigs: VisualizationBlockConfigDetails[];
   referenceTables: ReferenceTable[];
+}
+
+export interface IndicatorAttributes {
+  name: string;
+  description: string;
+  protocolId: number;
+  referenceTableIds: number[];
 }
 
 export interface Protocol {
@@ -31,8 +38,15 @@ export interface VisualizationBlockConfig {
   title: string;
   info: string;
   description: string;
-  type: 'scalaire' | 'barChart';
+  type: 'scalar' | 'bar_chart';
+}
+
+export interface VisualizationBlockConfigDetails extends VisualizationBlockConfig {
   params: VisualizationBlockConfigParam[];
+}
+
+export interface VisualizationBlockConfigPayload extends VisualizationBlockConfig {
+  params: { [key: string]: string };
 }
 
 export interface VisualizationBlockConfigParam {

@@ -1,0 +1,60 @@
+<div
+  [formGroup]="form"
+  class="form-container"
+>
+  <div class="form-element">
+    <label for="title">Titre</label>
+    <input
+      id="title"
+      formControlName="title"
+      type="text"
+      class="form-control form-control-sm"
+    />
+  </div>
+  <div class="form-element">
+    <label for="information">Information</label>
+    <input
+      id="information"
+      formControlName="info"
+      type="text"
+    />
+  </div>
+  <div class="form-element">
+    <label for="description">Description</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      type="text"
+    ></textarea>
+  </div>
+  <div class="form-element">
+    <label for="type">Type :</label>
+    <select
+      id="type"
+      formControlName="type"
+      (change)="onTypeChange($event)"
+      required
+      class="form-control"
+    >
+      <option value="bar_chart">Bar chart</option>
+      <option value="scalar">Scalaire</option>
+    </select>
+  </div>
+  <div
+    class="block-params"
+    [ngSwitch]="form.value.type"
+  >
+    <pnx-calc-bar-chart-viz-block-form
+      *ngSwitchCase="'bar_chart'"
+      [form]="paramsForm"
+      [variables]="variables"
+      [params]="vizBlock?.params"
+    ></pnx-calc-bar-chart-viz-block-form>
+    <pnx-calc-scalar-viz-block-form
+      *ngSwitchCase="'scalar'"
+      [form]="paramsForm"
+      [variables]="variables"
+      [params]="vizBlock?.params"
+    ></pnx-calc-scalar-viz-block-form>
+  </div>
+</div>

@@ -64,11 +64,13 @@ class VizBlockConfig(db.Model):
     __table_args__ = {"schema": "gn_calculatrice"}
 
     id_viz_block_config = db.Column(db.Integer, primary_key=True)
-    id_indicator = db.Column(db.ForeignKey("gn_calculatrice.t_indicators.id_indicator"))
+    id_indicator = db.Column(
+        db.ForeignKey("gn_calculatrice.t_indicators.id_indicator"), nullable=False
+    )
     title = db.Column(db.Unicode(100), nullable=False)
     info = db.Column(db.Unicode, nullable=False, default="")
     description = db.Column(db.Unicode, nullable=False, default="")
-    type = db.Column(Enum(VizBlockType, inherit_schema=True))
+    type = db.Column(Enum(VizBlockType, inherit_schema=True), nullable=False)
     params = db.Column(JSONB)
     indicator = db.relationship(Indicator)
 
