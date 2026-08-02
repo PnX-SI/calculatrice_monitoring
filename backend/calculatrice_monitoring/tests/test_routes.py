@@ -1,8 +1,13 @@
+import json
+from pathlib import Path
+from typing import Optional
+
 import pytest
 from flask import url_for
 from flask_login import logout_user
 from geonature.utils.env import db
 from pypnusershub.tests.utils import set_logged_user
+from werkzeug.datastructures import Headers
 
 from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 
@@ -813,3 +818,69 @@ class TestGetRerenceTables:
         set_logged_user(client, users["public"])
         response = client.get(url_for("calculatrice.get_reference_tables"))
         assert response.status_code == 403
+
+
+class TestCreateReferenceTable:
+    @staticmethod
+    def _get_payload(name: Optional[str] = "My ref table"):
+        filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
+        datafile = open(filename, "rb")
+        fields = {"code": "my_table"}
+        if name:
+            fields["name"] = name
+        return {
+            "file": (datafile, "indices_he.csv"),
+            "fields": json.dumps(fields),
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 201
+        reftable = response.json
+        assert "name" in reftable
+        assert reftable["name"] == "My ref table"
+        assert "code" in reftable
+        assert reftable["code"] == "my_table"
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_create_reftable_login_required_error(self, client):
+        logout_user()
+        payload = self._get_payload()
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_needs_create_permission_error(self, client, users):
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not C.
+        set_logged_user(client, users["gestionnaire"])
+        payload = self._get_payload()
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_indicator_missing_name_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(name=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "name" in response.json

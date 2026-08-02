@@ -1,4 +1,15 @@
-<div class="indicators container">
+<div class="container">
+  <div class="admin-actions">
+    <button
+      *ngIf="canReadReferenceTables()"
+      [routerLink]="['/calculatrice/reference-tables']"
+      class="mb-2 mt-2"
+      mat-raised-button
+      color="primary"
+    >
+      Gérer tableaux de référence
+    </button>
+  </div>
   <div class="indic-container">
     <div class="indic-protocol-list">
       <h3>Protocoles</h3>

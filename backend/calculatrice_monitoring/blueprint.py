@@ -1,4 +1,6 @@
-from flask import Blueprint, abort, request
+import json
+
+from flask import Blueprint, Response, abort, request
 from flask_login import login_required
 from flask_parameter_validation import Json, Query, Route, ValidateParameters
 from geonature.core.gn_permissions.decorators import check_cruved_scope
@@ -18,6 +20,7 @@ from calculatrice_monitoring.schemas import (
     IndicatorDetailsSchema,
     IndicatorSchema,
     ProtocolSchema,
+    ReferenceTableCreationSchema,
     ReferenceTableSchema,
     VizBlockConfigSchema,
 )
@@ -296,3 +299,26 @@ eros a suscipit.</p>
 def get_reference_tables():
     reftables = db.session.execute(db.select(ReferenceTable)).scalars()
     return ReferenceTableSchema().jsonify(reftables, many=True)
+
+
+@blueprint.route("/reftables/<int:reftable_id>/data", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def get_reference_table_data(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+    return Response(reftable.data, 200, mimetype="text/plain")
+
+
+@blueprint.route("/reftables", methods=["POST"])
+@check_cruved_scope(action="C", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def create_reference_table():
+    # TODO:
+    # - vérifier encodage fichier
+    # - vérifier fichier CSV
+    fields = json.loads(request.form["fields"])
+    data = ReferenceTableCreationSchema().load(fields)
+    reftable = ReferenceTable(**data)
+    reftable.data = request.files["file"].read().decode("utf-8")
+    db.session.add(reftable)
+    db.session.commit()
+    return ReferenceTableSchema().jsonify(reftable), 201

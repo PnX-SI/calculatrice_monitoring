@@ -65,4 +65,8 @@ export class ModuleComponent implements OnInit {
   canReadIndicator(): boolean {
     return this.getAdminPerm('R') > 0;
   }
+
+  canReadReferenceTables(): boolean {
+    return this.getAdminPerm('R') > 0;
+  }
 }

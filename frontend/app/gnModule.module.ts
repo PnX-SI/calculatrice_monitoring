@@ -17,6 +17,8 @@ import { IndicatorVizBlocksFormComponent } from './components/indicator-viz-bloc
 import { ScalarVizBlockFormComponent } from './components/indicator-viz-blocks-form/scalar-viz-block-form/scalar-viz-block-form.component';
 import { VizBlockFormComponent } from './components/indicator-viz-blocks-form/viz-block-form/viz-block-form.component';
 import { ModuleComponent } from './components/module/module.component';
+import { ReferenceTableFormComponent } from './components/reftable-form/reftable-form.component';
+import { ReferenceTablesComponent } from './components/reftables/reftables.component';
 import { VisualizationBlockComponent } from './components/visualization-block/visualization-block.component';
 import { VisualizationChartComponent } from './components/visualization-chart/visualization-chart.component';
 import { VisualizationPageComponent } from './components/visualization-page/visualization-page.component';
@@ -32,6 +34,8 @@ const routes: Routes = [
   { path: 'indicator/:indicatorId/edit', component: IndicatorFormComponent },
   { path: 'indicator/:indicatorId/edit-code', component: IndicatorCodeEditorComponent },
   { path: 'indicator/:indicatorId/viz-blocks', component: IndicatorVizBlocksFormComponent },
+  { path: 'reference-tables', component: ReferenceTablesComponent },
+  { path: 'reference-table/create', component: ReferenceTableFormComponent },
   { path: 'visualization/:indicatorId/params', component: VisualizationParamsFormComponent },
   { path: 'visualization/:indicatorId', component: VisualizationPageComponent },
 ];
@@ -46,6 +50,8 @@ const routes: Routes = [
     VizBlockFormComponent,
     ScalarVizBlockFormComponent,
     BarChartVizBlockFormComponent,
+    ReferenceTablesComponent,
+    ReferenceTableFormComponent,
     VisualizationParamsFormComponent,
     VisualizationPageComponent,
     VisualizationBlockComponent,

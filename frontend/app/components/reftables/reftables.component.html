@@ -1,0 +1,96 @@
+<div class="container">
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="card">
+    <div class="card-header">
+      <h3>Tableaux de référence</h3>
+    </div>
+    <div class="card-body">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Code</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let refTable of referenceTables">
+            <td>{{ refTable.name }}</td>
+            <td class="ref-table-code">{{ refTable.code }}</td>
+            <td>
+              <ng-container *ngIf="canEditReferenceTable(); else noEditButton">
+                <button
+                  mat-icon-button
+                  matTooltip="Éditer le tableau"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </ng-container>
+              <ng-template #noEditButton>
+                <button
+                  mat-icon-button
+                  [disabled]="true"
+                >
+                  <mat-icon matTooltip="Vous n'avez pas l'autorisation d'éditer">edit</mat-icon>
+                </button>
+              </ng-template>
+              <ng-container *ngIf="canExportReferenceTable(); else noExportButton">
+                <button
+                  mat-icon-button
+                  matTooltip="Exporter le tableau"
+                  (click)="downloadFile(refTable)"
+                >
+                  <mat-icon>download</mat-icon>
+                </button>
+              </ng-container>
+              <ng-template #noExportButton>
+                <button
+                  mat-icon-button
+                  [disabled]="true"
+                >
+                  <mat-icon matTooltip="Vous n'avez pas l'autorisation d'exporter">
+                    download
+                  </mat-icon>
+                </button>
+              </ng-template>
+              <ng-container *ngIf="canDeleteReferenceTable(); else noDeleteButton">
+                <button
+                  mat-icon-button
+                  matTooltip="Supprimer le tableau"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </ng-container>
+              <ng-template #noDeleteButton>
+                <button
+                  mat-icon-button
+                  [disabled]="true"
+                >
+                  <mat-icon matTooltip="Vous n'avez pas l'autorisation de supprimer">
+                    delete
+                  </mat-icon>
+                </button>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <button
+        *ngIf="canCreateReferenceTable()"
+        [routerLink]="['/calculatrice/reference-table/create']"
+        class="mt-2 mb-2"
+        mat-raised-button
+        color="primary"
+      >
+        Ajouter un tableau de référence
+      </button>
+    </div>
+  </div>
+</div>

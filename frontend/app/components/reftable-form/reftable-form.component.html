@@ -1,0 +1,62 @@
+<div class="container">
+  <a
+    mat-raised-button
+    routerLink="/calculatrice/reference-tables"
+    class="mb-2"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="card">
+    <div class="card-header">
+      <h2>Créer un tableau de référence</h2>
+    </div>
+    <div class="card-body">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+      >
+        <div class="form-inputs">
+          <div>
+            <label for="name">Nom</label>
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              class="form-control"
+            />
+          </div>
+          <div>
+            <label for="code">Code</label>
+            <input
+              id="code"
+              type="text"
+              formControlName="code"
+              class="form-control"
+            />
+          </div>
+          <div>
+            <label for="file-input">Importer fichier CSV</label>
+            <input
+              id="file-input"
+              type="file"
+              formControlName="file"
+              (change)="onFileChange($event)"
+              class="form-control"
+            />
+          </div>
+        </div>
+        <hr />
+        <button
+          type="submit"
+          mat-raised-button
+          color="primary"
+          id="validate"
+          [disabled]="!form.valid"
+        >
+          Valider
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
