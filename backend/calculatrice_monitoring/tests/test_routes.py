@@ -180,12 +180,14 @@ def test_indicators_fixture(indicators):
 
 class TestCreateIndicator:
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_create_indicator(self, client, users, protocol):
+    def test_create_indicator(self, client, users, protocol, reference_tables):
+        reftable_id = reference_tables["indices_he"].id_reference_table
         set_logged_user(client, users["admin"])
         payload = {
             "name": "New Indicator",
             "description": "A brand new indicator.",
             "protocolId": protocol.id_module,
+            "referenceTableIds": [reftable_id],
         }
         response = client.post(url_for("calculatrice.create_indicator"), json=payload)
         assert response.status_code == 201
@@ -197,6 +199,8 @@ class TestCreateIndicator:
         assert created.name == "New Indicator"
         assert created.description == "A brand new indicator."
         assert created.id_protocol == protocol.id_module
+        assert len(created.reference_tables) == 1
+        assert reftable_id in [rt.id_reference_table for rt in created.reference_tables]
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_indicator_without_description(self, client, users, protocol):

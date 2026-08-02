@@ -43,10 +43,9 @@ def _fetch_reference_tables(reference_table_ids):
     return reference_tables
 
 
-def _validate_indicator_relations(data):
+def _validate_and_get_indicator_relations(data):
     """Validates the protocol and reference tables referenced by an indicator payload.
 
-    `data` is mutated: `reference_table_ids` is popped out of it.
     Returns a tuple `(reference_tables, error_response)`: on failure, `reference_tables`
     is None and `error_response` is the `(body, status)` tuple to return to the client.
     """
@@ -91,9 +90,10 @@ def create_indicator():
         data = IndicatorAttributesSchema().load(request.json)
     except ValidationError as error:
         return error.messages, 400
-    reference_tables, error_response = _validate_indicator_relations(data)
+    reference_tables, error_response = _validate_and_get_indicator_relations(data)
     if error_response:
         return error_response
+    data.pop("reference_table_ids", None)
     indicator = Indicator(**data)
     indicator.reference_tables = reference_tables
     db.session.add(indicator)
@@ -112,7 +112,7 @@ def edit_indicator(indicator_id: int):
         data = schema.load(request.json)
     except ValidationError as error:
         return error.messages, 400
-    reference_tables, error_response = _validate_indicator_relations(data)
+    reference_tables, error_response = _validate_and_get_indicator_relations(data)
     if error_response:
         return error_response
 
