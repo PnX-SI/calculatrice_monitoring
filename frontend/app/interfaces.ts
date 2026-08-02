@@ -31,6 +31,13 @@ export interface Protocol {
 export interface ReferenceTable {
   id: number;
   name: string;
+  // TODO: ajouter description
+  // description?: string;
+  code: string;
+}
+
+export interface ReferenceTableAttributes {
+  name: string;
   code: string;
 }
 

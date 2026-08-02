@@ -6,11 +6,13 @@ h1 {
   padding: 0;
 }
 
-.indicators {
-  background-color: white;
+.admin-actions {
+  display: flex;
+  justify-content: end;
 }
 
 .indic-container {
+  background-color: white;
   display: flex;
   min-height: 90vh;
 }

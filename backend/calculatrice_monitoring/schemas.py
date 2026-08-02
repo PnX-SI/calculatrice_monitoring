@@ -40,6 +40,12 @@ class ReferenceTableSchema(ma.SQLAlchemyAutoSchema):
         exclude = ["data"]
 
 
+class ReferenceTableCreationSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ReferenceTable
+        dump_only = ["description", "id_reference_table", "data"]
+
+
 class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     id_indicator = ma.Integer(data_key="id")
     id_protocol = ma.Integer(data_key="protocolId")

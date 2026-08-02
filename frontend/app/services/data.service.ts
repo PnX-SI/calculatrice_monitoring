@@ -10,6 +10,7 @@ import {
   IndicatorDetails,
   Protocol,
   ReferenceTable,
+  ReferenceTableAttributes,
   Site,
   SitesGroup,
   VisualizationBlockConfigPayload,
@@ -192,6 +193,23 @@ export class DataService {
   getReferenceTables() {
     return this._http.get<Array<ReferenceTable>>(
       `${this._config.API_ENDPOINT}/calculatrice/reftables`
+    );
+  }
+
+  getReferenceTableData(referenceTable: ReferenceTable) {
+    return this._http.get(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTable.id}/data`,
+      { responseType: 'blob' }
+    );
+  }
+
+  createReferenceTable(fields: ReferenceTableAttributes, file: File) {
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('fields', JSON.stringify(fields));
+    return this._http.post<ReferenceTable>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables`,
+      formData
     );
   }
 
