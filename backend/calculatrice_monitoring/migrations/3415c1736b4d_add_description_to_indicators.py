@@ -22,6 +22,7 @@ def upgrade():
         sa.Column(
             "description",
             sa.Unicode(),
+            default="",
         ),
         schema="gn_calculatrice",
     )
