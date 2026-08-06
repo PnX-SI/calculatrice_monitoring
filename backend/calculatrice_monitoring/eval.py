@@ -227,27 +227,6 @@ def gn_extract(
     return PropertyCollection(values=values, scope=properties.scope)
 
 
-def create_abondance_perc(observations: MonitoringCollection) -> PropertyCollection:
-    """Given an observations MonitoringCollection it returns a PropertyCollection with
-    percentage values for the abondance property.
-
-    This is a temporary dev function which will be replaced with the Reference Table system or
-    a generic transformation function (like "TransformPropertyWithMap")."""
-    map = {"+": "0.5", "1": "3", "2": "15", "3": "37.5", "4": "67.5", "5": "87.5"}
-    values: list[PropertyValue] = []
-    for abondance in observations.abondance.values:  # PropertyCollection
-        values.append(
-            PropertyValue(
-                value=map[abondance.value],
-                entity=abondance.entity,
-            )
-        )
-    return PropertyCollection(
-        values=values,
-        scope=Scope.OBSERVATION,
-    )
-
-
 def fetch_prop_value(prop_collection: PropertyCollection, entity_id: Any) -> Any:
     """Look into the PropertyCollection for the PropertyValue corresponding to the entity ID.
 
@@ -350,7 +329,7 @@ def create_context(
 ) -> dict:
     context = {}
     context["gn_mean"] = gn_mean
-    context["create_abondance_perc"] = create_abondance_perc
+    # context["create_abondance_perc"] = create_abondance_perc
     context["observations"] = collections[Scope.OBSERVATION]
     context["visites"] = collections[Scope.VISIT]
     context["sites"] = collections[Scope.SITE]

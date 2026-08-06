@@ -24,7 +24,13 @@ moyenne = gn_mean(observations.abondance)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_all_observations(self, eval_context):
         code = """
-moyenne = gn_mean(create_abondance_perc(observations))
+abondance_perc = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
+moyenne = gn_mean(abondance_perc)
         """
 
         variables = evaluate(code, eval_context)
@@ -58,7 +64,13 @@ moyenne = gn_mean(observations.abondance, scope=Scope.VISIT)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = gn_mean(create_abondance_perc(observations), scope=Scope.VISIT)
+valeurs_abondance = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
+moyenne = gn_mean(valeurs_abondance, scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -150,7 +162,12 @@ médiane = gn_median(moyenne)
     ):
         code = """
 valeurs_he = gn_extract(indices_he, "cdnom", "indice_he", observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
+abondance_perc = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = gn_median(moyenne)
 """

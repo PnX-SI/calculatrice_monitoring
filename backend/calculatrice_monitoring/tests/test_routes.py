@@ -652,7 +652,7 @@ class TestGetIndicatorDetails:
         assert "visualizationBlockConfigs" in data
         assert len(data["visualizationBlockConfigs"]) == 2
         assert "referenceTables" in data
-        assert len(data["referenceTables"]) == 1
+        assert len(data["referenceTables"]) == 2
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_get_indicator_details_login_required_error(self, client, indicators):
@@ -797,9 +797,10 @@ class TestGetRerenceTables:
         assert response.status_code == 200
 
         reftables_codes = [rt["code"] for rt in response.json]
-        assert len(reftables_codes) == 2
+        assert len(reftables_codes) == 3
         assert "indices_he" in reftables_codes
         assert "indices_ht" in reftables_codes
+        assert "valeurs_abondance" in reftables_codes
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_empty_reftables_list(self, client, users):

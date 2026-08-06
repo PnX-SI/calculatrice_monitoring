@@ -392,10 +392,19 @@ def install_reference_tables():
             code="indices_ht",
         )
         db.session.add(ref_table_ht)
+        ref_table_abondance = install_reference_table_from_csv(
+            "valeurs_abondance.csv",
+            name="Valeurs abondance",
+            description="Tableau de référence avec la correspondance "
+            + "libellés => valeurs pour l'abondance",
+            code="valeurs_abondance",
+        )
+        db.session.add(ref_table_abondance)
 
     return {
         "indices_he": ref_table_he,
         "indices_ht": ref_table_ht,
+        "valeurs_abondance": ref_table_abondance,
     }
 
 
@@ -413,7 +422,12 @@ CODE_I02_ABONDANCE = """valeurs_he = gn_extract(
     origin_field="cdnom",
     target_field="indice_he",
     properties=observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
+abondance_perc = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = gn_median(moyenne)
 """
@@ -432,7 +446,12 @@ CODE_I06_ABONDANCE = """valeurs_ht = gn_extract(
     origin_field="cdnom",
     target_field="indice_ht",
     properties=observations.cd_nom)
-abondance_perc = create_abondance_perc(observations)
+abondance_perc = = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
 moyenne = gn_mean(valeurs_ht, scope=Scope.SITE, weights=abondance_perc)
 médiane = gn_median(moyenne)
 """
@@ -468,7 +487,7 @@ def install_test_indicators(protocols, reference_tables):
         },
         {
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
-            "reference_table_codes": ["indices_he"],
+            "reference_table_codes": ["indices_he", "valeurs_abondance"],
             "code": CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
@@ -480,7 +499,7 @@ def install_test_indicators(protocols, reference_tables):
         },
         {
             "name": "I06 - indice floristique de fertilité du sol (avec abondance)",
-            "reference_table_codes": ["indices_ht"],
+            "reference_table_codes": ["indices_ht", "valeurs_abondance"],
             "code": CODE_I06_ABONDANCE,
             "ref": "i06_abondance",
         },
