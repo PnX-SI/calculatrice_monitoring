@@ -399,42 +399,42 @@ def install_reference_tables():
     }
 
 
-CODE_I02 = """valeurs_he = Extraire(
+CODE_I02 = """valeurs_he = gn_extract(
     ref_table=indices_he,
     origin_field="cdnom",
     target_field="indice_he",
     properties=observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
-médiane = Médiane(moyenne)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE)
+médiane = gn_median(moyenne)
 """
 
-CODE_I02_ABONDANCE = """valeurs_he = Extraire(
+CODE_I02_ABONDANCE = """valeurs_he = gn_extract(
     ref_table=indices_he,
     origin_field="cdnom",
     target_field="indice_he",
     properties=observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
-médiane = Médiane(moyenne)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = gn_median(moyenne)
 """
 
-CODE_I06 = """valeurs_ht = Extraire(
+CODE_I06 = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
     target_field="indice_ht",
     properties=observations.cd_nom)
-moyenne = Moyenne(valeurs_ht, scope=Scope.SITE)
-médiane = Médiane(moyenne)
+moyenne = gn_mean(valeurs_ht, scope=Scope.SITE)
+médiane = gn_median(moyenne)
 """
 
-CODE_I06_ABONDANCE = """valeurs_ht = Extraire(
+CODE_I06_ABONDANCE = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
     target_field="indice_ht",
     properties=observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_ht, scope=Scope.SITE, weights=abondance_perc)
-médiane = Médiane(moyenne)
+moyenne = gn_mean(valeurs_ht, scope=Scope.SITE, weights=abondance_perc)
+médiane = gn_median(moyenne)
 """
 
 

@@ -444,7 +444,7 @@ class TestGetIndicatorVisualization:
                 name="dummy indicator testing the context",
                 id_protocol=flore_protocol.id_module,
                 code="""
-moy_durée = Moyenne(visites.durée_secondes)
+moy_durée = gn_mean(visites.durée_secondes)
                 """,
             )
             db.session.add(indicator)
@@ -489,7 +489,7 @@ moy_durée = Moyenne(visites.durée_secondes)
             indicator = Indicator(
                 name="dummy indicator testing sites in the context",
                 id_protocol=flore_protocol.id_module,
-                code="moy_superficies = Moyenne(sites.superficie_mètres_carrés)",
+                code="moy_superficies = gn_mean(sites.superficie_mètres_carrés)",
             )
             db.session.add(indicator)
 
@@ -527,7 +527,7 @@ class TestEditIndicatorCode:
     def test_edit_indicator_code(self, client, users, protocol_with_indicators):
         set_logged_user(client, users["admin"])
         indicator = protocol_with_indicators["indicators"][0]
-        new_code = "moyenne = Moyenne(visites.duree_secondes)"
+        new_code = "moyenne = gn_mean(visites.duree_secondes)"
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
             json={"code": new_code},
@@ -686,7 +686,7 @@ class TestEditIndicatorVizBlocks:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_vizblocks(self, client, users, protocol):
         set_logged_user(client, users["admin"])
-        code = "moyenne = Moyenne(visites.duree_secondes)"
+        code = "moyenne = gn_mean(visites.duree_secondes)"
         indicator = self._create_indicator(protocol, code)
 
         response = client.put(
