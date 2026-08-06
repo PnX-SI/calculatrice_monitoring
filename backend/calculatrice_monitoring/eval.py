@@ -212,7 +212,7 @@ def _build_table(data, origin_field, target_field):
     return lookup
 
 
-def Extraire(
+def gn_extract(
     ref_table: ReferenceTable, origin_field: str, target_field: str, properties: PropertyCollection
 ):
     values = []
@@ -259,7 +259,7 @@ def fetch_prop_value(prop_collection: PropertyCollection, entity_id: Any) -> Any
     return None
 
 
-def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
+def gn_mean(
     prop_collection: PropertyCollection,
     scope: Scope = Scope.GLOBAL,
     weights: PropertyCollection = None,
@@ -310,7 +310,7 @@ def Moyenne(  # noqa: N802  # (N802 Function name `Moyenne` should be lowercase)
         )
 
 
-def Médiane(prop_collection: PropertyCollection) -> PropertyCollection:
+def gn_median(prop_collection: PropertyCollection) -> PropertyCollection:
     """Returns the median value for the given property collection (for now the only implemented
     scope is "global")."""
     median = statistics.median([Decimal(prop_value.value) for prop_value in prop_collection.values])
@@ -349,14 +349,14 @@ def create_context(
     collections: dict[Scope, MonitoringCollection], reference_tables: list[ReferenceTable]
 ) -> dict:
     context = {}
-    context["Moyenne"] = Moyenne
+    context["gn_mean"] = gn_mean
     context["create_abondance_perc"] = create_abondance_perc
     context["observations"] = collections[Scope.OBSERVATION]
     context["visites"] = collections[Scope.VISIT]
     context["sites"] = collections[Scope.SITE]
-    context["Médiane"] = Médiane
+    context["gn_median"] = gn_median
     context["Scope"] = Scope
-    context["Extraire"] = Extraire
+    context["gn_extract"] = gn_extract
     for rf in reference_tables:
         context[rf.code] = rf
     return context

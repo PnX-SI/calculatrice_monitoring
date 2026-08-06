@@ -12,7 +12,7 @@ class TestEvalIndicator:
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance)
+moyenne = gn_mean(observations.abondance)
         """
 
         variables = evaluate(code, eval_context)
@@ -24,7 +24,7 @@ moyenne = Moyenne(observations.abondance)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(create_abondance_perc(observations))
+moyenne = gn_mean(create_abondance_perc(observations))
         """
 
         variables = evaluate(code, eval_context)
@@ -36,7 +36,7 @@ moyenne = Moyenne(create_abondance_perc(observations))
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope=Scope.VISIT)
+moyenne = gn_mean(observations.abondance, scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -58,7 +58,7 @@ moyenne = Moyenne(observations.abondance, scope=Scope.VISIT)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_percentages_per_visit_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(create_abondance_perc(observations), scope=Scope.VISIT)
+moyenne = gn_mean(create_abondance_perc(observations), scope=Scope.VISIT)
             """
 
         variables = evaluate(code, eval_context)
@@ -80,7 +80,7 @@ moyenne = Moyenne(create_abondance_perc(observations), scope=Scope.VISIT)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_site_all_observations(self, eval_context):
         code = """
-moyenne = Moyenne(observations.abondance, scope=Scope.SITE)
+moyenne = gn_mean(observations.abondance, scope=Scope.SITE)
                 """
 
         variables = evaluate(code, eval_context)
@@ -109,9 +109,9 @@ moyenne = Moyenne(observations.abondance, scope=Scope.SITE)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
-valeurs_he = Extraire(indices_he, "cdnom", "indice_he", observations.cd_nom)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE)
-médiane = Médiane(moyenne)
+valeurs_he = gn_extract(indices_he, "cdnom", "indice_he", observations.cd_nom)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE)
+médiane = gn_median(moyenne)
 """
 
         variables = evaluate(code, eval_context)
@@ -149,10 +149,10 @@ médiane = Médiane(moyenne)
         self, eval_context
     ):
         code = """
-valeurs_he = Extraire(indices_he, "cdnom", "indice_he", observations.cd_nom)
+valeurs_he = gn_extract(indices_he, "cdnom", "indice_he", observations.cd_nom)
 abondance_perc = create_abondance_perc(observations)
-moyenne = Moyenne(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
-médiane = Médiane(moyenne)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = gn_median(moyenne)
 """
 
         variables = evaluate(code, eval_context)
@@ -188,7 +188,7 @@ médiane = Médiane(moyenne)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_durée_visites(self, eval_context):
         code = """
-moyenne_durée = Moyenne(visites.durée_secondes)
+moyenne_durée = gn_mean(visites.durée_secondes)
 """
 
         variables = evaluate(code, eval_context)
