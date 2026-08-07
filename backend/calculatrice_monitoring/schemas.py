@@ -50,7 +50,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
         exclude = ["code"]
 
 
-class IndicatorCreationSchema(ma.SQLAlchemyAutoSchema):
+class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
     """Schema used to validate the payload when creating an indicator.
 
     Only the basic attributes of an indicator can be set on creation.
