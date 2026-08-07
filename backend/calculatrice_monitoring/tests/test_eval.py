@@ -31,7 +31,7 @@ moyenne = gn_mean(create_abondance_perc(observations))
 
         assert "moyenne" in variables
         assert len(variables["moyenne"].values) == 1
-        assert variables["moyenne"].values[0].value == Decimal("10.33333333333333333333333333")
+        assert variables["moyenne"].values[0].value == Decimal("10.38461538461538461538461538")
 
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_abondance_per_visit_all_observations(self, eval_context):

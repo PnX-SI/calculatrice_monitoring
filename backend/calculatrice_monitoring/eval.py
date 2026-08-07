@@ -233,7 +233,7 @@ def create_abondance_perc(observations: MonitoringCollection) -> PropertyCollect
 
     This is a temporary dev function which will be replaced with the Reference Table system or
     a generic transformation function (like "TransformPropertyWithMap")."""
-    map = {"+": 0.5, "1": 3, "2": 15, "3": 37.5, "4": 67.5, "5": 87.5}
+    map = {"+": "0.5", "1": "3", "2": "15", "3": "37.5", "4": "67.5", "5": "87.5"}
     values: list[PropertyValue] = []
     for abondance in observations.abondance.values:  # PropertyCollection
         values.append(
@@ -273,7 +273,7 @@ def gn_mean(
     if scope == Scope.GLOBAL:
         sums = 0
         for prop_value in prop_collection.values:
-            sums += int(prop_value.value)
+            sums += Decimal(prop_value.value)
         moyenne = Decimal(sums) / len(prop_collection.values)
         return PropertyCollection(
             values=[PropertyValue(value=moyenne, entity=ROOT)], scope=Scope.GLOBAL
