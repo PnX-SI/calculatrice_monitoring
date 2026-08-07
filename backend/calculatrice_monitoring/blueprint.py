@@ -14,7 +14,7 @@ from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import visualize
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
 from calculatrice_monitoring.schemas import (
-    IndicatorCreationSchema,
+    IndicatorAttributesSchema,
     IndicatorDetailsSchema,
     IndicatorSchema,
     ProtocolSchema,
@@ -85,7 +85,7 @@ def get_protocol(protocol_id: int):
 @check_cruved_scope(action="C", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
 def create_indicator():
     try:
-        data = IndicatorCreationSchema().load(request.json)
+        data = IndicatorAttributesSchema().load(request.json)
     except ValidationError as error:
         return error.messages, 400
     reference_tables, error_response = _validate_indicator_relations(data)
@@ -104,8 +104,7 @@ def edit_indicator(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
 
-    # TODO: rename schema to IndicAttributsSchema
-    schema = IndicatorCreationSchema()
+    schema = IndicatorAttributesSchema()
     try:
         data = schema.load(request.json)
     except ValidationError as error:
