@@ -108,7 +108,6 @@ def edit_indicator(indicator_id: int):
     try:
         data = schema.load(request.json)
     except ValidationError as error:
-        # TODO: check needed
         return error.messages, 400
     reference_tables, error_response = _validate_indicator_relations(data)
     if error_response:
