@@ -55,7 +55,7 @@ def _validate_indicator_relations(data):
     except NoResultFound:
         return None, ({"protocolId": [f"Protocol with ID {protocol_id} not found"]}, 400)
 
-    reference_table_ids = data.pop("reference_table_ids", [])
+    reference_table_ids = data.get("reference_table_ids", [])
     try:
         reference_tables = _fetch_reference_tables(reference_table_ids)
     except ValueError as error:
