@@ -141,6 +141,9 @@ class MonitoringCollection:
         self.scope = scope
         # property collections are added in create function.
 
+    def __len__(self):
+        return len(self.entities)
+
 
 generic_props_by_scope = {
     Scope.OBSERVATION: [
@@ -195,6 +198,7 @@ def create_monitoring_collection(
     install_properties(
         collection=coll, scope=scope, entities=entities, property_list=specific_props
     )
+    coll.entities = entities
     return coll
 
 
