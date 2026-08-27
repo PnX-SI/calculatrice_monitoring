@@ -9,6 +9,7 @@ from geonature.utils.env import db
 from pypnusershub.tests.utils import set_logged_user
 from werkzeug.datastructures import Headers
 
+from calculatrice_monitoring.eval import VisualizationErrorType
 from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
 
 
@@ -422,7 +423,7 @@ class TestGetIndicatorVisualization:
             },
         )
         assert response.status_code == 200
-        viz_blocks = response.json
+        viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 2
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "6.5"
@@ -476,7 +477,7 @@ moy_durée = gn_mean(visites.durée_secondes)
             },
         )
         assert response.status_code == 200
-        viz_blocks = response.json
+        viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 1
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "576"
@@ -520,10 +521,132 @@ moy_durée = gn_mean(visites.durée_secondes)
             },
         )
         assert response.status_code == 200
-        viz_blocks = response.json
+        viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 1
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "2"
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    def test_get_visualization_of_indicator_check_error(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing custom indicator error",
+                id_protocol=flore_protocol.id_module,
+                code="""
+nb_sites=len(sites)
+if nb_sites < 20:
+    raise IndicatorError(
+        f"Cet indicateur nécessite au moins 20 sites. La sélection inclut {nb_sites} sites."
+    )
+""",
+            )
+            db.session.add(indicator)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        error = response.json["error"]
+        assert error["type"] == VisualizationErrorType.check.value
+        assert (
+            error["message"]
+            == "Cet indicateur nécessite au moins 20 sites. La sélection inclut 5 sites."
+        )
+        viz_blocks = response.json["vizBlocks"]
+        assert len(viz_blocks) == 0
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    def test_get_visualization_of_indicator_internal_error(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing custom indicator error",
+                id_protocol=flore_protocol.id_module,
+                code="""
+# This comment adds a line to check proper detection of traceback line numbers
+result = 1 / 0
+""",
+            )
+            db.session.add(indicator)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        error = response.json["error"]
+        assert error["type"] == VisualizationErrorType.internal.value
+        assert error["message"] == "ZeroDivisionError: division by zero at line 3"
+        viz_blocks = response.json["vizBlocks"]
+        assert len(viz_blocks) == 0
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    def test_get_visualization_of_indicator_deep_internal_error(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing custom indicator error",
+                id_protocol=flore_protocol.id_module,
+                code="""
+# This comment adds a line to check proper detection of traceback line numbers
+def foo():
+  return 1 / 0
+result = foo()
+""",
+            )
+            db.session.add(indicator)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        error = response.json["error"]
+        assert error["type"] == VisualizationErrorType.internal.value
+        assert error["message"] == "ZeroDivisionError: division by zero at line 4"
+        viz_blocks = response.json["vizBlocks"]
+        assert len(viz_blocks) == 0
 
 
 class TestEditIndicatorCode:

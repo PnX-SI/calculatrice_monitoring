@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Campaign, Site, VisualizationBlockDefinition } from '../../interfaces';
+import { ModuleService } from '@geonature/services/module.service';
+import { Campaign, Site, VisualizationBlockDefinition, VisualizationError } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 
 interface Selection {
@@ -17,6 +18,7 @@ interface Selection {
 })
 export class VisualizationPageComponent implements OnInit {
   protected vizBlocks: VisualizationBlockDefinition[];
+  protected visualizationError?: VisualizationError;
   protected selections: Selection[];
   private _sites: Site[];
   private _campaigns: Campaign[];
@@ -25,7 +27,8 @@ export class VisualizationPageComponent implements OnInit {
   constructor(
     private _data: DataService,
     private _router: Router,
-    private _route: ActivatedRoute
+    private _route: ActivatedRoute,
+    private _moduleService: ModuleService
   ) {}
 
   ngOnInit() {
@@ -88,7 +91,20 @@ export class VisualizationPageComponent implements OnInit {
         vizSelection.type
       )
       .subscribe((data) => {
-        this.vizBlocks = data;
+        this.vizBlocks = data.vizBlocks;
+        this.visualizationError = data.error;
       });
+  }
+
+  private getAdminPerm(perm: string): number {
+    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
+  }
+
+  isUserAdmin(): boolean {
+    return this.getAdminPerm('U') > 0;
+  }
+
+  showGenericError() {
+    return this.visualizationError?.type === 'internal' && !this.isUserAdmin();
   }
 }

@@ -92,6 +92,16 @@ export interface VisualizationBlockDefinition {
   data: VisualizationBlockData;
 }
 
+export interface VisualizationError {
+  type: 'check' | 'internal';
+  message: string;
+}
+
+export interface Visualization {
+  error?: VisualizationError;
+  vizBlocks: VisualizationBlockDefinition[];
+}
+
 export interface Campaign {
   startDate: string;
   endDate: string;
