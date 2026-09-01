@@ -19,14 +19,358 @@
         [formGroup]="indicatorForm"
         (ngSubmit)="onSubmit()"
       >
-        <div>
-          <label for="code">Code de l'indicateur</label>
-          <textarea
-            id="code"
-            formControlName="code"
-            rows="10"
-            cols="80"
-          ></textarea>
+        <div class="code-editor-container">
+          <div class="textarea-wrapper">
+            <label for="code">Code de l'indicateur</label>
+            <textarea
+              id="code"
+              formControlName="code"
+              spellcheck="false"
+              rows="10"
+              cols="80"
+            ></textarea>
+          </div>
+          <div class="objects-panel">
+            <!-- Données Section -->
+            <div class="category-section">
+              <h3 class="category-title">Données</h3>
+              <div class="object-list">
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('sites'); $event.stopPropagation()"
+                    >
+                      sites
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    L'object
+                    <code>sites</code>
+                    représente les sites de la sélection. Il permet d'accéder aux propriétés avec
+                    l'opérateur . (point).
+                  </p>
+                  <p>Propriétés génériques</p>
+                  <ul>
+                    <li
+                      (click)="insertCode('sites.id_base_site'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      id_base_site
+                    </li>
+                    <li
+                      (click)="insertCode('sites.base_site_name'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      base_site_name
+                    </li>
+                  </ul>
+                  <p>Propriétés du protocole</p>
+                  <ul>
+                    <li
+                      *ngFor="let prop of protocolProperties.site"
+                      (click)="insertCode('sites.' + prop); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      {{ prop }}
+                    </li>
+                  </ul>
+                </mat-expansion-panel>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('visites'); $event.stopPropagation()"
+                    >
+                      visites
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    L'object
+                    <code>visites</code>
+                    représente les visites de la sélection. Il permet d'accéder aux propriétés avec
+                    l'opérateur . (point).
+                  </p>
+                  <p>Propriétés génériques</p>
+                  <ul>
+                    <li
+                      (click)="insertCode('visites.id_base_visit'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      id_base_visit
+                    </li>
+                  </ul>
+                  <p>Propriétés du protocole</p>
+                  <ul>
+                    <li
+                      *ngFor="let prop of protocolProperties.visit"
+                      (click)="insertCode('visites.' + prop); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      {{ prop }}
+                    </li>
+                  </ul>
+                </mat-expansion-panel>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('observations'); $event.stopPropagation()"
+                    >
+                      observations
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    L'object
+                    <code>observations</code>
+                    représente les observations de la sélection. Il permet d'accéder aux propriétés
+                    avec l'opérateur . (point).
+                  </p>
+                  <p>Propriétés génériques</p>
+                  <ul>
+                    <li
+                      (click)="insertCode('cd_nom'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      cd_nom
+                    </li>
+                  </ul>
+                  <p>Propriétés du protocole</p>
+                  <ul>
+                    <li
+                      *ngFor="let prop of protocolProperties.observation"
+                      (click)="insertCode('observations.' + prop); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      {{ prop }}
+                    </li>
+                  </ul>
+                </mat-expansion-panel>
+              </div>
+            </div>
+
+            <!-- Fonctions Section -->
+            <div class="category-section">
+              <h3 class="category-title">Fonctions</h3>
+              <div class="object-list">
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('gn_mean'); $event.stopPropagation()"
+                    >
+                      gn_mean
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    La fonction
+                    <code>gn_mean</code>
+                    retourne des valeurs moyennes selon un scope pour un objet
+                    <code>PropertyCollection</code>
+                    . Optionnellement la moyenne peut être pondérée en fournissant un autre objet
+                    <code>PropertyCollection</code>
+                    pour les poids.
+                  </p>
+                  <h4>Syntaxe</h4>
+                  <p>
+                    <code>gn_mean(properties [, scope=Scope.GLOBAL] [, weigths=None])</code>
+                  </p>
+                  <p>[ ] indique des éléments optionnels</p>
+                  <h4>Arguments</h4>
+                  <dl>
+                    <dt>properties</dt>
+                    <dd>
+                      Un objet
+                      <code>PropertyCollection</code>
+                      avec des valeurs numériques.
+                    </dd>
+                    <dt>scope</dt>
+                    <dd>
+                      Le scope sur lequel calculer les moyennes. Il doit être supérieur au scope de
+                      la propriété.
+                    </dd>
+                    <dt>weights</dt>
+                    <dd>
+                      Un autre objet
+                      <code>PropertyCollection</code>
+                      avec des valeurs numériques pour les poids.
+                    </dd>
+                  </dl>
+                  <h4>Exemples</h4>
+                  <p>
+                    Moyenne des scores des taxons observés par visite (en admettant que le protocole
+                    cible ait une propriété
+                    <code>score_taxon</code>
+                    au niveau des observations.
+                  </p>
+                  <p>
+                    <code>
+                      scores_moyens = gn_mean(observations.score_taxon, scope=Scope.VISIT)
+                    </code>
+                  </p>
+                  <p>
+                    L'objet retourné est une
+                    <code>PropertyCollection</code>
+                    de scope VISIT avec pour valeurs les moyennes des scores pour chaque visite.
+                  </p>
+                  <p>
+                    En reprenant l'exemple précédent on peut aussi calculer les moyennes pondérées
+                    des scores pour chaque visite.
+                  </p>
+                  <p>
+                    <code>
+                      scores_moyens_pondérés = gn_mean(observations.score_taxon, scope=Scope.VISIT,
+                      weigths=observations.abondance)
+                    </code>
+                  </p>
+                </mat-expansion-panel>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('gn_median'); $event.stopPropagation()"
+                    >
+                      gn_median
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    La fonction
+                    <code>gn_median</code>
+                    retourne les valeurs médianes selon un scope pour un objet
+                    <code>PropertyCollection</code>
+                    .
+                  </p>
+                  <h4>Syntaxe</h4>
+                  <p>
+                    <code>gn_median(properties [, scope=Scope.GLOBAL])</code>
+                  </p>
+                  <p>[ ] indique des éléments optionnels</p>
+                  <h4>Arguments</h4>
+                  <dl>
+                    <dt>properties</dt>
+                    <dd>
+                      Un objet
+                      <code>PropertyCollection</code>
+                      avec des valeurs numériques.
+                    </dd>
+                    <dt>scope</dt>
+                    <dd>
+                      Le scope sur lequel calculer les moyennes. Il doit être supérieur au scope de
+                      la propriété.
+                    </dd>
+                  </dl>
+                  <h4>Exemples</h4>
+                  <p>
+                    Médiane des scores des taxons observés par visite (en admettant que le protocole
+                    cible ait une propriété
+                    <code>score_taxon</code>
+                    au niveau des observations.
+                  </p>
+                  <p>
+                    <code>
+                      scores_médians = gn_median(observations.score_taxon, scope=Scope.VISIT)
+                    </code>
+                  </p>
+                  <p>
+                    L'objet retourné est une
+                    <code>PropertyCollection</code>
+                    de scope VISIT avec pour valeurs les médianes des scores pour chaque visite.
+                  </p>
+                </mat-expansion-panel>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
+                      (click)="insertCode('gn_extract'); $event.stopPropagation()"
+                    >
+                      gn_extract
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    La fonction
+                    <code>gn_extract</code>
+                    retourne les correspondances d'une propriété dans un tableau de référence.
+                  </p>
+                  <h4>Syntaxe</h4>
+                  <p>
+                    <code>gn_extract(ref_table, origin_field, target_field, properties):</code>
+                  </p>
+                  <h4>Arguments</h4>
+                  <dl>
+                    <dt>ref_table</dt>
+                    <dd>
+                      Un objet
+                      <code>ReferenceTable</code>
+                      .
+                    </dd>
+                    <dt>origin_field</dt>
+                    <dd>
+                      Le nom de la colonne d'entrée du tableau (contenant les valeurs de la
+                      propriété).
+                    </dd>
+                    <dt>target_field</dt>
+                    <dd>
+                      Le nom de la colonne de sortie du tableau (ce que l'on souhaite obtenir).
+                    </dd>
+                    <dt>properties</dt>
+                    <dd>
+                      Un objet
+                      <code>PropertyCollection</code>
+                      dont on souhaite obtenir les correspondances pour chaque valeur.
+                    </dd>
+                  </dl>
+                  <h4>Exemples</h4>
+                  <p>
+                    Récupération de l'indice correspondant à chaque taxon en utilisant la
+                    <code>PropertyCollection</code>
+                    <em>cd_nom</em>
+                    des observations.
+                  </p>
+                  <p>
+                    <code>
+                      indices = gn_extract(tableau_indices, "cd_nom", "indice", observations.cd_nom)
+                    </code>
+                  </p>
+                  <p>
+                    Le tableau de référence désigné par
+                    <code>tableau_indices</code>
+                    doit donc avoir au moins deux colonnes :
+                    <em>cd_nom</em>
+                    et
+                    <em>indice</em>
+                    .
+                  </p>
+                </mat-expansion-panel>
+              </div>
+            </div>
+
+            <!-- Tableaux Section -->
+            <div class="category-section">
+              <h3 class="category-title">Tableaux</h3>
+              <div class="object-list">
+                <ng-container
+                  *ngIf="indicator?.referenceTables?.length > 0; else noReferenceTables"
+                >
+                  <mat-expansion-panel *ngFor="let referenceTable of indicator.referenceTables">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title
+                        class="object-name"
+                        (click)="insertCode(referenceTable.code); $event.stopPropagation()"
+                      >
+                        {{ referenceTable.code }}
+                      </mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <p>
+                      {{ referenceTable.name }}
+                    </p>
+                  </mat-expansion-panel>
+                </ng-container>
+                <ng-template #noReferenceTables>
+                  <p class="empty-message">Aucun tableau disponible</p>
+                </ng-template>
+              </div>
+            </div>
+          </div>
         </div>
         <hr />
         <button

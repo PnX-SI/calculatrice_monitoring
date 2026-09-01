@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError } from 'rxjs/operators';
-import { IndicatorDetails } from '../../interfaces';
+import { IndicatorDetails, ProtocolProperties } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 import { UtilsService } from '../../services/utils.service';
 
@@ -15,6 +15,7 @@ import { UtilsService } from '../../services/utils.service';
 export class IndicatorCodeEditorComponent implements OnInit {
   indicatorForm: FormGroup;
   indicator: IndicatorDetails;
+  protocolProperties: ProtocolProperties;
 
   constructor(
     private _data: DataService,
@@ -33,6 +34,9 @@ export class IndicatorCodeEditorComponent implements OnInit {
       this._data.getIndicatorDetails(params.indicatorId).subscribe((data: IndicatorDetails) => {
         this.indicator = data;
         this.indicatorForm.controls.code.setValue(data.code);
+        this._data.getProtocolProperties(this.indicator.protocol.id).subscribe((data) => {
+          this.protocolProperties = data;
+        });
       });
     });
   }
@@ -45,6 +49,19 @@ export class IndicatorCodeEditorComponent implements OnInit {
         .subscribe((data: HttpResponse<String>) => {
           this._router.navigate(['/calculatrice/indicator', this.indicator.id, 'viz-blocks']);
         });
+    }
+  }
+
+  insertCode(code: string) {
+    const textarea = document.getElementById('code') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = this.indicatorForm.get('code')?.value || '';
+      const newText = text.substring(0, start) + code + text.substring(end);
+      this.indicatorForm.get('code')?.setValue(newText);
+      textarea.selectionStart = textarea.selectionEnd = start + code.length;
+      textarea.focus();
     }
   }
 }
