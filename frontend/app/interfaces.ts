@@ -28,6 +28,12 @@ export interface Protocol {
   code: string;
 }
 
+export interface ProtocolProperties {
+  site: string[];
+  visit: string[];
+  observation: string[];
+}
+
 export interface ReferenceTable {
   id: number;
   name: string;
