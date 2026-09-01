@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -65,6 +66,7 @@ const routes: Routes = [
     MatIconModule,
     MatButtonModule,
     MatCardModule,
+    MatExpansionModule,
     MatTooltipModule,
     ReactiveFormsModule,
     GN2CommonModule,
