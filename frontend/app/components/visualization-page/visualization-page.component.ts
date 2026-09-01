@@ -32,16 +32,17 @@ export class VisualizationPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this._sites = window.history.state.sites;
-    this._campaigns = window.history.state.campaigns;
-    if (this._sites === undefined || this._campaigns === undefined) {
-      this._router.navigate(['./params'], {
-        relativeTo: this._route,
-      });
-    }
-    this.selections = this._buildSelections(this._campaigns);
     this._route.params.subscribe((params) => {
       this._indicatorId = params.indicatorId;
+      const raw = sessionStorage.getItem(`calc-viz-params:${this._indicatorId}`);
+      const parsed = raw ? JSON.parse(raw) : undefined;
+      this._sites = parsed?.sites;
+      this._campaigns = parsed?.campaigns;
+      if (this._sites === undefined || this._campaigns === undefined) {
+        this._router.navigate(['./params'], { relativeTo: this._route });
+        return;
+      }
+      this.selections = this._buildSelections(this._campaigns);
       const firstSelection = this.selections[0];
       // The first selection is also visually selected in the template.
       this._updateVisualization(firstSelection);

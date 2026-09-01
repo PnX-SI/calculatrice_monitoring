@@ -156,13 +156,16 @@ export class VisualizationParamsFormComponent implements OnInit {
           this.sitesGroups.find((item) => item.id === this.campaignForm.value.sitesGroup)
         )
         .subscribe((sites) => {
-          this._router.navigate(['..'], {
-            relativeTo: this._route,
-            state: {
-              sites: sites,
-              campaigns: this.campaignForm.value.campaigns,
-            },
-          });
+          // We use the sessionStorage to pass parameters to the visualization page in
+          // order to be able to refresh the page (it does not work with the window history
+          // states: refreshing loses the parameters. The storage item key includes the
+          // indicator ID in order to avoid conflict when navigating directly between
+          // visualizations.
+          sessionStorage.setItem(
+            `calc-viz-params:${this._route.snapshot.params.indicatorId}`,
+            JSON.stringify({ sites, campaigns: this.campaignForm.value.campaigns })
+          );
+          this._router.navigate(['..'], { relativeTo: this._route });
         });
     } else {
       console.error('Le formulaire contient des erreurs.');
