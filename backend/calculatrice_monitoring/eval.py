@@ -2,6 +2,7 @@
 # ruff: noqa: PLC2401  # (PLC2401=Function name contains a non-ASCII character)
 
 import csv
+import enum
 import statistics
 from collections import defaultdict
 from datetime import date
@@ -141,6 +142,9 @@ class MonitoringCollection:
         self.scope = scope
         # property collections are added in create function.
 
+    def __len__(self):
+        return len(self.entities)
+
 
 generic_props_by_scope = {
     Scope.OBSERVATION: [
@@ -195,6 +199,7 @@ def create_monitoring_collection(
     install_properties(
         collection=coll, scope=scope, entities=entities, property_list=specific_props
     )
+    coll.entities = entities
     return coll
 
 
@@ -324,6 +329,15 @@ def create_monitoring_collections(
     }
 
 
+class IndicatorError(Exception):
+    pass
+
+
+class VisualizationErrorType(enum.Enum):
+    check = "check"
+    internal = "internal"
+
+
 def create_context(
     collections: dict[Scope, MonitoringCollection], reference_tables: list[ReferenceTable]
 ) -> dict:
@@ -336,6 +350,7 @@ def create_context(
     context["gn_median"] = gn_median
     context["Scope"] = Scope
     context["gn_extract"] = gn_extract
+    context["IndicatorError"] = IndicatorError
     for rf in reference_tables:
         context[rf.code] = rf
     return context
@@ -384,6 +399,16 @@ def build_viz_blocks(variables, indicator):
     return viz_blocks
 
 
+def _get_error_line_number(error: Exception) -> int:
+    """Return the line number of the last frame of the given exception's traceback."""
+    tb = error.__traceback__
+    lineno = tb.tb_lineno
+    while tb.tb_next:
+        tb = tb.tb_next
+        lineno = tb.tb_lineno
+    return lineno
+
+
 def visualize(
     indicator: Indicator,
     monitoring_sites: list[TMonitoringSites],
@@ -416,5 +441,25 @@ def visualize(
 
     collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
     context = create_context(collections, indicator.reference_tables)
-    variables = evaluate(code, context)
-    return build_viz_blocks(variables, indicator)
+    try:
+        variables = evaluate(code, context)
+    except IndicatorError as error:
+        return {
+            "error": {"type": VisualizationErrorType.check.value, "message": str(error)},
+            "vizBlocks": [],
+        }
+    except Exception as error:
+        error_type = type(error).__name__
+        error_message = str(error)
+        error_line_number = _get_error_line_number(error)
+        return {
+            "error": {
+                "type": VisualizationErrorType.internal.value,
+                "message": f"{error_type}: {error_message} at line {error_line_number}",
+            },
+            "vizBlocks": [],
+        }
+    return {
+        "error": None,
+        "vizBlocks": build_viz_blocks(variables, indicator),
+    }

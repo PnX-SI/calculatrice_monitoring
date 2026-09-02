@@ -18,6 +18,18 @@
     </mat-selection-list>
   </div>
   <div class="blocks-container">
+    <div
+      *ngIf="visualizationError"
+      class="visualization-error alert alert-warning"
+    >
+      <div *ngIf="showGenericError(); else actualError">
+        Une erreur inattendue s'est produite durant l'évaluation de l'indicateur. Veuillez contacter
+        le responsable de l'indicateur.
+      </div>
+      <ng-template #actualError>
+        <div>{{ visualizationError.message }}</div>
+      </ng-template>
+    </div>
     <pnx-calc-visualization-block
       *ngFor="let block of vizBlocks"
       [blockDef]="block"

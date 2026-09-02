@@ -13,8 +13,8 @@ import {
   ReferenceTableAttributes,
   Site,
   SitesGroup,
+  Visualization,
   VisualizationBlockConfigPayload,
-  VisualizationBlockDefinition,
 } from '../interfaces';
 
 interface MonitoringSitesGroup {
@@ -176,7 +176,7 @@ export class DataService {
     campaigns: Campaign[],
     visualizationType: string
   ) {
-    return this._http.post<VisualizationBlockDefinition[]>(
+    return this._http.post<Visualization>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/visualize`,
       {
         indicator_id: indicatorId,
