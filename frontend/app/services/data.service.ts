@@ -9,6 +9,7 @@ import {
   IndicatorAttributes,
   IndicatorDetails,
   Protocol,
+  ProtocolProperties,
   ReferenceTable,
   ReferenceTableAttributes,
   Site,
@@ -45,6 +46,12 @@ export class DataService {
   getProtocol(protocolId: number) {
     return this._http.get<Protocol>(
       `${this._config.API_ENDPOINT}/calculatrice/protocol/${protocolId}`
+    );
+  }
+
+  getProtocolProperties(protocolId: number) {
+    return this._http.get<ProtocolProperties>(
+      `${this._config.API_ENDPOINT}/calculatrice/protocol/${protocolId}/properties`
     );
   }
 

@@ -6,6 +6,7 @@ from flask_parameter_validation import Json, Query, Route, ValidateParameters
 from geonature.core.gn_permissions.decorators import check_cruved_scope
 from geonature.core.gn_permissions.tools import get_scopes_by_action
 from geonature.utils.env import db
+from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import TMonitoringModules, TMonitoringSites
 from marshmallow import ValidationError
 from sqlalchemy import select
@@ -13,7 +14,7 @@ from sqlalchemy.exc import NoResultFound
 from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
-from calculatrice_monitoring.eval import visualize
+from calculatrice_monitoring.eval import Scope, visualize
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
 from calculatrice_monitoring.schemas import (
     IndicatorAttributesSchema,
@@ -81,6 +82,24 @@ def get_protocol(protocol_id: int):
     if scopes["R"] == 0:
         abort(403, description=f"Missing permission to read protocol {protocol_id}")
     return ProtocolSchema().jsonify(protocol)
+
+
+@blueprint.route("/protocol/<int:protocol_id>/properties", methods=["GET"])
+@login_required
+def get_protocol_properties(protocol_id: int):
+    protocol = db.get_or_404(
+        TMonitoringModules, protocol_id, description=f"Protocol {protocol_id} not found"
+    )
+    scopes = get_scopes_by_action(
+        module_code=protocol.module_code, object_code="MONITORINGS_MODULES"
+    )
+    if scopes["R"] == 0:
+        abort(403, description=f"Missing permission to read protocol {protocol_id}")
+    properties = {}
+    for scope in [Scope.SITE.value, Scope.VISIT.value, Scope.OBSERVATION.value]:
+        specific_props = list(get_config(protocol.module_code)[scope]["specific"].keys())
+        properties[scope] = specific_props
+    return properties, 200
 
 
 @blueprint.route("/indicator", methods=["POST"])

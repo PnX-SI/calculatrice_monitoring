@@ -161,6 +161,48 @@ class TestGetProtocol:
         assert response.status_code == 404
 
 
+class TestGetProtocolProperties:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_protocol_properties(self, client, users, protocols):
+        set_logged_user(client, users["gestionnaire"])
+        flore_protocol = protocols["mheo_flore_test"]
+        response = client.get(
+            url_for("calculatrice.get_protocol_properties", protocol_id=flore_protocol.id_module)
+        )
+        assert response.status_code == 200
+        for scope in ["observation", "site", "visit"]:
+            assert scope in response.json
+        assert "superficie_mètres_carrés" in response.json["site"]
+        assert "diffusion_mesure" in response.json["visit"]
+        assert "durée_secondes" in response.json["visit"]
+        assert "abondance" in response.json["observation"]
+        assert "récolte" in response.json["observation"]
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_get_protocol_properties_login_required_error(self, client, protocols):
+        logout_user()
+        flore_protocol = protocols["mheo_flore_test"]
+        response = client.get(
+            url_for("calculatrice.get_protocol_properties", protocol_id=flore_protocol.id_module)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_protocol_properties_needs_permission_error(self, client, users, protocols):
+        set_logged_user(client, users["public"])
+        flore_protocol = protocols["mheo_flore_test"]
+        response = client.get(
+            url_for("calculatrice.get_protocol_properties", protocol_id=flore_protocol.id_module)
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "protocols")
+    def test_get_protocol_properties_not_found_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(url_for("calculatrice.get_protocol_properties", protocol_id=12345))
+        assert response.status_code == 404
+
+
 def test_monitoring_objects_fixture(monitoring_objects):
     assert len(monitoring_objects["sites_groups"]) == 1
     assert len(monitoring_objects["sites"]) == 5
