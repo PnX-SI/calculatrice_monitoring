@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Validators } from '@librairies/@angular/forms';
 import { catchError } from 'rxjs/operators';
 import { ReferenceTable } from '../../interfaces';
@@ -12,20 +12,45 @@ import { UtilsService } from '../../services/utils.service';
   templateUrl: './reftable-form.component.html',
   styleUrls: ['./reftable-form.component.css'],
 })
-export class ReferenceTableFormComponent {
+export class ReferenceTableFormComponent implements OnInit {
   form: FormGroup;
   file: File;
+  mode: 'create' | 'edit';
+  referenceTable?: ReferenceTable;
 
   constructor(
     private _data: DataService,
     private _formBuilder: FormBuilder,
     private _router: Router,
-    private _utils: UtilsService
+    private _utils: UtilsService,
+    private _route: ActivatedRoute
   ) {
     this.form = this._formBuilder.group({
-      file: [null, Validators.required],
+      file: [null],
       name: ['', Validators.required],
       code: ['', Validators.required],
+    });
+  }
+
+  ngOnInit() {
+    this._route.params.subscribe((params) => {
+      if (params.reftableId === undefined) {
+        this.mode = 'create';
+        this.form.controls.file.setValidators(Validators.required);
+        this.form.controls.file.updateValueAndValidity();
+        return;
+      }
+      this.mode = 'edit';
+      this.form.controls.code.disable();
+      const reftableId: number = params.reftableId;
+      this._data.getReferenceTables().subscribe((data: Array<ReferenceTable>) => {
+        this.referenceTable = data.find((referenceTable) => referenceTable.id == reftableId);
+        this.form.setValue({
+          file: null,
+          name: this.referenceTable.name,
+          code: this.referenceTable.code,
+        });
+      });
     });
   }
 
@@ -39,18 +64,33 @@ export class ReferenceTableFormComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      this._data
-        .createReferenceTable(
-          {
-            name: this.form.controls.name.value,
-            code: this.form.controls.code.value,
-          },
-          this.file
-        )
-        .pipe(catchError(this._utils.handleError))
-        .subscribe((data: ReferenceTable) => {
-          this._router.navigate(['/calculatrice/reference-tables']);
-        });
+      if (this.mode === 'create') {
+        this._data
+          .createReferenceTable(
+            {
+              name: this.form.controls.name.value,
+              code: this.form.controls.code.value,
+            },
+            this.file
+          )
+          .pipe(catchError(this._utils.handleError))
+          .subscribe((data: ReferenceTable) => {
+            this._router.navigate(['/calculatrice/reference-tables']);
+          });
+      } else {
+        this._data
+          .editReferenceTable(
+            this.referenceTable.id,
+            {
+              name: this.form.controls.name.value,
+            },
+            this.file
+          )
+          .pipe(catchError(this._utils.handleError))
+          .subscribe((data: ReferenceTable) => {
+            this._router.navigate(['/calculatrice/reference-tables']);
+          });
+      }
     }
   }
 }

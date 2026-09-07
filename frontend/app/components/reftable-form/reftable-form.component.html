@@ -9,7 +9,7 @@
   </a>
   <div class="card">
     <div class="card-header">
-      <h2>Créer un tableau de référence</h2>
+      <h2>{{ mode === 'edit' ? 'Éditer' : 'Créer' }} un tableau de référence</h2>
     </div>
     <div class="card-body">
       <form
@@ -36,7 +36,9 @@
             />
           </div>
           <div>
-            <label for="file-input">Importer fichier CSV</label>
+            <label for="file-input">
+              Importer fichier CSV{{ mode === 'edit' ? ' (facultatif)' : '' }}
+            </label>
             <input
               id="file-input"
               type="file"

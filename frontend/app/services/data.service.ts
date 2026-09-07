@@ -12,6 +12,7 @@ import {
   ProtocolProperties,
   ReferenceTable,
   ReferenceTableAttributes,
+  ReferenceTableEditAttributes,
   Site,
   SitesGroup,
   Visualization,
@@ -216,6 +217,18 @@ export class DataService {
     formData.append('fields', JSON.stringify(fields));
     return this._http.post<ReferenceTable>(
       `${this._config.API_ENDPOINT}/calculatrice/reftables`,
+      formData
+    );
+  }
+
+  editReferenceTable(referenceTableId: number, fields: ReferenceTableEditAttributes, file?: File) {
+    let formData = new FormData();
+    if (file) {
+      formData.append('file', file);
+    }
+    formData.append('fields', JSON.stringify(fields));
+    return this._http.put<ReferenceTable>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
       formData
     );
   }

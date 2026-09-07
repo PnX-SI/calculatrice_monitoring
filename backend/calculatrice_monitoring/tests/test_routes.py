@@ -10,7 +10,7 @@ from pypnusershub.tests.utils import set_logged_user
 from werkzeug.datastructures import Headers
 
 from calculatrice_monitoring.eval import VisualizationErrorType
-from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
 
 
 class TestGetIndicators:
@@ -1054,3 +1054,124 @@ class TestCreateReferenceTable:
         )
         assert response.status_code == 400
         assert "name" in response.json
+
+
+class TestEditReferenceTable:
+    @staticmethod
+    def _get_payload(name: Optional[str] = "Updated name", code: Optional[str] = None, file=None):
+        fields = {}
+        if name:
+            fields["name"] = name
+        if code:
+            fields["code"] = code
+        payload = {"fields": json.dumps(fields)}
+        if file:
+            payload["file"] = file
+        return payload
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_name_only(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        assert response.json["name"] == "Updated name"
+        assert response.json["code"] == reftable.code
+
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.name == "Updated name"
+        assert updated.code == reftable.code
+        assert updated.data == reftable.data
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_with_new_file(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        original_data = reftable.data
+        set_logged_user(client, users["admin"])
+        filename = Path(__file__).parent.parent / "./migrations/data/indices_ht.csv"
+        expected_data = filename.read_text()
+        datafile = open(filename, "rb")
+        payload = self._get_payload(file=(datafile, "indices_ht.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.name == "Updated name"
+        assert updated.data == expected_data
+        assert updated.data != original_data
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_ignores_code(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        original_code = reftable.code
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(code="not_allowed")
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 400
+        assert "code" in response.json
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.code == original_code
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_reftable_login_required_error(self, client, reference_tables):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_needs_update_permission_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
+        set_logged_user(client, users["gestionnaire"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_name_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(name=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "name" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=999999),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 404

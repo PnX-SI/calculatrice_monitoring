@@ -47,6 +47,10 @@ export interface ReferenceTableAttributes {
   code: string;
 }
 
+export interface ReferenceTableEditAttributes {
+  name: string;
+}
+
 export interface VisualizationBlockConfig {
   title: string;
   info: string;
