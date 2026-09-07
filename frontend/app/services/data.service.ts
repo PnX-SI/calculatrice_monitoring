@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfigService } from '@geonature/services/config.service';
 import { ParamsDict } from '@geonature_common/form/data-form.service';
@@ -217,7 +217,8 @@ export class DataService {
     formData.append('fields', JSON.stringify(fields));
     return this._http.post<ReferenceTable>(
       `${this._config.API_ENDPOINT}/calculatrice/reftables`,
-      formData
+      formData,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
   }
 
@@ -229,7 +230,8 @@ export class DataService {
     formData.append('fields', JSON.stringify(fields));
     return this._http.put<ReferenceTable>(
       `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
-      formData
+      formData,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
   }
 

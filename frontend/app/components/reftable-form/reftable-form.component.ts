@@ -1,7 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Validators } from '@librairies/@angular/forms';
+import { ToastrService } from 'ngx-toastr';
+import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ReferenceTable } from '../../interfaces';
 import { DataService } from '../../services/data.service';
@@ -23,7 +26,8 @@ export class ReferenceTableFormComponent implements OnInit {
     private _formBuilder: FormBuilder,
     private _router: Router,
     private _utils: UtilsService,
-    private _route: ActivatedRoute
+    private _route: ActivatedRoute,
+    private _toastr: ToastrService
   ) {
     this.form = this._formBuilder.group({
       file: [null],
@@ -73,7 +77,7 @@ export class ReferenceTableFormComponent implements OnInit {
             },
             this.file
           )
-          .pipe(catchError(this._utils.handleError))
+          .pipe(catchError((error: HttpErrorResponse) => this._handleSubmitError(error)))
           .subscribe((data: ReferenceTable) => {
             this._router.navigate(['/calculatrice/reference-tables']);
           });
@@ -86,11 +90,25 @@ export class ReferenceTableFormComponent implements OnInit {
             },
             this.file
           )
-          .pipe(catchError(this._utils.handleError))
+          .pipe(catchError((error: HttpErrorResponse) => this._handleSubmitError(error)))
           .subscribe((data: ReferenceTable) => {
             this._router.navigate(['/calculatrice/reference-tables']);
           });
       }
     }
+  }
+
+  private _handleSubmitError(error: HttpErrorResponse): Observable<never> {
+    const errMsg =
+      error.status === 400 && error.error?.code
+        ? error.error.code[0]
+        : 'Une erreur est survenue lors de l’enregistrement du tableau de référence.';
+    this._toastr.error(errMsg, 'Erreur', {
+      disableTimeOut: true,
+      tapToDismiss: false,
+      closeButton: true,
+      easeTime: 0,
+    });
+    return this._utils.handleError(error);
   }
 }
