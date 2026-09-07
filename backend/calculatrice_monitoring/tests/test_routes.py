@@ -1055,6 +1055,24 @@ class TestCreateReferenceTable:
         assert response.status_code == 400
         assert "name" in response.json
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_duplicate_code_error(self, client, users, reference_tables):
+        existing_code = reference_tables["indices_he"].code
+        set_logged_user(client, users["admin"])
+        filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
+        datafile = open(filename, "rb")
+        payload = {
+            "file": (datafile, "indices_he.csv"),
+            "fields": json.dumps({"name": "Another table", "code": existing_code}),
+        }
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "code" in response.json
+
 
 class TestEditReferenceTable:
     @staticmethod

@@ -336,7 +336,15 @@ def create_reference_table():
     # - vérifier encodage fichier
     # - vérifier fichier CSV
     fields = json.loads(request.form["fields"])
-    data = ReferenceTableCreationSchema().load(fields)
+    try:
+        data = ReferenceTableCreationSchema().load(fields)
+    except ValidationError as error:
+        return error.messages, 400
+    existing = db.session.execute(
+        select(ReferenceTable).filter_by(code=data["code"])
+    ).scalar_one_or_none()
+    if existing is not None:
+        return {"code": [f"Reference table with code '{data['code']}' already exists"]}, 400
     reftable = ReferenceTable(**data)
     reftable.data = request.files["file"].read().decode("utf-8")
     db.session.add(reftable)
