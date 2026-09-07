@@ -1073,6 +1073,42 @@ class TestCreateReferenceTable:
         assert response.status_code == 400
         assert "code" in response.json
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    @pytest.mark.parametrize(
+        "invalid_code",
+        [
+            "1_starts_with_digit",
+            "_starts_with_underscore",
+            "has space",
+            "has-dash",
+            "has.dot",
+            "",
+        ],
+    )
+    def test_create_reftable_invalid_code_format_error(self, client, users, invalid_code):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        payload["fields"] = json.dumps({"name": "My ref table", "code": invalid_code})
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "code" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_valid_code_with_digits_and_underscore(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        payload["fields"] = json.dumps({"name": "My ref table", "code": "valid_code_2"})
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+
 
 class TestEditReferenceTable:
     @staticmethod
