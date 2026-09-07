@@ -37,6 +37,7 @@ const routes: Routes = [
   { path: 'indicator/:indicatorId/viz-blocks', component: IndicatorVizBlocksFormComponent },
   { path: 'reference-tables', component: ReferenceTablesComponent },
   { path: 'reference-table/create', component: ReferenceTableFormComponent },
+  { path: 'reference-table/:reftableId/edit', component: ReferenceTableFormComponent },
   { path: 'visualization/:indicatorId/params', component: VisualizationParamsFormComponent },
   { path: 'visualization/:indicatorId', component: VisualizationPageComponent },
 ];

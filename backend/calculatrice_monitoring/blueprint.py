@@ -22,6 +22,7 @@ from calculatrice_monitoring.schemas import (
     IndicatorSchema,
     ProtocolSchema,
     ReferenceTableCreationSchema,
+    ReferenceTableEditSchema,
     ReferenceTableSchema,
     VizBlockConfigSchema,
 )
@@ -341,3 +342,22 @@ def create_reference_table():
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 201
+
+
+@blueprint.route("/reftables/<int:reftable_id>", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_reference_table(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+
+    fields = json.loads(request.form["fields"])
+    try:
+        data = ReferenceTableEditSchema().load(fields)
+    except ValidationError as error:
+        return error.messages, 400
+    reftable.name = data["name"]
+    if "file" in request.files:
+        reftable.data = request.files["file"].read().decode("utf-8")
+    db.session.add(reftable)
+    db.session.commit()
+    return ReferenceTableSchema().jsonify(reftable), 200
