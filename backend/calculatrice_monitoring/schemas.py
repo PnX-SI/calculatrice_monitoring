@@ -1,4 +1,5 @@
 from geonature.utils.env import ma
+from marshmallow import validate
 
 from calculatrice_monitoring.models import (
     VIZ_BLOCK_CONFIG_PARAMS,
@@ -6,6 +7,10 @@ from calculatrice_monitoring.models import (
     ReferenceTable,
     VizBlockConfig,
 )
+
+# A reference table's code must look like a Python variable name: it must start with a
+# letter and may only contain letters, digits and underscores (no spaces or other characters).
+REFERENCE_TABLE_CODE_REGEXP = r"^[A-Za-z][A-Za-z0-9_]*$"
 
 
 class VizBlockConfigSchema(ma.SQLAlchemyAutoSchema):
@@ -41,6 +46,15 @@ class ReferenceTableSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ReferenceTableCreationSchema(ma.SQLAlchemyAutoSchema):
+    code = ma.auto_field(
+        validate=validate.Regexp(
+            REFERENCE_TABLE_CODE_REGEXP,
+            error=(
+                "Code must start with a letter and only contain letters, digits and underscores"
+            ),
+        )
+    )
+
     class Meta:
         model = ReferenceTable
         dump_only = ["description", "id_reference_table", "data"]
