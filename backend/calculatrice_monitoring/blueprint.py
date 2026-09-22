@@ -1,4 +1,6 @@
+import csv
 import json
+from io import StringIO
 
 from flask import Blueprint, Response, abort, request
 from flask_login import login_required
@@ -17,6 +19,7 @@ from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import Scope, visualize
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
 from calculatrice_monitoring.schemas import (
+    REFERENCE_TABLE_ENCODINGS,
     IndicatorAttributesSchema,
     IndicatorDetailsSchema,
     IndicatorSchema,
@@ -27,6 +30,64 @@ from calculatrice_monitoring.schemas import (
     VizBlockConfigSchema,
 )
 from calculatrice_monitoring.utils import extract_variable_names
+
+REFERENCE_TABLE_MAX_VALUE_LENGTH = 100
+REFERENCE_TABLE_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 Mo
+
+
+def _humansize(nbytes: int):
+    """Helper function to convert a bytes size limit to a readable format.
+
+    # Source - https://stackoverflow.com/a/14996816
+    # Posted by nneonneo, modified by community.
+    # Retrieved 2026-09-23, License - CC BY-SA 3.0
+
+    >>> humansize(131)
+    '131 B'
+    >>> humansize(58812)
+    '57.43 KB'
+    >>> humansize(68819826)
+    '65.63 MB'
+    """
+    suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes) - 1:
+        nbytes /= 1024.0
+        i += 1
+    f = f"{nbytes:.2f}".rstrip("0").rstrip(".")
+    return f"{f} {suffixes[i]}"
+
+
+def _decode_reference_table_file(file_storage, encoding: str, separator: str) -> str:
+    """Decodes an uploaded reference table file and normalizes it to a comma-separated CSV.
+
+    The file's rows are always re-serialized with ',' as the separator so that the stored
+    data can later be read back with the default csv.DictReader delimiter (see eval.py).
+    """
+    raw_bytes = file_storage.read()
+    if len(raw_bytes) > REFERENCE_TABLE_MAX_FILE_SIZE:
+        max_size_str = _humansize(REFERENCE_TABLE_MAX_FILE_SIZE)
+        raise ValueError(f"Le fichier est trop volumineux. La limite est de {max_size_str}.")
+    codec = REFERENCE_TABLE_ENCODINGS[encoding]
+    try:
+        raw = raw_bytes.decode(codec)
+    except UnicodeDecodeError as error:
+        raise ValueError(f"Unable to decode file using the '{encoding}' encoding") from error
+    try:
+        rows = list(csv.reader(StringIO(raw), delimiter=separator))
+    except csv.Error as error:
+        raise ValueError("Unable to parse file as CSV") from error
+    if any(len(value) > REFERENCE_TABLE_MAX_VALUE_LENGTH for row in rows for value in row):
+        raise ValueError(
+            "Certaines valeurs sont trop longues. "
+            f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+        )
+    if separator == ",":
+        return raw
+    output = StringIO()
+    csv.writer(output, delimiter=",", lineterminator="\n").writerows(rows)
+    return output.getvalue()
+
 
 blueprint = Blueprint("calculatrice", __name__)
 
@@ -332,21 +393,22 @@ def get_reference_table_data(reftable_id: int):
 @blueprint.route("/reftables", methods=["POST"])
 @check_cruved_scope(action="C", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
 def create_reference_table():
-    # TODO:
-    # - vérifier encodage fichier
-    # - vérifier fichier CSV
     fields = json.loads(request.form["fields"])
     try:
         data = ReferenceTableCreationSchema().load(fields)
     except ValidationError as error:
         return error.messages, 400
+    file_options = data.pop("file_options")
     existing = db.session.execute(
         select(ReferenceTable).filter_by(code=data["code"])
     ).scalar_one_or_none()
     if existing is not None:
         return {"code": [f"Reference table with code '{data['code']}' already exists"]}, 400
     reftable = ReferenceTable(**data)
-    reftable.data = request.files["file"].read().decode("utf-8")
+    try:
+        reftable.data = _decode_reference_table_file(request.files["file"], **file_options)
+    except ValueError as error:
+        return {"file": [str(error)]}, 400
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 201
@@ -363,9 +425,13 @@ def edit_reference_table(reftable_id: int):
         data = ReferenceTableEditSchema().load(fields)
     except ValidationError as error:
         return error.messages, 400
+    file_options = data.pop("file_options")
     reftable.name = data["name"]
     if "file" in request.files:
-        reftable.data = request.files["file"].read().decode("utf-8")
+        try:
+            reftable.data = _decode_reference_table_file(request.files["file"], **file_options)
+        except ValueError as error:
+            return {"file": [str(error)]}, 400
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 200

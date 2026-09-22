@@ -45,10 +45,14 @@ export interface ReferenceTable {
 export interface ReferenceTableAttributes {
   name: string;
   code: string;
+  encoding: string;
+  separator: string;
 }
 
 export interface ReferenceTableEditAttributes {
   name: string;
+  encoding: string;
+  separator: string;
 }
 
 export interface VisualizationBlockConfig {

@@ -16,10 +16,16 @@ import { UtilsService } from '../../services/utils.service';
   styleUrls: ['./reftable-form.component.css'],
 })
 export class ReferenceTableFormComponent implements OnInit {
+  private static readonly MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 Mo
+
   form: FormGroup;
   file: File;
   mode: 'create' | 'edit';
   referenceTable?: ReferenceTable;
+  encodings: Array<string> = ['utf-8', 'latin-1'];
+  separators: Array<string> = [',', ';'];
+  previewHeader: Array<string>;
+  previewRows: Array<Array<string>> = [];
 
   constructor(
     private _data: DataService,
@@ -33,6 +39,8 @@ export class ReferenceTableFormComponent implements OnInit {
       file: [null],
       name: ['', Validators.required],
       code: ['', Validators.required],
+      encoding: ['utf-8'],
+      separator: [','],
     });
   }
 
@@ -49,13 +57,16 @@ export class ReferenceTableFormComponent implements OnInit {
       const reftableId: number = params.reftableId;
       this._data.getReferenceTables().subscribe((data: Array<ReferenceTable>) => {
         this.referenceTable = data.find((referenceTable) => referenceTable.id == reftableId);
-        this.form.setValue({
+        this.form.patchValue({
           file: null,
           name: this.referenceTable.name,
           code: this.referenceTable.code,
         });
       });
     });
+
+    this.form.controls.encoding.valueChanges.subscribe(() => this._updateCSVPreview());
+    this.form.controls.separator.valueChanges.subscribe(() => this._updateCSVPreview());
   }
 
   onFileChange(event) {
@@ -63,7 +74,41 @@ export class ReferenceTableFormComponent implements OnInit {
     if (fileList.length < 1) {
       return;
     }
-    this.file = fileList[0];
+    const file = fileList[0];
+    if (file.size > ReferenceTableFormComponent.MAX_FILE_SIZE_BYTES) {
+      this._showErrorToast('Le fichier est trop volumineux. La limite est de 2 Mo.');
+      event.target.value = '';
+      this.file = undefined;
+      this.form.controls.file.setValue(null);
+      this._updateCSVPreview();
+      return;
+    }
+    this.file = file;
+    this._updateCSVPreview();
+  }
+
+  /*
+   * Update the preview of the CSV content using the user-provided encoding.
+   */
+  private _updateCSVPreview() {
+    this.previewHeader = undefined;
+    this.previewRows = [];
+    if (!this.file) {
+      return;
+    }
+    const encodingMap = new Map<string, string>();
+    encodingMap.set('utf-8', 'utf-8');
+    encodingMap.set('latin-1', 'iso-8859-1');
+    const encoding = encodingMap.get(this.form.controls.encoding.value);
+    const separator = this.form.controls.separator.value;
+    const numberOfLines = 3;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const lines = (reader.result as string).split(/\r\n|\r|\n/).filter((line) => line.length > 0);
+      this.previewHeader = lines[0]?.split(separator);
+      this.previewRows = lines.slice(1, numberOfLines + 1).map((line) => line.split(separator));
+    };
+    reader.readAsText(this.file, encoding);
   }
 
   onSubmit() {
@@ -74,6 +119,8 @@ export class ReferenceTableFormComponent implements OnInit {
             {
               name: this.form.controls.name.value,
               code: this.form.controls.code.value,
+              encoding: this.form.controls.encoding.value,
+              separator: this.form.controls.separator.value,
             },
             this.file
           )
@@ -87,6 +134,8 @@ export class ReferenceTableFormComponent implements OnInit {
             this.referenceTable.id,
             {
               name: this.form.controls.name.value,
+              encoding: this.form.controls.encoding.value,
+              separator: this.form.controls.separator.value,
             },
             this.file
           )
@@ -99,16 +148,25 @@ export class ReferenceTableFormComponent implements OnInit {
   }
 
   private _handleSubmitError(error: HttpErrorResponse): Observable<never> {
-    const errMsg =
-      error.status === 400 && error.error?.code
-        ? error.error.code[0]
-        : 'Une erreur est survenue lors de l’enregistrement du tableau de référence.';
-    this._toastr.error(errMsg, 'Erreur', {
+    if (error.error) {
+      Object.keys(error.error).forEach((key) => {
+        const message = Array.isArray(error.error[key]) ? error.error[key][0] : error.error[key];
+        this._showErrorToast(`${key}: ${message}`);
+      });
+    } else {
+      this._showErrorToast(
+        'Une erreur est survenue lors de l’enregistrement du tableau de référence.'
+      );
+    }
+    return this._utils.handleError(error);
+  }
+
+  private _showErrorToast(message: string) {
+    this._toastr.error(message, 'Erreur', {
       disableTimeOut: true,
       tapToDismiss: false,
       closeButton: true,
       easeTime: 0,
     });
-    return this._utils.handleError(error);
   }
 }
