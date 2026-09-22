@@ -47,6 +47,36 @@
               class="form-control"
             />
           </div>
+          <div>
+            <label for="encoding">Encodage du fichier</label>
+            <select
+              id="encoding"
+              formControlName="encoding"
+              class="form-control"
+            >
+              <option
+                *ngFor="let encoding of encodings"
+                [value]="encoding"
+              >
+                {{ encoding }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label for="separator">Séparateur du fichier</label>
+            <select
+              id="separator"
+              formControlName="separator"
+              class="form-control"
+            >
+              <option
+                *ngFor="let separator of separators"
+                [value]="separator"
+              >
+                {{ separator }}
+              </option>
+            </select>
+          </div>
         </div>
         <hr />
         <button
@@ -59,6 +89,24 @@
           Valider
         </button>
       </form>
+      <div
+        class="csv-preview"
+        *ngIf="previewHeader"
+      >
+        <h3>Aperçu du fichier</h3>
+        <table>
+          <thead>
+            <tr>
+              <th *ngFor="let cell of previewHeader">{{ cell }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of previewRows">
+              <td *ngFor="let cell of row">{{ cell }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

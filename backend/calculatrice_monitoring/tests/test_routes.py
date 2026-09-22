@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
@@ -7,8 +8,13 @@ from flask import url_for
 from flask_login import logout_user
 from geonature.utils.env import db
 from pypnusershub.tests.utils import set_logged_user
+from sqlalchemy import select
 from werkzeug.datastructures import Headers
 
+from calculatrice_monitoring.blueprint import (
+    REFERENCE_TABLE_MAX_FILE_SIZE,
+    REFERENCE_TABLE_MAX_VALUE_LENGTH,
+)
 from calculatrice_monitoring.eval import VisualizationErrorType
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
 
@@ -992,14 +998,27 @@ class TestGetRerenceTables:
 
 class TestCreateReferenceTable:
     @staticmethod
-    def _get_payload(name: Optional[str] = "My ref table"):
-        filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
-        datafile = open(filename, "rb")
-        fields = {"code": "my_table"}
-        if name:
+    def _get_payload(
+        name: Optional[str] = "My ref table",
+        code: Optional[str] = "my_table",
+        file=None,
+        encoding: Optional[str] = "utf-8",
+        separator: Optional[str] = ",",
+    ):
+        if file is None:
+            filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
+            file = (open(filename, "rb"), "indices_he.csv")
+        fields = {}
+        if name is not None:
             fields["name"] = name
+        if code is not None:
+            fields["code"] = code
+        if encoding is not None:
+            fields["encoding"] = encoding
+        if separator is not None:
+            fields["separator"] = separator
         return {
-            "file": (datafile, "indices_he.csv"),
+            "file": file,
             "fields": json.dumps(fields),
         }
 
@@ -1059,12 +1078,7 @@ class TestCreateReferenceTable:
     def test_create_reftable_duplicate_code_error(self, client, users, reference_tables):
         existing_code = reference_tables["indices_he"].code
         set_logged_user(client, users["admin"])
-        filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
-        datafile = open(filename, "rb")
-        payload = {
-            "file": (datafile, "indices_he.csv"),
-            "fields": json.dumps({"name": "Another table", "code": existing_code}),
-        }
+        payload = self._get_payload(name="Another reftable", code=existing_code)
         response = client.post(
             url_for("calculatrice.create_reference_table"),
             data=payload,
@@ -1087,8 +1101,7 @@ class TestCreateReferenceTable:
     )
     def test_create_reftable_invalid_code_format_error(self, client, users, invalid_code):
         set_logged_user(client, users["admin"])
-        payload = self._get_payload()
-        payload["fields"] = json.dumps({"name": "My ref table", "code": invalid_code})
+        payload = self._get_payload(code=invalid_code)
         response = client.post(
             url_for("calculatrice.create_reference_table"),
             data=payload,
@@ -1100,8 +1113,7 @@ class TestCreateReferenceTable:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_reftable_valid_code_with_digits_and_underscore(self, client, users):
         set_logged_user(client, users["admin"])
-        payload = self._get_payload()
-        payload["fields"] = json.dumps({"name": "My ref table", "code": "valid_code_2"})
+        payload = self._get_payload(code="valid_code_2")
         response = client.post(
             url_for("calculatrice.create_reference_table"),
             data=payload,
@@ -1109,17 +1121,143 @@ class TestCreateReferenceTable:
         )
         assert response.status_code == 201
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_normalizes_semicolon_separator(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(b"cdnom;indice_he\n81610;9\n"), "reftable.csv"), separator=";"
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+        created = db.session.execute(select(ReferenceTable).filter_by(code="my_table")).scalar_one()
+        assert created.data == "cdnom,indice_he\n81610,9\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_decodes_latin1_encoding(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO("nom,valeur\nélevé,1\n".encode("iso-8859-1")), "reftable.csv"),
+            encoding="latin-1",
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+        created = db.session.execute(select(ReferenceTable).filter_by(code="my_table")).scalar_one()
+        assert created.data == "nom,valeur\nélevé,1\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_unable_to_decode_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO("élevé".encode("iso-8859-1")), "reftable.csv"), encoding="utf-8"
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_value_too_long_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert response.json == {
+            "file": [
+                "Certaines valeurs sont trop longues. "
+                f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+            ]
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_file_too_large_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        placeholder = b"81610,9\n"
+        times = REFERENCE_TABLE_MAX_FILE_SIZE // len(placeholder)
+        oversized_content = b"cdnom,indice_he\n" + placeholder * (times + 1)
+        payload = self._get_payload(file=(BytesIO(oversized_content), "reftable.csv"))
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+        assert "Le fichier est trop volumineux" in response.json["file"][0]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_missing_encoding_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(encoding=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "encoding" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_missing_separator_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(separator=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_invalid_separator_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(file=(BytesIO(b"a,b\n1,2\n"), "reftable.csv"), separator="|")
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json
+
 
 class TestEditReferenceTable:
     @staticmethod
-    def _get_payload(name: Optional[str] = "Updated name", code: Optional[str] = None, file=None):
+    def _get_payload(
+        name: Optional[str] = "Updated name",
+        code: Optional[str] = None,
+        file=None,
+        encoding: Optional[str] = "utf-8",
+        separator: Optional[str] = ",",
+    ):
         fields = {}
-        if name:
+        if name is not None:
             fields["name"] = name
-        if code:
+        if code is not None:
             fields["code"] = code
+        if encoding is not None:
+            fields["encoding"] = encoding
+        if separator is not None:
+            fields["separator"] = separator
         payload = {"fields": json.dumps(fields)}
-        if file:
+        if file is not None:
             payload["file"] = file
         return payload
 
@@ -1229,3 +1367,96 @@ class TestEditReferenceTable:
             headers=Headers({"Content-Type": "multipart/form-data"}),
         )
         assert response.status_code == 404
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_normalizes_semicolon_separator(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(b"cdnom;indice_he\n81610;9\n"), "reftable.csv"), separator=";"
+        )
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.data == "cdnom,indice_he\n81610,9\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_wrong_encoding_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(file=(BytesIO("élevé".encode("iso-8859-1")), "reftable.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_value_too_long_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+        )
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert response.json == {
+            "file": [
+                "Certaines valeurs sont trop longues. "
+                f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+            ]
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_file_too_large_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        placeholder = b"81610,9\n"
+        times = REFERENCE_TABLE_MAX_FILE_SIZE // len(placeholder)
+        oversized_content = b"cdnom,indice_he\n" + placeholder * (times + 1)
+        payload = self._get_payload(file=(BytesIO(oversized_content), "reftable.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+        assert "Le fichier est trop volumineux" in response.json["file"][0]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_encoding_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(encoding=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "encoding" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_separator_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(separator=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json

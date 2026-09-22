@@ -1,5 +1,5 @@
 from geonature.utils.env import ma
-from marshmallow import validate
+from marshmallow import post_load, validate
 
 from calculatrice_monitoring.models import (
     VIZ_BLOCK_CONFIG_PARAMS,
@@ -11,6 +11,27 @@ from calculatrice_monitoring.models import (
 # A reference table's code must look like a Python variable name: it must start with a
 # letter and may only contain letters, digits and underscores (no spaces or other characters).
 REFERENCE_TABLE_CODE_REGEXP = r"^[A-Za-z][A-Za-z0-9_]*$"
+
+# Maps the encoding names exposed to the frontend to the actual Python codec names.
+REFERENCE_TABLE_ENCODINGS = {
+    "utf-8": "utf-8",
+    "latin-1": "iso-8859-1",
+}
+
+REFERENCE_TABLE_SEPARATORS = [",", ";"]
+
+
+def _prepare_file_options(data):
+    """Gather the file-decoding options for easier removal out of a loaded reference table payload.
+
+    These options are never persisted on the ReferenceTable model: they are only used to decode
+    and normalize the uploaded file before storing its content.
+    """
+    data["file_options"] = {
+        "encoding": data.pop("encoding"),
+        "separator": data.pop("separator"),
+    }
+    return data
 
 
 class VizBlockConfigSchema(ma.SQLAlchemyAutoSchema):
@@ -54,16 +75,29 @@ class ReferenceTableCreationSchema(ma.SQLAlchemyAutoSchema):
             ),
         )
     )
+    encoding = ma.String(required=True, validate=validate.OneOf(REFERENCE_TABLE_ENCODINGS.keys()))
+    separator = ma.String(required=True, validate=validate.OneOf(REFERENCE_TABLE_SEPARATORS))
 
     class Meta:
         model = ReferenceTable
         dump_only = ["description", "id_reference_table", "data"]
 
+    @post_load
+    def prepare_file_options(self, data, **kwargs):  # noqa: ARG002  # Unused method argument: `kwargs`
+        return _prepare_file_options(data)
+
 
 class ReferenceTableEditSchema(ma.SQLAlchemyAutoSchema):
+    encoding = ma.String(required=True, validate=validate.OneOf(REFERENCE_TABLE_ENCODINGS.keys()))
+    separator = ma.String(required=True, validate=validate.OneOf(REFERENCE_TABLE_SEPARATORS))
+
     class Meta:
         model = ReferenceTable
         dump_only = ["id_reference_table", "code", "data"]
+
+    @post_load
+    def prepare_file_options(self, data, **kwargs):  # noqa: ARG002  # Unused method argument: `kwargs`
+        return _prepare_file_options(data)
 
 
 class IndicatorSchema(ma.SQLAlchemyAutoSchema):
