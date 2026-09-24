@@ -1069,6 +1069,12 @@ class TestGetRerenceTables:
         assert "indices_ht" in reftables_codes
         assert "valeurs_abondance" in reftables_codes
 
+        reftable_he = next(rt for rt in response.json if rt["code"] == "indices_he")
+        assert (
+            reftable_he["description"]
+            == "Tableau de référence avec indices de référence par espèce pour HE"
+        )
+
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_empty_reftables_list(self, client, users):
         set_logged_user(client, users["gestionnaire"])
@@ -1092,6 +1098,7 @@ class TestCreateReferenceTable:
     @staticmethod
     def _get_payload(
         name: Optional[str] = "My ref table",
+        description: Optional[str] = "My ref table description",
         code: Optional[str] = "my_table",
         file=None,
         encoding: Optional[str] = "utf-8",
@@ -1103,6 +1110,8 @@ class TestCreateReferenceTable:
         fields = {}
         if name is not None:
             fields["name"] = name
+        if description is not None:
+            fields["description"] = description
         if code is not None:
             fields["code"] = code
         if encoding is not None:
@@ -1128,8 +1137,23 @@ class TestCreateReferenceTable:
         reftable = response.json
         assert "name" in reftable
         assert reftable["name"] == "My ref table"
+        assert "description" in reftable
+        assert reftable["description"] == "My ref table description"
         assert "code" in reftable
         assert reftable["code"] == "my_table"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_without_description(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(description=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 201
+        assert response.json["description"] is None
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_create_reftable_login_required_error(self, client):
@@ -1334,6 +1358,7 @@ class TestEditReferenceTable:
     @staticmethod
     def _get_payload(
         name: Optional[str] = "Updated name",
+        description: Optional[str] = "Updated description",
         code: Optional[str] = None,
         file=None,
         encoding: Optional[str] = "utf-8",
@@ -1342,6 +1367,8 @@ class TestEditReferenceTable:
         fields = {}
         if name is not None:
             fields["name"] = name
+        if description is not None:
+            fields["description"] = description
         if code is not None:
             fields["code"] = code
         if encoding is not None:
@@ -1354,7 +1381,7 @@ class TestEditReferenceTable:
         return payload
 
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_edit_reftable_name_only(self, client, users, reference_tables):
+    def test_edit_reftable(self, client, users, reference_tables):
         reftable = reference_tables["indices_he"]
         set_logged_user(client, users["admin"])
         payload = self._get_payload()
@@ -1366,12 +1393,33 @@ class TestEditReferenceTable:
 
         assert response.status_code == 200
         assert response.json["name"] == "Updated name"
+        assert response.json["description"] == "Updated description"
         assert response.json["code"] == reftable.code
 
         updated = db.session.get(ReferenceTable, reftable.id_reference_table)
         assert updated.name == "Updated name"
+        assert updated.description == "Updated description"
         assert updated.code == reftable.code
         assert updated.data == reftable.data
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_keeps_description_when_not_provided(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        original_description = reftable.description
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(description=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        assert response.json["description"] == original_description
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.description == original_description
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_reftable_with_new_file(self, client, users, reference_tables):

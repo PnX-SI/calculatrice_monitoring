@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ModuleService } from '@geonature/services/module.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { saveAs } from 'file-saver';
 import { ReferenceTable } from '../../interfaces';
 import { DataService } from '../../services/data.service';
@@ -11,16 +12,24 @@ import { DataService } from '../../services/data.service';
 })
 export class ReferenceTablesComponent implements OnInit {
   protected referenceTables: Array<ReferenceTable> = [];
+  protected selectedReferenceTable: ReferenceTable;
+  @ViewChild('infoModal') private _infoModalContent: TemplateRef<any>;
 
   constructor(
     private _data: DataService,
-    private _moduleService: ModuleService
+    private _moduleService: ModuleService,
+    private _modalService: NgbModal
   ) {}
 
   ngOnInit() {
     this._data.getReferenceTables().subscribe((data: Array<ReferenceTable>) => {
       this.referenceTables = data;
     });
+  }
+
+  showDescription(referenceTable: ReferenceTable) {
+    this.selectedReferenceTable = referenceTable;
+    this._modalService.open(this._infoModalContent);
   }
 
   downloadFile(referenceTable: ReferenceTable) {

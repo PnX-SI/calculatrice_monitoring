@@ -360,8 +360,11 @@
                         {{ referenceTable.code }}
                       </mat-panel-title>
                     </mat-expansion-panel-header>
-                    <p>
+                    <h4>
                       {{ referenceTable.name }}
+                    </h4>
+                    <p *ngIf="referenceTable.description">
+                      {{ referenceTable.description }}
                     </p>
                   </mat-expansion-panel>
                 </ng-container>
