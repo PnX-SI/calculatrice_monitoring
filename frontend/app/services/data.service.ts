@@ -243,6 +243,13 @@ export class DataService {
     );
   }
 
+  deleteReferenceTable(referenceTableId: number) {
+    return this._http.delete<void>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
+    );
+  }
+
   private async getPage(url: string, params: ParamsDict): Promise<PaginatedList> {
     let httpParams = new HttpParams();
     for (const key in params) {

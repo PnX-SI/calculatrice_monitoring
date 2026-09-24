@@ -86,6 +86,7 @@
                 <button
                   mat-icon-button
                   matTooltip="Supprimer le tableau"
+                  (click)="confirmDeleteReferenceTable(refTable)"
                 >
                   <mat-icon>delete</mat-icon>
                 </button>
@@ -138,5 +139,39 @@
   </div>
   <div class="modal-body">
     {{ selectedReferenceTable?.description }}
+  </div>
+</ng-template>
+<ng-template
+  #deleteConfirmModal
+  let-modal
+>
+  <div class="modal-header">
+    <h4
+      class="modal-title"
+      id="modal-basic-title"
+    >
+      Supprimer le tableau de référence
+    </h4>
+  </div>
+  <div class="modal-body">
+    Voulez-vous vraiment supprimer le tableau de référence « {{ selectedReferenceTable?.name }} » ?
+    Cette action est irréversible.
+  </div>
+  <div class="modal-footer">
+    <button
+      type="button"
+      mat-raised-button
+      (click)="modal.dismiss('Cross click')"
+    >
+      Annuler
+    </button>
+    <button
+      type="button"
+      mat-raised-button
+      color="warn"
+      (click)="modal.close('confirm')"
+    >
+      Supprimer
+    </button>
   </div>
 </ng-template>
