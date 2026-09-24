@@ -37,14 +37,24 @@ export interface ProtocolProperties {
 export interface ReferenceTable {
   id: number;
   name: string;
-  // TODO: ajouter description
-  // description?: string;
+  description?: string;
   code: string;
+  active: boolean;
 }
 
 export interface ReferenceTableAttributes {
   name: string;
+  description?: string;
   code: string;
+  encoding: string;
+  separator: string;
+}
+
+export interface ReferenceTableEditAttributes {
+  name: string;
+  description?: string;
+  encoding: string;
+  separator: string;
 }
 
 export interface VisualizationBlockConfig {

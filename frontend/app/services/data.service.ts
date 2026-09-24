@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfigService } from '@geonature/services/config.service';
 import { ParamsDict } from '@geonature_common/form/data-form.service';
@@ -12,6 +12,7 @@ import {
   ProtocolProperties,
   ReferenceTable,
   ReferenceTableAttributes,
+  ReferenceTableEditAttributes,
   Site,
   SitesGroup,
   Visualization,
@@ -216,7 +217,36 @@ export class DataService {
     formData.append('fields', JSON.stringify(fields));
     return this._http.post<ReferenceTable>(
       `${this._config.API_ENDPOINT}/calculatrice/reftables`,
-      formData
+      formData,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
+    );
+  }
+
+  editReferenceTableActiveStatus(referenceTableId: number, active: boolean) {
+    return this._http.put<ReferenceTable>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}/active`,
+      { active },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  editReferenceTable(referenceTableId: number, fields: ReferenceTableEditAttributes, file?: File) {
+    let formData = new FormData();
+    if (file) {
+      formData.append('file', file);
+    }
+    formData.append('fields', JSON.stringify(fields));
+    return this._http.put<ReferenceTable>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
+      formData,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
+    );
+  }
+
+  deleteReferenceTable(referenceTableId: number) {
+    return this._http.delete<void>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
+      { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
   }
 

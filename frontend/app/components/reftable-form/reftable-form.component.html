@@ -9,7 +9,7 @@
   </a>
   <div class="card">
     <div class="card-header">
-      <h2>Créer un tableau de référence</h2>
+      <h2>{{ mode === 'edit' ? 'Éditer' : 'Créer' }} un tableau de référence</h2>
     </div>
     <div class="card-body">
       <form
@@ -27,6 +27,14 @@
             />
           </div>
           <div>
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              formControlName="description"
+              class="form-control"
+            ></textarea>
+          </div>
+          <div>
             <label for="code">Code</label>
             <input
               id="code"
@@ -36,7 +44,9 @@
             />
           </div>
           <div>
-            <label for="file-input">Importer fichier CSV</label>
+            <label for="file-input">
+              Importer fichier CSV{{ mode === 'edit' ? ' (facultatif)' : '' }}
+            </label>
             <input
               id="file-input"
               type="file"
@@ -44,6 +54,36 @@
               (change)="onFileChange($event)"
               class="form-control"
             />
+          </div>
+          <div>
+            <label for="encoding">Encodage du fichier</label>
+            <select
+              id="encoding"
+              formControlName="encoding"
+              class="form-control"
+            >
+              <option
+                *ngFor="let encoding of encodings"
+                [value]="encoding"
+              >
+                {{ encoding }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label for="separator">Séparateur du fichier</label>
+            <select
+              id="separator"
+              formControlName="separator"
+              class="form-control"
+            >
+              <option
+                *ngFor="let separator of separators"
+                [value]="separator"
+              >
+                {{ separator }}
+              </option>
+            </select>
           </div>
         </div>
         <hr />
@@ -57,6 +97,24 @@
           Valider
         </button>
       </form>
+      <div
+        class="csv-preview"
+        *ngIf="previewHeader"
+      >
+        <h3>Aperçu du fichier</h3>
+        <table>
+          <thead>
+            <tr>
+              <th *ngFor="let cell of previewHeader">{{ cell }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of previewRows">
+              <td *ngFor="let cell of row">{{ cell }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

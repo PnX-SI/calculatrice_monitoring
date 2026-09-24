@@ -1,4 +1,6 @@
+import csv
 import json
+from io import StringIO
 
 from flask import Blueprint, Response, abort, request
 from flask_login import login_required
@@ -17,15 +19,75 @@ from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import Scope, visualize
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
 from calculatrice_monitoring.schemas import (
+    REFERENCE_TABLE_ENCODINGS,
     IndicatorAttributesSchema,
     IndicatorDetailsSchema,
     IndicatorSchema,
     ProtocolSchema,
     ReferenceTableCreationSchema,
+    ReferenceTableEditSchema,
     ReferenceTableSchema,
     VizBlockConfigSchema,
 )
 from calculatrice_monitoring.utils import extract_variable_names
+
+REFERENCE_TABLE_MAX_VALUE_LENGTH = 100
+REFERENCE_TABLE_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 Mo
+
+
+def _humansize(nbytes: int):
+    """Helper function to convert a bytes size limit to a readable format.
+
+    # Source - https://stackoverflow.com/a/14996816
+    # Posted by nneonneo, modified by community.
+    # Retrieved 2026-09-23, License - CC BY-SA 3.0
+
+    >>> humansize(131)
+    '131 B'
+    >>> humansize(58812)
+    '57.43 KB'
+    >>> humansize(68819826)
+    '65.63 MB'
+    """
+    suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes) - 1:
+        nbytes /= 1024.0
+        i += 1
+    f = f"{nbytes:.2f}".rstrip("0").rstrip(".")
+    return f"{f} {suffixes[i]}"
+
+
+def _decode_reference_table_file(file_storage, encoding: str, separator: str) -> str:
+    """Decodes an uploaded reference table file and normalizes it to a comma-separated CSV.
+
+    The file's rows are always re-serialized with ',' as the separator so that the stored
+    data can later be read back with the default csv.DictReader delimiter (see eval.py).
+    """
+    raw_bytes = file_storage.read()
+    if len(raw_bytes) > REFERENCE_TABLE_MAX_FILE_SIZE:
+        max_size_str = _humansize(REFERENCE_TABLE_MAX_FILE_SIZE)
+        raise ValueError(f"Le fichier est trop volumineux. La limite est de {max_size_str}.")
+    codec = REFERENCE_TABLE_ENCODINGS[encoding]
+    try:
+        raw = raw_bytes.decode(codec)
+    except UnicodeDecodeError as error:
+        raise ValueError(f"Unable to decode file using the '{encoding}' encoding") from error
+    try:
+        rows = list(csv.reader(StringIO(raw), delimiter=separator))
+    except csv.Error as error:
+        raise ValueError("Unable to parse file as CSV") from error
+    if any(len(value) > REFERENCE_TABLE_MAX_VALUE_LENGTH for row in rows for value in row):
+        raise ValueError(
+            "Certaines valeurs sont trop longues. "
+            f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+        )
+    if separator == ",":
+        return raw
+    output = StringIO()
+    csv.writer(output, delimiter=",", lineterminator="\n").writerows(rows)
+    return output.getvalue()
+
 
 blueprint = Blueprint("calculatrice", __name__)
 
@@ -44,8 +106,13 @@ def _fetch_reference_tables(reference_table_ids):
     return reference_tables
 
 
-def _validate_and_get_indicator_relations(data):
+def _validate_and_get_indicator_relations(data, existing_reference_table_ids=frozenset()):
     """Validates the protocol and reference tables referenced by an indicator payload.
+
+    `existing_reference_table_ids` are the reference tables already attached to the indicator
+    being edited (empty when creating an indicator): they are exempt from the "must be active"
+    check below, so that deactivating a reference table never breaks indicators it is already
+    attached to, while still preventing new attachments of inactive reference tables.
 
     Returns a tuple `(reference_tables, error_response)`: on failure, `reference_tables`
     is None and `error_response` is the `(body, status)` tuple to return to the client.
@@ -65,6 +132,22 @@ def _validate_and_get_indicator_relations(data):
         missing_ids = sorted(error.args[0])
         return None, (
             {"referenceTableIds": [f"Reference table(s) with ID {missing_ids} not found"]},
+            400,
+        )
+
+    newly_attached_inactive_names = sorted(
+        rt.name
+        for rt in reference_tables
+        if not rt.active and rt.id_reference_table not in existing_reference_table_ids
+    )
+    if newly_attached_inactive_names:
+        return None, (
+            {
+                "referenceTableIds": [
+                    f"Reference table(s) {newly_attached_inactive_names} are inactive and "
+                    "cannot be attached to an indicator"
+                ]
+            },
             400,
         )
     return reference_tables, None
@@ -131,7 +214,10 @@ def edit_indicator(indicator_id: int):
         data = schema.load(request.json)
     except ValidationError as error:
         return error.messages, 400
-    reference_tables, error_response = _validate_and_get_indicator_relations(data)
+    existing_reference_table_ids = {rt.id_reference_table for rt in indicator.reference_tables}
+    reference_tables, error_response = _validate_and_get_indicator_relations(
+        data, existing_reference_table_ids
+    )
     if error_response:
         return error_response
 
@@ -331,13 +417,79 @@ def get_reference_table_data(reftable_id: int):
 @blueprint.route("/reftables", methods=["POST"])
 @check_cruved_scope(action="C", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
 def create_reference_table():
-    # TODO:
-    # - vérifier encodage fichier
-    # - vérifier fichier CSV
     fields = json.loads(request.form["fields"])
-    data = ReferenceTableCreationSchema().load(fields)
+    try:
+        data = ReferenceTableCreationSchema().load(fields)
+    except ValidationError as error:
+        return error.messages, 400
+    file_options = data.pop("file_options")
+    existing = db.session.execute(
+        select(ReferenceTable).filter_by(code=data["code"])
+    ).scalar_one_or_none()
+    if existing is not None:
+        return {"code": [f"Reference table with code '{data['code']}' already exists"]}, 400
     reftable = ReferenceTable(**data)
-    reftable.data = request.files["file"].read().decode("utf-8")
+    try:
+        reftable.data = _decode_reference_table_file(request.files["file"], **file_options)
+    except ValueError as error:
+        return {"file": [str(error)]}, 400
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 201
+
+
+@blueprint.route("/reftables/<int:reftable_id>/active", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_reference_table_active_status(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+    active = request.json.get("active")
+    if not isinstance(active, bool):
+        return {"active": ["Must be a boolean"]}, 400
+    reftable.active = active
+    db.session.add(reftable)
+    db.session.commit()
+    return ReferenceTableSchema().jsonify(reftable), 200
+
+
+@blueprint.route("/reftables/<int:reftable_id>", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_reference_table(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+
+    fields = json.loads(request.form["fields"])
+    try:
+        data = ReferenceTableEditSchema().load(fields)
+    except ValidationError as error:
+        return error.messages, 400
+    file_options = data.pop("file_options")
+    reftable.name = data["name"]
+    reftable.description = data.get("description", reftable.description)
+    if "file" in request.files:
+        try:
+            reftable.data = _decode_reference_table_file(request.files["file"], **file_options)
+        except ValueError as error:
+            return {"file": [str(error)]}, 400
+    db.session.add(reftable)
+    db.session.commit()
+    return ReferenceTableSchema().jsonify(reftable), 200
+
+
+@blueprint.route("/reftables/<int:reftable_id>", methods=["DELETE"])
+@check_cruved_scope(action="D", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def delete_reference_table(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+
+    if reftable.indicators:
+        names = sorted(indicator.name for indicator in reftable.indicators)
+        return {
+            "referenceTable": [
+                f"Reference table is used by indicator(s) {', '.join(names)} and cannot be deleted"
+            ]
+        }, 400
+
+    db.session.delete(reftable)
+    db.session.commit()
+    return "", 204

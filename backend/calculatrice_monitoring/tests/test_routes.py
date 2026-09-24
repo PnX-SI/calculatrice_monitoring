@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
@@ -7,10 +8,15 @@ from flask import url_for
 from flask_login import logout_user
 from geonature.utils.env import db
 from pypnusershub.tests.utils import set_logged_user
+from sqlalchemy import select
 from werkzeug.datastructures import Headers
 
+from calculatrice_monitoring.blueprint import (
+    REFERENCE_TABLE_MAX_FILE_SIZE,
+    REFERENCE_TABLE_MAX_VALUE_LENGTH,
+)
 from calculatrice_monitoring.eval import VisualizationErrorType
-from calculatrice_monitoring.models import Indicator, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
 
 
 class TestGetIndicators:
@@ -310,6 +316,24 @@ class TestCreateIndicator:
         assert response.status_code == 400
         assert "code" in response.json
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_indicator_rejects_inactive_reference_table(
+        self, client, users, protocol, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "New Indicator",
+            "protocolId": protocol.id_module,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.post(url_for("calculatrice.create_indicator"), json=payload)
+        assert response.status_code == 400
+        assert "referenceTableIds" in response.json
+        assert db.session.execute(select(Indicator).filter_by(name="New Indicator")).first() is None
+
 
 class TestEditIndicator:
     @pytest.mark.usefixtures("calculatrice_permissions")
@@ -442,6 +466,80 @@ class TestEditIndicator:
         )
         assert response.status_code == 400
         assert "code" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_rejects_newly_attached_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": indicator.name,
+            "protocolId": protocol_id,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 400
+        assert "referenceTableIds" in response.json
+        db.session.refresh(indicator)
+        assert indicator.reference_tables == []
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_keeps_already_attached_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "Renamed indicator",
+            "protocolId": protocol_id,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert [rt.id_reference_table for rt in indicator.reference_tables] == [
+            reftable.id_reference_table
+        ]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_can_explicitly_remove_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "Renamed indicator",
+            "protocolId": protocol_id,
+            "referenceTableIds": [],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert indicator.reference_tables == []
 
 
 class TestGetIndicatorVisualization:
@@ -971,6 +1069,12 @@ class TestGetRerenceTables:
         assert "indices_ht" in reftables_codes
         assert "valeurs_abondance" in reftables_codes
 
+        reftable_he = next(rt for rt in response.json if rt["code"] == "indices_he")
+        assert (
+            reftable_he["description"]
+            == "Tableau de référence avec indices de référence par espèce pour HE"
+        )
+
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_empty_reftables_list(self, client, users):
         set_logged_user(client, users["gestionnaire"])
@@ -992,14 +1096,30 @@ class TestGetRerenceTables:
 
 class TestCreateReferenceTable:
     @staticmethod
-    def _get_payload(name: Optional[str] = "My ref table"):
-        filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
-        datafile = open(filename, "rb")
-        fields = {"code": "my_table"}
-        if name:
+    def _get_payload(
+        name: Optional[str] = "My ref table",
+        description: Optional[str] = "My ref table description",
+        code: Optional[str] = "my_table",
+        file=None,
+        encoding: Optional[str] = "utf-8",
+        separator: Optional[str] = ",",
+    ):
+        if file is None:
+            filename = Path(__file__).parent.parent / "./migrations/data/indices_he.csv"
+            file = (open(filename, "rb"), "indices_he.csv")
+        fields = {}
+        if name is not None:
             fields["name"] = name
+        if description is not None:
+            fields["description"] = description
+        if code is not None:
+            fields["code"] = code
+        if encoding is not None:
+            fields["encoding"] = encoding
+        if separator is not None:
+            fields["separator"] = separator
         return {
-            "file": (datafile, "indices_he.csv"),
+            "file": file,
             "fields": json.dumps(fields),
         }
 
@@ -1017,8 +1137,23 @@ class TestCreateReferenceTable:
         reftable = response.json
         assert "name" in reftable
         assert reftable["name"] == "My ref table"
+        assert "description" in reftable
+        assert reftable["description"] == "My ref table description"
         assert "code" in reftable
         assert reftable["code"] == "my_table"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_without_description(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(description=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 201
+        assert response.json["description"] is None
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_create_reftable_login_required_error(self, client):
@@ -1054,3 +1189,600 @@ class TestCreateReferenceTable:
         )
         assert response.status_code == 400
         assert "name" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_duplicate_code_error(self, client, users, reference_tables):
+        existing_code = reference_tables["indices_he"].code
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(name="Another reftable", code=existing_code)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "code" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    @pytest.mark.parametrize(
+        "invalid_code",
+        [
+            "1_starts_with_digit",
+            "_starts_with_underscore",
+            "has space",
+            "has-dash",
+            "has.dot",
+            "",
+        ],
+    )
+    def test_create_reftable_invalid_code_format_error(self, client, users, invalid_code):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(code=invalid_code)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "code" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_valid_code_with_digits_and_underscore(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(code="valid_code_2")
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_normalizes_semicolon_separator(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(b"cdnom;indice_he\n81610;9\n"), "reftable.csv"), separator=";"
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+        created = db.session.execute(select(ReferenceTable).filter_by(code="my_table")).scalar_one()
+        assert created.data == "cdnom,indice_he\n81610,9\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_decodes_latin1_encoding(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO("nom,valeur\nélevé,1\n".encode("iso-8859-1")), "reftable.csv"),
+            encoding="latin-1",
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 201
+        created = db.session.execute(select(ReferenceTable).filter_by(code="my_table")).scalar_one()
+        assert created.data == "nom,valeur\nélevé,1\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_unable_to_decode_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO("élevé".encode("iso-8859-1")), "reftable.csv"), encoding="utf-8"
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_value_too_long_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+        )
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert response.json == {
+            "file": [
+                "Certaines valeurs sont trop longues. "
+                f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+            ]
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_file_too_large_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        placeholder = b"81610,9\n"
+        times = REFERENCE_TABLE_MAX_FILE_SIZE // len(placeholder)
+        oversized_content = b"cdnom,indice_he\n" + placeholder * (times + 1)
+        payload = self._get_payload(file=(BytesIO(oversized_content), "reftable.csv"))
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+        assert "Le fichier est trop volumineux" in response.json["file"][0]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_missing_encoding_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(encoding=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "encoding" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_missing_separator_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(separator=None)
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_reftable_invalid_separator_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(file=(BytesIO(b"a,b\n1,2\n"), "reftable.csv"), separator="|")
+        response = client.post(
+            url_for("calculatrice.create_reference_table"),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json
+
+
+class TestEditReferenceTable:
+    @staticmethod
+    def _get_payload(
+        name: Optional[str] = "Updated name",
+        description: Optional[str] = "Updated description",
+        code: Optional[str] = None,
+        file=None,
+        encoding: Optional[str] = "utf-8",
+        separator: Optional[str] = ",",
+    ):
+        fields = {}
+        if name is not None:
+            fields["name"] = name
+        if description is not None:
+            fields["description"] = description
+        if code is not None:
+            fields["code"] = code
+        if encoding is not None:
+            fields["encoding"] = encoding
+        if separator is not None:
+            fields["separator"] = separator
+        payload = {"fields": json.dumps(fields)}
+        if file is not None:
+            payload["file"] = file
+        return payload
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        assert response.json["name"] == "Updated name"
+        assert response.json["description"] == "Updated description"
+        assert response.json["code"] == reftable.code
+
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.name == "Updated name"
+        assert updated.description == "Updated description"
+        assert updated.code == reftable.code
+        assert updated.data == reftable.data
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_keeps_description_when_not_provided(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        original_description = reftable.description
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(description=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        assert response.json["description"] == original_description
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.description == original_description
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_with_new_file(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        original_data = reftable.data
+        set_logged_user(client, users["admin"])
+        filename = Path(__file__).parent.parent / "./migrations/data/indices_ht.csv"
+        expected_data = filename.read_text()
+        datafile = open(filename, "rb")
+        payload = self._get_payload(file=(datafile, "indices_ht.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.name == "Updated name"
+        assert updated.data == expected_data
+        assert updated.data != original_data
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_ignores_code(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        original_code = reftable.code
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(code="not_allowed")
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 400
+        assert "code" in response.json
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.code == original_code
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_reftable_login_required_error(self, client, reference_tables):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_needs_update_permission_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
+        set_logged_user(client, users["gestionnaire"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_name_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(name=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "name" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload()
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=999999),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_normalizes_semicolon_separator(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(b"cdnom;indice_he\n81610;9\n"), "reftable.csv"), separator=";"
+        )
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+
+        assert response.status_code == 200
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.data == "cdnom,indice_he\n81610,9\n"
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_wrong_encoding_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(file=(BytesIO("élevé".encode("iso-8859-1")), "reftable.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_value_too_long_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+        )
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert response.json == {
+            "file": [
+                "Certaines valeurs sont trop longues. "
+                f"La limite est de {REFERENCE_TABLE_MAX_VALUE_LENGTH} caractères."
+            ]
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_file_too_large_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        placeholder = b"81610,9\n"
+        times = REFERENCE_TABLE_MAX_FILE_SIZE // len(placeholder)
+        oversized_content = b"cdnom,indice_he\n" + placeholder * (times + 1)
+        payload = self._get_payload(file=(BytesIO(oversized_content), "reftable.csv"))
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "file" in response.json
+        assert "Le fichier est trop volumineux" in response.json["file"][0]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_encoding_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(encoding=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "encoding" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reftable_missing_separator_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        payload = self._get_payload(separator=None)
+        response = client.put(
+            url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
+            data=payload,
+            headers=Headers({"Content-Type": "multipart/form-data"}),
+        )
+        assert response.status_code == 400
+        assert "separator" in response.json
+
+
+class TestEditReferenceTableActiveStatus:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_deactivate_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        assert reftable.active is True
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 200
+        assert response.json["active"] is False
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is False
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_reactivate_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": True},
+        )
+        assert response.status_code == 200
+        assert response.json["active"] is True
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is True
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_does_not_detach_indicators(
+        self, client, users, reference_tables, protocol_with_indicators
+    ):
+        reftable = reference_tables["indices_he"]
+        indicator = protocol_with_indicators["indicators"][0]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert [rt.id_reference_table for rt in indicator.reference_tables] == [
+            reftable.id_reference_table
+        ]
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_reference_table_active_status_login_required_error(
+        self, client, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_needs_update_permission_error(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
+        set_logged_user(client, users["gestionnaire"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for("calculatrice.edit_reference_table_active_status", reftable_id=999999),
+            json={"active": False},
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_requires_boolean(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": "not-a-boolean"},
+        )
+        assert response.status_code == 400
+        assert "active" in response.json
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is True
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_missing_field_error(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={},
+        )
+        assert response.status_code == 400
+        assert "active" in response.json
+
+
+class TestDeleteReferenceTable:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 204
+        assert db.session.get(ReferenceTable, reftable.id_reference_table) is None
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_attached_to_indicator_error(
+        self, client, users, reference_tables, protocol_with_indicators
+    ):
+        reftable = reference_tables["indices_he"]
+        indicator = protocol_with_indicators["indicators"][0]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+        set_logged_user(client, users["admin"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 400
+        assert "referenceTable" in response.json
+        assert db.session.get(ReferenceTable, reftable.id_reference_table) is not None
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_delete_reftable_login_required_error(self, client, reference_tables):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_needs_delete_permission_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not D.
+        set_logged_user(client, users["gestionnaire"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.delete(url_for("calculatrice.delete_reference_table", reftable_id=999999))
+        assert response.status_code == 404
