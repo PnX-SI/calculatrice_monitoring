@@ -474,3 +474,22 @@ def edit_reference_table(reftable_id: int):
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 200
+
+
+@blueprint.route("/reftables/<int:reftable_id>", methods=["DELETE"])
+@check_cruved_scope(action="D", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def delete_reference_table(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+
+    if reftable.indicators:
+        names = sorted(indicator.name for indicator in reftable.indicators)
+        return {
+            "referenceTable": [
+                f"Reference table is used by indicator(s) {', '.join(names)} and cannot be deleted"
+            ]
+        }, 400
+
+    db.session.delete(reftable)
+    db.session.commit()
+    return "", 204

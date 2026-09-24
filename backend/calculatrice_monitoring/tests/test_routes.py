@@ -1733,3 +1733,56 @@ class TestEditReferenceTableActiveStatus:
         )
         assert response.status_code == 400
         assert "active" in response.json
+
+
+class TestDeleteReferenceTable:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 204
+        assert db.session.get(ReferenceTable, reftable.id_reference_table) is None
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_attached_to_indicator_error(
+        self, client, users, reference_tables, protocol_with_indicators
+    ):
+        reftable = reference_tables["indices_he"]
+        indicator = protocol_with_indicators["indicators"][0]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+        set_logged_user(client, users["admin"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 400
+        assert "referenceTable" in response.json
+        assert db.session.get(ReferenceTable, reftable.id_reference_table) is not None
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_delete_reftable_login_required_error(self, client, reference_tables):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_needs_delete_permission_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not D.
+        set_logged_user(client, users["gestionnaire"])
+        response = client.delete(
+            url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_delete_reftable_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.delete(url_for("calculatrice.delete_reference_table", reftable_id=999999))
+        assert response.status_code == 404
