@@ -106,8 +106,13 @@ def _fetch_reference_tables(reference_table_ids):
     return reference_tables
 
 
-def _validate_and_get_indicator_relations(data):
+def _validate_and_get_indicator_relations(data, existing_reference_table_ids=frozenset()):
     """Validates the protocol and reference tables referenced by an indicator payload.
+
+    `existing_reference_table_ids` are the reference tables already attached to the indicator
+    being edited (empty when creating an indicator): they are exempt from the "must be active"
+    check below, so that deactivating a reference table never breaks indicators it is already
+    attached to, while still preventing new attachments of inactive reference tables.
 
     Returns a tuple `(reference_tables, error_response)`: on failure, `reference_tables`
     is None and `error_response` is the `(body, status)` tuple to return to the client.
@@ -127,6 +132,22 @@ def _validate_and_get_indicator_relations(data):
         missing_ids = sorted(error.args[0])
         return None, (
             {"referenceTableIds": [f"Reference table(s) with ID {missing_ids} not found"]},
+            400,
+        )
+
+    newly_attached_inactive_names = sorted(
+        rt.name
+        for rt in reference_tables
+        if not rt.active and rt.id_reference_table not in existing_reference_table_ids
+    )
+    if newly_attached_inactive_names:
+        return None, (
+            {
+                "referenceTableIds": [
+                    f"Reference table(s) {newly_attached_inactive_names} are inactive and "
+                    "cannot be attached to an indicator"
+                ]
+            },
             400,
         )
     return reference_tables, None
@@ -193,7 +214,10 @@ def edit_indicator(indicator_id: int):
         data = schema.load(request.json)
     except ValidationError as error:
         return error.messages, 400
-    reference_tables, error_response = _validate_and_get_indicator_relations(data)
+    existing_reference_table_ids = {rt.id_reference_table for rt in indicator.reference_tables}
+    reference_tables, error_response = _validate_and_get_indicator_relations(
+        data, existing_reference_table_ids
+    )
     if error_response:
         return error_response
 
@@ -412,6 +436,20 @@ def create_reference_table():
     db.session.add(reftable)
     db.session.commit()
     return ReferenceTableSchema().jsonify(reftable), 201
+
+
+@blueprint.route("/reftables/<int:reftable_id>/active", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_reference_table_active_status(reftable_id: int):
+    error_msg = f"Reference table {reftable_id} not found"
+    reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
+    active = request.json.get("active")
+    if not isinstance(active, bool):
+        return {"active": ["Must be a boolean"]}, 400
+    reftable.active = active
+    db.session.add(reftable)
+    db.session.commit()
+    return ReferenceTableSchema().jsonify(reftable), 200
 
 
 @blueprint.route("/reftables/<int:reftable_id>", methods=["PUT"])

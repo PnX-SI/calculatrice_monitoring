@@ -222,6 +222,14 @@ export class DataService {
     );
   }
 
+  editReferenceTableActiveStatus(referenceTableId: number, active: boolean) {
+    return this._http.put<ReferenceTable>(
+      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}/active`,
+      { active },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   editReferenceTable(referenceTableId: number, fields: ReferenceTableEditAttributes, file?: File) {
     let formData = new FormData();
     if (file) {

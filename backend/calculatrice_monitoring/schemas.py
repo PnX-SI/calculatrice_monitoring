@@ -80,7 +80,7 @@ class ReferenceTableCreationSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = ReferenceTable
-        dump_only = ["description", "id_reference_table", "data"]
+        dump_only = ["description", "id_reference_table", "data", "active"]
 
     @post_load
     def prepare_file_options(self, data, **kwargs):  # noqa: ARG002  # Unused method argument: `kwargs`
@@ -93,7 +93,7 @@ class ReferenceTableEditSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = ReferenceTable
-        dump_only = ["id_reference_table", "code", "data"]
+        dump_only = ["id_reference_table", "code", "data", "active"]
 
     @post_load
     def prepare_file_options(self, data, **kwargs):  # noqa: ARG002  # Unused method argument: `kwargs`
