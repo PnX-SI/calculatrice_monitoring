@@ -38,6 +38,7 @@ export class ReferenceTableFormComponent implements OnInit {
     this.form = this._formBuilder.group({
       file: [null],
       name: ['', Validators.required],
+      description: [''],
       code: ['', Validators.required],
       encoding: ['utf-8'],
       separator: [','],
@@ -60,6 +61,7 @@ export class ReferenceTableFormComponent implements OnInit {
         this.form.patchValue({
           file: null,
           name: this.referenceTable.name,
+          description: this.referenceTable.description,
           code: this.referenceTable.code,
         });
       });
@@ -118,6 +120,7 @@ export class ReferenceTableFormComponent implements OnInit {
           .createReferenceTable(
             {
               name: this.form.controls.name.value,
+              description: this.form.controls.description.value,
               code: this.form.controls.code.value,
               encoding: this.form.controls.encoding.value,
               separator: this.form.controls.separator.value,
@@ -134,6 +137,7 @@ export class ReferenceTableFormComponent implements OnInit {
             this.referenceTable.id,
             {
               name: this.form.controls.name.value,
+              description: this.form.controls.description.value,
               encoding: this.form.controls.encoding.value,
               separator: this.form.controls.separator.value,
             },

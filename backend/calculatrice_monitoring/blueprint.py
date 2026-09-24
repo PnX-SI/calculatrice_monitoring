@@ -465,6 +465,7 @@ def edit_reference_table(reftable_id: int):
         return error.messages, 400
     file_options = data.pop("file_options")
     reftable.name = data["name"]
+    reftable.description = data.get("description", reftable.description)
     if "file" in request.files:
         try:
             reftable.data = _decode_reference_table_file(request.files["file"], **file_options)

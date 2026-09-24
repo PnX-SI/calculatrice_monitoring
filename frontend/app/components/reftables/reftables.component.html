@@ -23,7 +23,17 @@
         </thead>
         <tbody>
           <tr *ngFor="let refTable of referenceTables">
-            <td>{{ refTable.name }}</td>
+            <td>
+              {{ refTable.name }}
+              <button
+                *ngIf="refTable.description"
+                mat-icon-button
+                matTooltip="Voir la description"
+                (click)="showDescription(refTable)"
+              >
+                <mat-icon>info</mat-icon>
+              </button>
+            </td>
             <td class="ref-table-code">{{ refTable.code }}</td>
             <td>
               <mat-slide-toggle
@@ -106,3 +116,27 @@
     </div>
   </div>
 </div>
+<ng-template
+  #infoModal
+  let-modal
+>
+  <div class="modal-header">
+    <h4
+      class="modal-title"
+      id="modal-basic-title"
+    >
+      {{ selectedReferenceTable?.name }}
+    </h4>
+    <button
+      type="button"
+      class="close"
+      aria-label="Close"
+      (click)="modal.dismiss('Cross click')"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    {{ selectedReferenceTable?.description }}
+  </div>
+</ng-template>

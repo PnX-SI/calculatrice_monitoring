@@ -80,7 +80,7 @@ class ReferenceTableCreationSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = ReferenceTable
-        dump_only = ["description", "id_reference_table", "data", "active"]
+        dump_only = ["id_reference_table", "data", "active"]
 
     @post_load
     def prepare_file_options(self, data, **kwargs):  # noqa: ARG002  # Unused method argument: `kwargs`
@@ -136,7 +136,7 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     reference_tables = ma.Nested(
         "ReferenceTableSchema",
         many=True,
-        only=["id_reference_table", "name", "code"],
+        only=["id_reference_table", "name", "code", "description"],
         data_key="referenceTables",
     )
 
