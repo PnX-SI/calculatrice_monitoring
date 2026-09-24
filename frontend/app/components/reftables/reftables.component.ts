@@ -29,6 +29,13 @@ export class ReferenceTablesComponent implements OnInit {
     });
   }
 
+  toggleActive(referenceTable: ReferenceTable) {
+    const toggled = !referenceTable.active;
+    this._data.editReferenceTableActiveStatus(referenceTable.id, toggled).subscribe(() => {
+      referenceTable.active = toggled;
+    });
+  }
+
   private getAdminPerm(perm: string): number {
     return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
   }

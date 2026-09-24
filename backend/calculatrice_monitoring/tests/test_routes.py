@@ -316,6 +316,24 @@ class TestCreateIndicator:
         assert response.status_code == 400
         assert "code" in response.json
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_create_indicator_rejects_inactive_reference_table(
+        self, client, users, protocol, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "New Indicator",
+            "protocolId": protocol.id_module,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.post(url_for("calculatrice.create_indicator"), json=payload)
+        assert response.status_code == 400
+        assert "referenceTableIds" in response.json
+        assert db.session.execute(select(Indicator).filter_by(name="New Indicator")).first() is None
+
 
 class TestEditIndicator:
     @pytest.mark.usefixtures("calculatrice_permissions")
@@ -448,6 +466,80 @@ class TestEditIndicator:
         )
         assert response.status_code == 400
         assert "code" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_rejects_newly_attached_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": indicator.name,
+            "protocolId": protocol_id,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 400
+        assert "referenceTableIds" in response.json
+        db.session.refresh(indicator)
+        assert indicator.reference_tables == []
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_keeps_already_attached_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "Renamed indicator",
+            "protocolId": protocol_id,
+            "referenceTableIds": [reftable.id_reference_table],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert [rt.id_reference_table for rt in indicator.reference_tables] == [
+            reftable.id_reference_table
+        ]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_can_explicitly_remove_inactive_reference_table(
+        self, client, users, protocol_with_indicators, reference_tables
+    ):
+        indicator = protocol_with_indicators["indicators"][0]
+        protocol_id = protocol_with_indicators["protocol"].id_module
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        payload = {
+            "name": "Renamed indicator",
+            "protocolId": protocol_id,
+            "referenceTableIds": [],
+        }
+        response = client.put(
+            url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
+            json=payload,
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert indicator.reference_tables == []
 
 
 class TestGetIndicatorVisualization:
@@ -1460,3 +1552,136 @@ class TestEditReferenceTable:
         )
         assert response.status_code == 400
         assert "separator" in response.json
+
+
+class TestEditReferenceTableActiveStatus:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_deactivate_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        assert reftable.active is True
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 200
+        assert response.json["active"] is False
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is False
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_reactivate_reftable(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        with db.session.begin_nested():
+            reftable.active = False
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": True},
+        )
+        assert response.status_code == 200
+        assert response.json["active"] is True
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is True
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_does_not_detach_indicators(
+        self, client, users, reference_tables, protocol_with_indicators
+    ):
+        reftable = reference_tables["indices_he"]
+        indicator = protocol_with_indicators["indicators"][0]
+        with db.session.begin_nested():
+            indicator.reference_tables = [reftable]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 200
+        db.session.refresh(indicator)
+        assert [rt.id_reference_table for rt in indicator.reference_tables] == [
+            reftable.id_reference_table
+        ]
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_reference_table_active_status_login_required_error(
+        self, client, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_needs_update_permission_error(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
+        set_logged_user(client, users["gestionnaire"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": False},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for("calculatrice.edit_reference_table_active_status", reftable_id=999999),
+            json={"active": False},
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_requires_boolean(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={"active": "not-a-boolean"},
+        )
+        assert response.status_code == 400
+        assert "active" in response.json
+        updated = db.session.get(ReferenceTable, reftable.id_reference_table)
+        assert updated.active is True
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_reference_table_active_status_missing_field_error(
+        self, client, users, reference_tables
+    ):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for(
+                "calculatrice.edit_reference_table_active_status",
+                reftable_id=reftable.id_reference_table,
+            ),
+            json={},
+        )
+        assert response.status_code == 400
+        assert "active" in response.json

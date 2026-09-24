@@ -40,6 +40,7 @@ export interface ReferenceTable {
   // TODO: ajouter description
   // description?: string;
   code: string;
+  active: boolean;
 }
 
 export interface ReferenceTableAttributes {

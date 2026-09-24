@@ -15,6 +15,7 @@ export class IndicatorFormComponent implements OnInit {
   indicatorForm: FormGroup;
   protocols: Array<Protocol> = undefined;
   referenceTables: Array<ReferenceTable> = undefined;
+  selectableReferenceTables: Array<ReferenceTable> = undefined;
   indicatorDetails: IndicatorDetails;
   mode?: 'create' | 'edit';
 
@@ -39,6 +40,7 @@ export class IndicatorFormComponent implements OnInit {
     });
     this._data.getReferenceTables().subscribe((data: Array<ReferenceTable>) => {
       this.referenceTables = data;
+      this._updateSelectableReferenceTables();
     });
     this._route.params.subscribe((params) => {
       if (params.indicatorId === undefined) {
@@ -49,6 +51,7 @@ export class IndicatorFormComponent implements OnInit {
       const indicatorId: number = params.indicatorId;
       this._data.getIndicatorDetails(indicatorId).subscribe((data: IndicatorDetails) => {
         this.indicatorDetails = data;
+        this._updateSelectableReferenceTables();
         this.indicatorForm.setValue({
           name: data.name,
           description: data.description,
@@ -57,6 +60,23 @@ export class IndicatorFormComponent implements OnInit {
         });
       });
     });
+  }
+
+  /**
+   * The reference tables selectable in the form are the active ones, plus any reference
+   * table already attached to the indicator being edited (even if it has since been
+   * deactivated) so that editing an indicator never silently drops an existing link.
+   */
+  private _updateSelectableReferenceTables() {
+    if (!this.referenceTables) {
+      return;
+    }
+    const linkedIds = new Set(
+      (this.indicatorDetails?.referenceTables ?? []).map((referenceTable) => referenceTable.id)
+    );
+    this.selectableReferenceTables = this.referenceTables.filter(
+      (referenceTable) => referenceTable.active || linkedIds.has(referenceTable.id)
+    );
   }
 
   onSubmit() {

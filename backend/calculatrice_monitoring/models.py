@@ -84,6 +84,7 @@ class ReferenceTable(db.Model):
     description = db.Column(db.Unicode)
     code = db.Column(db.Unicode(32), nullable=False, unique=True)
     data = db.Column(db.Text, nullable=False)
+    active = db.Column(db.Boolean, nullable=False, default=True, server_default="true")
     indicators = db.relationship(
         Indicator,
         secondary=cor_indicator_reference_table,

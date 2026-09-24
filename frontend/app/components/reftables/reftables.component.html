@@ -17,6 +17,7 @@
           <tr>
             <th>Nom</th>
             <th>Code</th>
+            <th>Actif</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -24,6 +25,16 @@
           <tr *ngFor="let refTable of referenceTables">
             <td>{{ refTable.name }}</td>
             <td class="ref-table-code">{{ refTable.code }}</td>
+            <td>
+              <mat-slide-toggle
+                *ngIf="canEditReferenceTable(); else activeStatusText"
+                [checked]="refTable.active"
+                (change)="toggleActive(refTable)"
+              ></mat-slide-toggle>
+              <ng-template #activeStatusText>
+                {{ refTable.active ? 'Oui' : 'Non' }}
+              </ng-template>
+            </td>
             <td>
               <ng-container *ngIf="canEditReferenceTable(); else noEditButton">
                 <button
