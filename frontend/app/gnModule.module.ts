@@ -25,21 +25,77 @@ import { VisualizationChartComponent } from './components/visualization-chart/vi
 import { VisualizationPageComponent } from './components/visualization-page/visualization-page.component';
 import { VisualizationParamsFormComponent } from './components/visualization-params-form/visualization-params-form.component';
 import { VisualizationScalarComponent } from './components/visualization-scalar/visualization-scalar.component';
+import { CruvedPermissionGuard } from './guards/cruved-permission.guard';
 import { DataService } from './services/data.service';
 import { UtilsService } from './services/utils.service';
 
 const routes: Routes = [
-  { path: '', component: ModuleComponent },
-  { path: 'indicator/:indicatorId/details', component: IndicatorDetailsComponent },
-  { path: 'indicator/create', component: IndicatorFormComponent },
-  { path: 'indicator/:indicatorId/edit', component: IndicatorFormComponent },
-  { path: 'indicator/:indicatorId/edit-code', component: IndicatorCodeEditorComponent },
-  { path: 'indicator/:indicatorId/viz-blocks', component: IndicatorVizBlocksFormComponent },
-  { path: 'reference-tables', component: ReferenceTablesComponent },
-  { path: 'reference-table/create', component: ReferenceTableFormComponent },
-  { path: 'reference-table/:reftableId/edit', component: ReferenceTableFormComponent },
-  { path: 'visualization/:indicatorId/params', component: VisualizationParamsFormComponent },
-  { path: 'visualization/:indicatorId', component: VisualizationPageComponent },
+  {
+    path: '',
+    component: ModuleComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'R' },
+  },
+  {
+    path: 'indicator/:indicatorId/details',
+    component: IndicatorDetailsComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'R', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'indicator/create',
+    component: IndicatorFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'C', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'indicator/:indicatorId/edit',
+    component: IndicatorFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'indicator/:indicatorId/edit-code',
+    component: IndicatorCodeEditorComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'indicator/:indicatorId/viz-blocks',
+    component: IndicatorVizBlocksFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'reference-tables',
+    component: ReferenceTablesComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'R', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'reference-table/create',
+    component: ReferenceTableFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'C', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'reference-table/:reftableId/edit',
+    component: ReferenceTableFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+  },
+  {
+    path: 'visualization/:indicatorId/params',
+    component: VisualizationParamsFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'R' },
+  },
+  {
+    path: 'visualization/:indicatorId',
+    component: VisualizationPageComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'R' },
+  },
 ];
 
 @NgModule({
@@ -73,7 +129,7 @@ const routes: Routes = [
     GN2CommonModule,
     NgChartsModule,
   ],
-  providers: [DataService, UtilsService],
+  providers: [DataService, UtilsService, CruvedPermissionGuard],
   bootstrap: [ModuleComponent],
 })
 export class GeonatureModule {}
