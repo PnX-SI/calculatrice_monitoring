@@ -804,6 +804,38 @@ result = foo()
         viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 0
 
+    def test_error_login_required(self, client, monitoring_objects, indicators):
+        logout_user()
+        i02_abondance = indicators["i02_abondance"]
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=i02_abondance.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 401
+
+    def test_error_read_permission_needed(self, client, users, monitoring_objects, indicators):
+        i02_abondance = indicators["i02_abondance"]
+        set_logged_user(client, users["public"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=i02_abondance.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 403
+
 
 class TestEditIndicatorCode:
     @pytest.mark.usefixtures("calculatrice_permissions")
