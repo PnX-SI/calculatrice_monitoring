@@ -883,7 +883,7 @@ class TestEditIndicatorCode:
         assert indicator.code == new_code
 
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_edit_indicator_code_handles_single_quotes(
+    def test_edit_indicator_code_handles_double_quotes(
         self, client, users, protocol_with_indicators
     ):
         set_logged_user(client, users["admin"])
@@ -1144,7 +1144,7 @@ class TestGetRerenceTables:
         assert response.status_code == 401
 
     @pytest.mark.usefixtures("calculatrice_permissions")
-    def test_get_protocol_needs_permission_error(self, client, users):
+    def test_error_needs_permission(self, client, users):
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_reference_tables"))
         assert response.status_code == 403
