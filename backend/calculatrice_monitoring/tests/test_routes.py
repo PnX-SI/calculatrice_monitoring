@@ -286,7 +286,6 @@ class TestCreateIndicator:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_indicator_needs_create_permission_error(self, client, users, protocol):
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not C.
         set_logged_user(client, users["gestionnaire"])
         payload = {"name": "Forbidden", "protocolId": protocol.id_module}
         response = client.post(url_for("calculatrice.create_indicator"), json=payload)
@@ -412,7 +411,6 @@ class TestEditIndicator:
     def test_edit_indicator_needs_update_permission_error(
         self, client, users, protocol_with_indicators
     ):
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
         set_logged_user(client, users["gestionnaire"])
         indicator = protocol_with_indicators["indicators"][0]
         protocol_id = protocol_with_indicators["protocol"].id_module
@@ -931,7 +929,6 @@ class TestEditIndicatorCode:
     def test_edit_indicator_code_needs_update_permission_error(
         self, client, users, protocol_with_indicators
     ):
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
         set_logged_user(client, users["gestionnaire"])
         indicator = protocol_with_indicators["indicators"][0]
         response = client.put(
@@ -1051,7 +1048,6 @@ class TestEditIndicatorVizBlocks:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_vizblocks_needs_create_permission_error(self, client, users):
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
         set_logged_user(client, users["gestionnaire"])
         does_not_matter = 12345
 
@@ -1107,7 +1103,7 @@ class TestEditIndicatorVizBlocks:
 class TestGetRerenceTables:
     @pytest.mark.usefixtures("calculatrice_permissions", "reference_tables")
     def test_get_reftables(self, client, users):
-        set_logged_user(client, users["gestionnaire"])
+        set_logged_user(client, users["admin"])
         response = client.get(url_for("calculatrice.get_reference_tables"))
         assert response.status_code == 200
 
@@ -1125,7 +1121,7 @@ class TestGetRerenceTables:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_empty_reftables_list(self, client, users):
-        set_logged_user(client, users["gestionnaire"])
+        set_logged_user(client, users["admin"])
         response = client.get(url_for("calculatrice.get_reference_tables"))
         assert response.status_code == 200
         assert response.json == []
@@ -1137,7 +1133,7 @@ class TestGetRerenceTables:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_get_protocol_needs_permission_error(self, client, users):
-        set_logged_user(client, users["public"])
+        set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_reference_tables"))
         assert response.status_code == 403
 
@@ -1261,7 +1257,6 @@ class TestCreateReferenceTable:
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_reftable_needs_create_permission_error(self, client, users):
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not C.
         set_logged_user(client, users["gestionnaire"])
         payload = self._get_payload()
         response = client.post(
@@ -1567,7 +1562,6 @@ class TestEditReferenceTable:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_reftable_needs_update_permission_error(self, client, users, reference_tables):
         reftable = reference_tables["indices_he"]
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
         set_logged_user(client, users["gestionnaire"])
         payload = self._get_payload()
         response = client.put(
@@ -1773,7 +1767,6 @@ class TestEditReferenceTableActiveStatus:
         self, client, users, reference_tables
     ):
         reftable = reference_tables["indices_he"]
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not U.
         set_logged_user(client, users["gestionnaire"])
         response = client.put(
             url_for(
@@ -1867,7 +1860,6 @@ class TestDeleteReferenceTable:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_delete_reftable_needs_delete_permission_error(self, client, users, reference_tables):
         reftable = reference_tables["indices_he"]
-        # `gestionnaire` only has the R permission on CALC_ADMIN_INDICATOR, not D.
         set_logged_user(client, users["gestionnaire"])
         response = client.delete(
             url_for("calculatrice.delete_reference_table", reftable_id=reftable.id_reference_table)
