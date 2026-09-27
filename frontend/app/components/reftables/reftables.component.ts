@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ModuleService } from '@geonature/services/module.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { saveAs } from 'file-saver';
 import { ToastrService } from 'ngx-toastr';
 import { catchError } from 'rxjs/operators';
 import { ReferenceTable } from '../../interfaces';
 import { DataService } from '../../services/data.service';
+import { PermissionService } from '../../services/permission.service';
 import { UtilsService } from '../../services/utils.service';
 
 @Component({
@@ -22,10 +22,10 @@ export class ReferenceTablesComponent implements OnInit {
 
   constructor(
     private _data: DataService,
-    private _moduleService: ModuleService,
     private _modalService: NgbModal,
     private _utils: UtilsService,
-    private _toastr: ToastrService
+    private _toastr: ToastrService,
+    private _permissionService: PermissionService
   ) {}
 
   ngOnInit() {
@@ -94,23 +94,19 @@ export class ReferenceTablesComponent implements OnInit {
     return this._utils.handleError(error);
   }
 
-  private getAdminPerm(perm: string): number {
-    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
-  }
-
   canCreateReferenceTable(): boolean {
-    return this.getAdminPerm('C') > 0;
+    return this._permissionService.getAdminPermission('C') > 0;
   }
 
   canEditReferenceTable(): boolean {
-    return this.getAdminPerm('U') > 0;
+    return this._permissionService.getAdminPermission('U') > 0;
   }
 
   canExportReferenceTable(): boolean {
-    return this.getAdminPerm('E') > 0;
+    return this._permissionService.getAdminPermission('E') > 0;
   }
 
   canDeleteReferenceTable(): boolean {
-    return this.getAdminPerm('D') > 0;
+    return this._permissionService.getAdminPermission('D') > 0;
   }
 }

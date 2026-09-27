@@ -27,6 +27,7 @@ import { VisualizationParamsFormComponent } from './components/visualization-par
 import { VisualizationScalarComponent } from './components/visualization-scalar/visualization-scalar.component';
 import { CruvedPermissionGuard } from './guards/cruved-permission.guard';
 import { DataService } from './services/data.service';
+import { PermissionService } from './services/permission.service';
 import { UtilsService } from './services/utils.service';
 
 const routes: Routes = [
@@ -129,7 +130,7 @@ const routes: Routes = [
     GN2CommonModule,
     NgChartsModule,
   ],
-  providers: [DataService, UtilsService, CruvedPermissionGuard],
+  providers: [DataService, UtilsService, CruvedPermissionGuard, PermissionService],
   bootstrap: [ModuleComponent],
 })
 export class GeonatureModule {}
