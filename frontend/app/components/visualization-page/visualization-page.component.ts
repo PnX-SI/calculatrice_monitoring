@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModuleService } from '@geonature/services/module.service';
 import { Campaign, Site, VisualizationBlockDefinition, VisualizationError } from '../../interfaces';
 import { DataService } from '../../services/data.service';
+import { PermissionService } from '../../services/permission.service';
 
 interface Selection {
   label: string;
@@ -28,7 +28,7 @@ export class VisualizationPageComponent implements OnInit {
     private _data: DataService,
     private _router: Router,
     private _route: ActivatedRoute,
-    private _moduleService: ModuleService
+    private _permissionService: PermissionService
   ) {}
 
   ngOnInit() {
@@ -97,14 +97,10 @@ export class VisualizationPageComponent implements OnInit {
       });
   }
 
-  private getAdminPerm(perm: string): number {
-    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
-  }
-
   isUserAdmin(): boolean {
     // We use update permission because having acess to error
     // is for debugging when updating indicator
-    return this.getAdminPerm('U') > 0;
+    return this._permissionService.getAdminPermission('U') > 0;
   }
 
   showGenericError() {

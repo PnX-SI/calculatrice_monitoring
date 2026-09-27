@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ModuleService } from '@geonature/services/module.service';
 import { IndicatorDetails } from '../../interfaces';
 import { DataService } from '../../services/data.service';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'pnx-calc-indicator',
@@ -15,7 +15,7 @@ export class IndicatorDetailsComponent implements OnInit {
   constructor(
     private _data: DataService,
     private _route: ActivatedRoute,
-    private _moduleService: ModuleService
+    private _permissionService: PermissionService
   ) {}
 
   ngOnInit() {
@@ -27,11 +27,7 @@ export class IndicatorDetailsComponent implements OnInit {
     });
   }
 
-  private getAdminPerm(perm: string): number {
-    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
-  }
-
   canEditIndicator(): boolean {
-    return this.getAdminPerm('U') > 0;
+    return this._permissionService.getAdminPermission('U') > 0;
   }
 }
