@@ -127,3 +127,50 @@ Pour peupler la BD d'une instance GeoNature de dev/test/démo :
 L'écriture des méthodes downgrade des migrations `calculatrice-samples-test` est possible mais différée pour le moment
 afin d'avancer. Pour le moment il faut garder une BD ou un dump avant l'installation des migrations en backup pour « désinstaller ».
 
+# Permissions du module
+
+Les permissions du module sont définies soit directement au niveau du module
+(pseudo-permission object `ALL`) soit attachées au permission object
+`CAL_ADMIN_INDICATOR` pour les permissions d'administration.
+
+Les permissions du module sont en lecture seule et peuvent être données à n'importe quel
+utilisateur. Les permissions d'administration permettent de modifier et de supprimer les données et
+notamment le programme Python exécuté pour chaque indicateur. Certaines instructions dans ces
+programmes peuvent potentiellement compromettre la stabilité et la sécurité de l'instance GeoNature.
+La permission U (Update) de `CALC_ADMIN_INDICATOR` doit donc être accordée avec discernement.
+
+Tableau des permissions du module (`ALL`) :
+
+| Permission   | Description dans notre cas                                                                                                       | Impact du scope                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Create**   | Inutile ici                                                                                                                      |                                                                                                    |
+| **Read**     | Permet de visualiser les résultats d'un indicateur et ses statistiques.                                                          | Dans la sélection des zones humides seuls celles accessibles à l'utilisateur sont sélectionnables. |
+| **Update**   | Inutile ici                                                                                                                      |                                                                                                    |
+| **Validate** | Inutile ici                                                                                                                      |                                                                                                    |
+| **Export**   | Permet de télécharger les tableaux de référence. Permettra à terme d'exporter les résultats d'un indicateur et ses statistiques. | Dans la sélection des zones humides seuls celles accessibles à l'utilisateur sont sélectionnables. |
+| **Delete**   | Inutile ici                                                                                                                      |                                                                                                    |
+
+Tableau des permissions d'administration (`CALC_ADMIN_INDICATOR`) :
+
+| Permission   | Description dans notre cas                                                                                                      | Impact du scope |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| **Create**   | Permet de créer des objets d'administration d'indicateurs (indicateurs, statistiques, tableaux de référence …)                  | Aucun           |
+| **Read**     | Permet de visualiser la définition des objets d'administration d'indicateurs. Permet aussi de voir les indicateurs non publics. | Aucun           |
+| **Update**   | Permet de mettre à jour les objets d'administration d'indicateurs                                                               | Aucun           |
+| **Validate** | Inutile ici                                                                                                                     | Aucun           |
+| **Export**   | Inutile pour l'instant                                                                                                          | Aucun           |
+| **Delete**   | Permet la suppression des objets d'administration d'indicateurs.                                                                | Aucun           |
+
+# Prise en compte des permissions du module gn-monitorings
+
+Les permissions monitorings de l'utilisateur de la calculatrice sont nécessaires 
+pour :
+
+- permission R sur `MONITORINGS_MODULES` pour afficher le protocole et les 
+  indicateurs associés sur la homepage de la calculatrice
+- permission R sur `MONITORINGS_GRP_SITES` et `MONITORINGS_SITES` pour afficher 
+  les groupes de sites et permettre la sélection d'un groupe lors du paramétrage 
+  d'un indicateur.
+- lors du calcul d'un indicateur le groupe et les sites sélectionnés sont 
+  disponibles ainsi que TOUTES les visites et observations de ces sites sans 
+  vérification des permissions.
