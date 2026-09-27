@@ -64,6 +64,12 @@ class TestGetIndicators:
         assert response.status_code == 404
         assert response.json["description"] == "protocol 12345 does not exist"
 
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_error_endpoint_requires_read_permission(self, client, users):
+        set_logged_user(client, users["public"])
+        response = client.get(url_for("calculatrice.get_indicators", id_protocol="12345"))
+        assert response.status_code == 403
+
 
 class TestGetIndicator:
     @pytest.mark.usefixtures("calculatrice_permissions")

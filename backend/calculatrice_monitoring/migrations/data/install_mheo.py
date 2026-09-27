@@ -108,7 +108,6 @@ def install_test_permissions(protocols, users):
         )
 
     with db.session.begin_nested():
-        add_permission(users["public"], "CALCULATRICE", "R", "ALL", scope=2)
         add_permission(users["gestionnaire"], "CALCULATRICE", "R", "ALL", scope=2)
         add_permission(users["admin"], "CALCULATRICE", "R", "ALL", scope=None)
         add_permission(users["gestionnaire"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=2)
