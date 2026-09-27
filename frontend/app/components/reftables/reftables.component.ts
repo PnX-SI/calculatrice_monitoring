@@ -103,7 +103,7 @@ export class ReferenceTablesComponent implements OnInit {
   }
 
   canExportReferenceTable(): boolean {
-    return this._permissionService.getAdminPermission('E') > 0;
+    return this._permissionService.getPermission('E') > 0;
   }
 
   canDeleteReferenceTable(): boolean {
