@@ -295,7 +295,10 @@ def get_indicator_code_variables(indicator_id: int):
 @check_cruved_scope(action="R", module_code=MODULE_CODE)
 def get_indicators():
     params = MultiDict(request.args)
-    id_protocol_param = params.pop("id_protocol")
+    try:
+        id_protocol_param = params.pop("id_protocol")
+    except KeyError:
+        return "Query parameter `id_protocol` is required", 400
     try:
         id_protocol = int(id_protocol_param)
     except ValueError:
