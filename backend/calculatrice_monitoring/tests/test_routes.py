@@ -40,7 +40,7 @@ class TestGetIndicators:
 
     def test_error_endpoint_requires_login(self, client):
         logout_user()
-        response = client.get(url_for("calculatrice.get_indicators"))
+        response = client.get(url_for("calculatrice.get_indicators", id_protocol="12345"))
         assert response.status_code == 401
 
     @pytest.mark.usefixtures("calculatrice_permissions")
@@ -48,18 +48,21 @@ class TestGetIndicators:
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_indicators"))
         assert response.status_code == 400
+        assert response.text == "Query parameter `id_protocol` is required"
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_error_protocol_param_must_cast_to_integer(self, client, users):
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_indicators", id_protocol="foo"))
         assert response.status_code == 400
+        assert response.text == "param `id_protocol` should be an integer, foo received"
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_error_target_protocol_must_exist(self, client, users):
         set_logged_user(client, users["gestionnaire"])
         response = client.get(url_for("calculatrice.get_indicators", id_protocol="12345"))
         assert response.status_code == 404
+        assert response.json["description"] == "protocol 12345 does not exist"
 
 
 class TestGetIndicator:
@@ -132,6 +135,13 @@ class TestGetProtocols:
             "MhéO Piézométrie (test)",
         ]
         assert [protocol["label"] for protocol in response.json] == expected_labels
+
+    @pytest.mark.usefixtures("protocols", "calculatrice_permissions")
+    def test_get_protocols_without_any_permission(self, client, users):
+        set_logged_user(client, users["public"])
+        response = client.get(url_for("calculatrice.get_protocols"))
+        assert response.status_code == 200
+        assert response.json == []
 
 
 class TestGetProtocol:
