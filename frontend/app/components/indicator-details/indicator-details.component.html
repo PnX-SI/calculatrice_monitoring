@@ -15,6 +15,7 @@
       <div class="flex-row">
         <h2>{{ indicatorDetails.name }}</h2>
         <button
+          *ngIf="canEditIndicator()"
           [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit']"
           mat-mini-fab
           matTooltip="Éditer l'indicateur"

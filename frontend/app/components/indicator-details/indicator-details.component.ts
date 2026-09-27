@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ModuleService } from '@geonature/services/module.service';
 import { IndicatorDetails } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 
@@ -13,7 +14,8 @@ export class IndicatorDetailsComponent implements OnInit {
 
   constructor(
     private _data: DataService,
-    private _route: ActivatedRoute
+    private _route: ActivatedRoute,
+    private _moduleService: ModuleService
   ) {}
 
   ngOnInit() {
@@ -23,5 +25,13 @@ export class IndicatorDetailsComponent implements OnInit {
         this.indicatorDetails = data;
       });
     });
+  }
+
+  private getAdminPerm(perm: string): number {
+    return this._moduleService.currentModule.module_objects.CALC_ADMIN_INDICATOR?.cruved[perm] || 0;
+  }
+
+  canEditIndicator(): boolean {
+    return this.getAdminPerm('U') > 0;
   }
 }
