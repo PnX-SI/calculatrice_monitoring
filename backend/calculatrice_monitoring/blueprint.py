@@ -283,7 +283,7 @@ def get_indicator_details(indicator_id: int):
 
 
 @blueprint.route("/indicator/<int:indicator_id>/code-variables", methods=["GET"])
-@check_cruved_scope(action="R", module_code=MODULE_CODE)
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
 def get_indicator_code_variables(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
