@@ -116,18 +116,29 @@ def install_test_permissions(protocols, users):
         add_permission(users["admin"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(users["admin"], "CALCULATRICE", "U", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(users["admin"], "CALCULATRICE", "D", "CALC_ADMIN_INDICATOR", scope=None)
-        add_permission(
-            users["gestionnaire"], "mheo_amphibiens_test", "R", "MONITORINGS_MODULES", scope=2
-        )
-        add_permission(
-            users["gestionnaire"], "mheo_flore_test", "R", "MONITORINGS_MODULES", scope=2
-        )
-        add_permission(
-            users["gestionnaire"], "mheo_odonate_test", "R", "MONITORINGS_MODULES", scope=2
-        )
-        for protocol in protocols.values():
+        for gestionnaire_protocol in [
+            "mheo_amphibiens_test",
+            "mheo_flore_test",
+            "mheo_odonate_test",
+        ]:
             add_permission(
-                users["admin"], protocol.module_code, "R", "MONITORINGS_MODULES", scope=None
+                users["gestionnaire"], gestionnaire_protocol, "R", "MONITORINGS_MODULES", scope=2
+            )
+            add_permission(
+                users["gestionnaire"], gestionnaire_protocol, "R", "MONITORINGS_GRP_SITES", scope=2
+            )
+            add_permission(
+                users["gestionnaire"], gestionnaire_protocol, "R", "MONITORINGS_SITES", scope=2
+            )
+        for admin_protocol in protocols.values():
+            add_permission(
+                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_MODULES", scope=None
+            )
+            add_permission(
+                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_GRP_SITES", scope=None
+            )
+            add_permission(
+                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_SITES", scope=None
             )
 
 
