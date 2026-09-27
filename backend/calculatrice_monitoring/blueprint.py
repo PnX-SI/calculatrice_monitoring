@@ -410,7 +410,7 @@ def get_reference_tables():
 
 
 @blueprint.route("/reftables/<int:reftable_id>/data", methods=["GET"])
-@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+@check_cruved_scope(action="E", module_code=MODULE_CODE)
 def get_reference_table_data(reftable_id: int):
     error_msg = f"Reference table {reftable_id} not found"
     reftable = db.get_or_404(ReferenceTable, reftable_id, description=error_msg)
