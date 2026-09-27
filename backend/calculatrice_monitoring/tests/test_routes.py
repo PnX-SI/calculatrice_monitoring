@@ -1142,6 +1142,51 @@ class TestGetRerenceTables:
         assert response.status_code == 403
 
 
+class TestGetReferenceTableData:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_reftable_data(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(
+            url_for(
+                "calculatrice.get_reference_table_data",
+                reftable_id=reftable.id_reference_table,
+            )
+        )
+        assert response.status_code == 200
+        assert response.mimetype == "text/plain"
+        assert response.text == reftable.data
+
+    def test_get_reftable_data_login_required_error(self, client, reference_tables):
+        reftable = reference_tables["indices_he"]
+        logout_user()
+        response = client.get(
+            url_for(
+                "calculatrice.get_reference_table_data",
+                reftable_id=reftable.id_reference_table,
+            )
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_reftable_data_needs_permission_error(self, client, users, reference_tables):
+        reftable = reference_tables["indices_he"]
+        set_logged_user(client, users["public"])
+        response = client.get(
+            url_for(
+                "calculatrice.get_reference_table_data",
+                reftable_id=reftable.id_reference_table,
+            )
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_reftable_data_not_found_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(url_for("calculatrice.get_reference_table_data", reftable_id=999999))
+        assert response.status_code == 404
+
+
 class TestCreateReferenceTable:
     @staticmethod
     def _get_payload(
