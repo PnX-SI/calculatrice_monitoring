@@ -955,7 +955,7 @@ class TestGetIndicatorDetails:
     )
     def test_get_indicator_details(self, client, users, indicators):
         i02_abondance = indicators["i02_abondance"]
-        set_logged_user(client, users["gestionnaire"])
+        set_logged_user(client, users["admin"])
         response = client.get(
             url_for("calculatrice.get_indicator_details", indicator_id=i02_abondance.id_indicator)
         )
@@ -975,9 +975,21 @@ class TestGetIndicatorDetails:
         )
         assert response.status_code == 401
 
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "i02_abondance_viz_blocks",
+    )
+    def test_get_indicator_details_needs_permission_error(self, client, users, indicators):
+        i02_abondance = indicators["i02_abondance"]
+        set_logged_user(client, users["gestionnaire"])
+        response = client.get(
+            url_for("calculatrice.get_indicator_details", indicator_id=i02_abondance.id_indicator)
+        )
+        assert response.status_code == 403
+
     @pytest.mark.usefixtures("calculatrice_permissions", "indicators")
     def test_get_indicator_details_not_found_error(self, client, users):
-        set_logged_user(client, users["gestionnaire"])
+        set_logged_user(client, users["admin"])
         response = client.get(url_for("calculatrice.get_indicator_details", indicator_id=12345))
         assert response.status_code == 404
 
