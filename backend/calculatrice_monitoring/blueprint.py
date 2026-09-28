@@ -363,12 +363,14 @@ def get_indicator_visualization(
         )
     else:
         # for now hard-coded vizblocks are returned for other visualization types
-        return [
-            {
-                "title": "Bloc visualisation type scalaire",
-                "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
+        return {
+            "error": None,
+            "vizBlocks": [
+                {
+                    "title": "Bloc visualisation type scalaire",
+                    "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
 <p>Pour celui-ci la valeur est statique, il n'y a pas de calcul</p>""",
-                "description": f"""<h3>Description</h3>
+                    "description": f"""<h3>Description</h3>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean ac tempor felis. Cras ut
 blandit ipsum, rutrum blandit justo. Sed accumsan est ut consequat rhoncus. Nunc luctus rutrum
 eros a suscipit.</p>
@@ -382,24 +384,25 @@ eros a suscipit.</p>
 <h3>Un paragraphe avec une image</h3>
 <img src="https://geonature.fr/img/geonature-logo.jpg"/>
 <p>Nulla facilisi. Donec vel erat placerat, iaculis mauris in, commodo metus.</p>""",
-                "type": "scalaire",
-                "data": {
-                    "figure": 6.2,
+                    "type": "scalaire",
+                    "data": {
+                        "figure": 6.2,
+                    },
                 },
-            },
-            {
-                "title": "Bloc visualisation type bar chart",
-                "type": "barChart",
-                "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
+                {
+                    "title": "Bloc visualisation type bar chart",
+                    "type": "barChart",
+                    "info": """<h3>Ici des informations sur le calcul de ce résultat</h3>
 <p>Pour celui-ci la valeur est statique, il n'y a pas de calcul</p>""",
-                "description": """<h3>Description</h3>
+                    "description": """<h3>Description</h3>
 <p>Un exemple de représentation avec un diagramme à barres. Les valeurs sont statiques.</p>""",
-                "data": {
-                    "labels": ["Q1", "Q2", "Q3"],
-                    "datasets": [{"data": [5.5, 6.7, 4.9], "label": "Series A"}],
+                    "data": {
+                        "labels": ["Q1", "Q2", "Q3"],
+                        "datasets": [{"data": [5.5, 6.7, 4.9], "label": "Series A"}],
+                    },
                 },
-            },
-        ]
+            ],
+        }
 
 
 @blueprint.route("/reftables", methods=["GET"])
