@@ -1385,8 +1385,9 @@ class TestCreateReferenceTable:
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_reftable_value_too_long_error(self, client, users):
         set_logged_user(client, users["admin"])
+        times = REFERENCE_TABLE_MAX_VALUE_LENGTH + 1
         payload = self._get_payload(
-            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * times},9\n".encode()), "reftable.csv")
         )
         response = client.post(
             url_for("calculatrice.create_reference_table"),
@@ -1641,8 +1642,9 @@ class TestEditReferenceTable:
     def test_edit_reftable_value_too_long_error(self, client, users, reference_tables):
         reftable = reference_tables["indices_he"]
         set_logged_user(client, users["admin"])
+        times = REFERENCE_TABLE_MAX_VALUE_LENGTH + 1
         payload = self._get_payload(
-            file=(BytesIO(f"cdnom,indice_he\n{'a' * 101},9\n".encode()), "reftable.csv")
+            file=(BytesIO(f"cdnom,indice_he\n{'a' * times},9\n".encode()), "reftable.csv")
         )
         response = client.put(
             url_for("calculatrice.edit_reference_table", reftable_id=reftable.id_reference_table),
