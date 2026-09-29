@@ -10,13 +10,35 @@ import { ReferenceTable } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 import { UtilsService } from '../../services/utils.service';
 
+/* Source - https://stackoverflow.com/a/20459666
+ * Posted by Bas van Dijk, modified by community.
+ * Retrieved 2026-09-29, License - CC BY-SA 4.0
+ *
+ * Examples:
+ * >> getReadableSize(131)
+ *  "131.0 B"
+ *  >> getReadableSize(58812)
+ *  "57.4 KB"
+ *  >> getReadableSize(68819826)
+ *  "65.6 MB"
+ */
+function getReadableSize(size) {
+  var units = ['B', 'KB', 'MB', 'GB'];
+  var i = 0;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    ++i;
+  }
+  return size.toFixed(1) + ' ' + units[i];
+}
+
 @Component({
   selector: 'pnx-calc-reftable-form',
   templateUrl: './reftable-form.component.html',
   styleUrls: ['./reftable-form.component.css'],
 })
 export class ReferenceTableFormComponent implements OnInit {
-  private static readonly MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 Mo
+  private static readonly MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 Mo
 
   form: FormGroup;
   file: File;
@@ -78,7 +100,8 @@ export class ReferenceTableFormComponent implements OnInit {
     }
     const file = fileList[0];
     if (file.size > ReferenceTableFormComponent.MAX_FILE_SIZE_BYTES) {
-      this._showErrorToast('Le fichier est trop volumineux. La limite est de 2 Mo.');
+      const readableSize = getReadableSize(ReferenceTableFormComponent.MAX_FILE_SIZE_BYTES);
+      this._showErrorToast(`Le fichier est trop volumineux. La limite est de ${readableSize}.`);
       event.target.value = '';
       this.file = undefined;
       this.form.controls.file.setValue(null);

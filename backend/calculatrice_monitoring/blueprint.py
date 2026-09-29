@@ -31,8 +31,8 @@ from calculatrice_monitoring.schemas import (
 )
 from calculatrice_monitoring.utils import extract_variable_names
 
-REFERENCE_TABLE_MAX_VALUE_LENGTH = 100
-REFERENCE_TABLE_MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 Mo
+REFERENCE_TABLE_MAX_VALUE_LENGTH = 1000
+REFERENCE_TABLE_MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo
 
 
 def _humansize(nbytes: int):
@@ -42,17 +42,17 @@ def _humansize(nbytes: int):
     # Posted by nneonneo, modified by community.
     # Retrieved 2026-09-23, License - CC BY-SA 3.0
 
-    >>> humansize(131)
+    >>> _humansize(131)
     '131 B'
-    >>> humansize(58812)
+    >>> _humansize(58812)
     '57.43 KB'
-    >>> humansize(68819826)
+    >>> _humansize(68819826)
     '65.63 MB'
     """
     suffixes = ["B", "KB", "MB", "GB", "TB", "PB"]
     i = 0
     while nbytes >= 1024 and i < len(suffixes) - 1:
-        nbytes /= 1024.0
+        nbytes /= 1024
         i += 1
     f = f"{nbytes:.2f}".rstrip("0").rstrip(".")
     return f"{f} {suffixes[i]}"
