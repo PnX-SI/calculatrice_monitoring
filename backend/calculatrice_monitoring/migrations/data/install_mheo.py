@@ -441,6 +441,11 @@ abondance_perc = gn_extract(
     properties=observations.abondance,
 )
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+tableau = TableData(headers=["Quadrats", "Valeurs He"])
+for prop_value in moyenne.values:
+	site_name = prop_value.entity.base_site_name
+	site_value = prop_value.value
+	tableau.add_row([site_name, site_value])
 médiane = gn_median(moyenne)
 """
 
@@ -560,8 +565,32 @@ def install_i02_abondance_visualization_config(indicators):
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE par quadrat (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne",
+                "entity_prop": "base_site_name",
+                "dataset_label": "Moyenne HE par quadrat",
+            },
+        )
+        db.session.add(linechart_block)
+        table_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE par quadrat (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.table,
+            params={
+                "variable": "tableau",
+            },
+        )
+        db.session.add(table_block)
 
-    return scalar_block, barchart_block
+    return scalar_block, barchart_block, table_block, linechart_block
 
 
 def install_i02_visualization_config(indicators):

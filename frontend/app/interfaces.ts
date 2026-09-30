@@ -61,7 +61,7 @@ export interface VisualizationBlockConfig {
   title: string;
   info: string;
   description: string;
-  type: 'scalar' | 'bar_chart';
+  type: 'scalar' | 'bar_chart' | 'line_chart' | 'table';
 }
 
 export interface VisualizationBlockConfigDetails extends VisualizationBlockConfig {
@@ -93,18 +93,29 @@ export type ScalarVisualizationBlockData = {
   figure: number;
 };
 
-export type BarChartVisualizationBlockData = {
+export type ChartVisualizationBlockData = {
   labels: string[];
   datasets: any[];
 };
 
-export type VisualizationBlockData = ScalarVisualizationBlockData | BarChartVisualizationBlockData;
+export type BarChartVisualizationBlockData = ChartVisualizationBlockData;
+export type LineChartVisualizationBlockData = ChartVisualizationBlockData;
+
+export type TableVisualizationBlockData = {
+  headers: string[];
+  rows: string[][];
+};
+
+export type VisualizationBlockData =
+  | ScalarVisualizationBlockData
+  | ChartVisualizationBlockData
+  | TableVisualizationBlockData;
 
 export interface VisualizationBlockDefinition {
   title: string;
   info: string;
   description: string;
-  type: 'scalaire' | 'barChart';
+  type: 'scalaire' | 'barChart' | 'lineChart' | 'table';
   data: VisualizationBlockData;
 }
 

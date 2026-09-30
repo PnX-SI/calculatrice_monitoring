@@ -5,8 +5,9 @@ import {
   VisualizationBlockConfigDetails,
   VisualizationBlockConfigParam,
 } from '../../../interfaces';
-import { BarChartVizBlockFormComponent } from '../bar-chart-viz-block-form/bar-chart-viz-block-form.component';
+import { ChartVizBlockFormComponent } from '../chart-viz-block-form/chart-viz-block-form.component';
 import { ScalarVizBlockFormComponent } from '../scalar-viz-block-form/scalar-viz-block-form.component';
+import { TableVizBlockFormComponent } from '../table-viz-block-form/table-viz-block-form.component';
 
 @Component({
   selector: 'pnx-calc-viz-block-form',
@@ -48,9 +49,13 @@ export class VizBlockFormComponent {
   ): FormGroup {
     switch (type) {
       case 'bar_chart':
-        return BarChartVizBlockFormComponent.buildForm(params, getVariables);
+        return ChartVizBlockFormComponent.buildForm(params, getVariables);
       case 'scalar':
         return ScalarVizBlockFormComponent.buildForm(params, getVariables);
+      case 'line_chart':
+        return ChartVizBlockFormComponent.buildForm(params, getVariables);
+      case 'table':
+        return TableVizBlockFormComponent.buildForm(params, getVariables);
       default:
         return new FormGroup({});
     }

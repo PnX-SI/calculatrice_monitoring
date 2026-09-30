@@ -4,10 +4,29 @@
   </mat-card-title>
   <mat-card-content>
     <div class="graphics-row">
-      <div #viewContainer></div>
+      <ng-container [ngSwitch]="blockDef.type">
+        <pnx-calc-visualization-scalar
+          *ngSwitchCase="'scalaire'"
+          [data]="blockDef.data"
+        ></pnx-calc-visualization-scalar>
+        <pnx-calc-visualization-chart
+          *ngSwitchCase="'barChart'"
+          [data]="blockDef.data"
+          [type]="'bar'"
+        ></pnx-calc-visualization-chart>
+        <pnx-calc-visualization-chart
+          *ngSwitchCase="'lineChart'"
+          [data]="blockDef.data"
+          [type]="'line'"
+        ></pnx-calc-visualization-chart>
+        <pnx-calc-visualization-table
+          *ngSwitchCase="'table'"
+          [data]="blockDef.data"
+        ></pnx-calc-visualization-table>
+      </ng-container>
       <button
         mat-icon-button
-        (click)="onInformationClick($event)"
+        (click)="onInformationClick()"
       >
         <mat-icon>info</mat-icon>
       </button>

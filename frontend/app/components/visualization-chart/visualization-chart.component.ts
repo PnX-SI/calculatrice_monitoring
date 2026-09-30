@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { BarChartVisualizationBlockData } from '../../interfaces';
+import { ChartVisualizationBlockData } from '../../interfaces';
 
 @Component({
   selector: 'pnx-calc-visualization-chart',
@@ -7,6 +7,6 @@ import { BarChartVisualizationBlockData } from '../../interfaces';
   styleUrls: ['./visualization-chart.component.css'],
 })
 export class VisualizationChartComponent {
-  barChartType = 'bar' as const;
-  @Input() data: BarChartVisualizationBlockData;
+  @Input() type: 'bar' | 'line' = 'bar';
+  @Input() data: ChartVisualizationBlockData;
 }
