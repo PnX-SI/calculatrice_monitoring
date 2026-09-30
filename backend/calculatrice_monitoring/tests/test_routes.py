@@ -578,7 +578,7 @@ class TestGetIndicatorVisualization:
         )
         assert response.status_code == 200
         viz_blocks = response.json["vizBlocks"]
-        assert len(viz_blocks) == 2
+        assert len(viz_blocks) == 4
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "6.5"
         barchart_viz_block = viz_blocks[1]
@@ -589,6 +589,18 @@ class TestGetIndicatorVisualization:
             "6.5",
             "5.4",
         ]
+        linechart_viz_block = viz_blocks[2]
+        assert linechart_viz_block["data"]["datasets"][0]["data"] == [
+            "8.785714285714285714285714286",
+            "7.181818181818181818181818182",
+            "5.684782608695652173913043478",
+            "6.5",
+            "5.4",
+        ]
+        table_viz_block = viz_blocks[3]
+        table_data = table_viz_block["data"]
+        assert table_data["headers"] == ["Quadrats", "Valeurs He"]
+        assert table_data["rows"][0] == ["Transect 1 Quadrat 1", "8.79"]
 
     @pytest.mark.usefixtures(
         "calculatrice_permissions",
@@ -962,7 +974,7 @@ class TestGetIndicatorDetails:
         assert response.status_code == 200
         data = response.json
         assert "visualizationBlockConfigs" in data
-        assert len(data["visualizationBlockConfigs"]) == 2
+        assert len(data["visualizationBlockConfigs"]) == 4
         assert "referenceTables" in data
         assert len(data["referenceTables"]) == 2
 

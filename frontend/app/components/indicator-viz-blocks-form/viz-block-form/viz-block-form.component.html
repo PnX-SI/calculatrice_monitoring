@@ -38,23 +38,37 @@
     >
       <option value="bar_chart">Bar chart</option>
       <option value="scalar">Scalaire</option>
+      <option value="line_chart">Line chart</option>
+      <option value="table">Tableau</option>
     </select>
   </div>
   <div
     class="block-params"
     [ngSwitch]="form.value.type"
   >
-    <pnx-calc-bar-chart-viz-block-form
-      *ngSwitchCase="'bar_chart'"
-      [form]="paramsForm"
-      [variables]="variables"
-      [params]="vizBlock?.params"
-    ></pnx-calc-bar-chart-viz-block-form>
     <pnx-calc-scalar-viz-block-form
       *ngSwitchCase="'scalar'"
       [form]="paramsForm"
       [variables]="variables"
       [params]="vizBlock?.params"
     ></pnx-calc-scalar-viz-block-form>
+    <pnx-calc-chart-viz-block-form
+      *ngSwitchCase="'bar_chart'"
+      [form]="paramsForm"
+      [variables]="variables"
+      [params]="vizBlock?.params"
+    ></pnx-calc-chart-viz-block-form>
+    <pnx-calc-chart-viz-block-form
+      *ngSwitchCase="'line_chart'"
+      [form]="paramsForm"
+      [variables]="variables"
+      [params]="vizBlock?.params"
+    ></pnx-calc-chart-viz-block-form>
+    <pnx-calc-table-viz-block-form
+      *ngSwitchCase="'table'"
+      [form]="paramsForm"
+      [variables]="variables"
+      [params]="vizBlock?.params"
+    ></pnx-calc-table-viz-block-form>
   </div>
 </div>
