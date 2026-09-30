@@ -11,6 +11,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { VisualizationBlockDefinition } from '../../interfaces';
 import { VisualizationChartComponent } from '../visualization-chart/visualization-chart.component';
 import { VisualizationScalarComponent } from '../visualization-scalar/visualization-scalar.component';
+import { VisualizationTableComponent } from '../visualization-table/visualization-table.component';
 
 @Component({
   selector: 'pnx-calc-visualization-block',
@@ -34,6 +35,8 @@ export class VisualizationBlockComponent implements AfterViewInit {
         ref = this._vcr.createComponent(VisualizationScalarComponent);
       } else if (this.blockDef.type === 'barChart') {
         ref = this._vcr.createComponent(VisualizationChartComponent);
+      } else if (this.blockDef.type === 'table') {
+        ref = this._vcr.createComponent(VisualizationTableComponent);
       }
       ref!.setInput('data', this.blockDef.data);
     });

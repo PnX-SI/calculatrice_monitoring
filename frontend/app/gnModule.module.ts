@@ -25,6 +25,7 @@ import { VisualizationChartComponent } from './components/visualization-chart/vi
 import { VisualizationPageComponent } from './components/visualization-page/visualization-page.component';
 import { VisualizationParamsFormComponent } from './components/visualization-params-form/visualization-params-form.component';
 import { VisualizationScalarComponent } from './components/visualization-scalar/visualization-scalar.component';
+import { VisualizationTableComponent } from './components/visualization-table/visualization-table.component';
 import { CruvedPermissionGuard } from './guards/cruved-permission.guard';
 import { DataService } from './services/data.service';
 import { PermissionService } from './services/permission.service';
@@ -116,6 +117,7 @@ const routes: Routes = [
     VisualizationBlockComponent,
     VisualizationChartComponent,
     VisualizationScalarComponent,
+    VisualizationTableComponent,
   ],
   imports: [
     CommonModule,

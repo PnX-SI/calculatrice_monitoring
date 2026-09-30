@@ -98,6 +98,11 @@ export type BarChartVisualizationBlockData = {
   datasets: any[];
 };
 
+export type TableVisualizationBlockData = {
+  headers: string[];
+  rows: string[][];
+};
+
 export type VisualizationBlockData = ScalarVisualizationBlockData | BarChartVisualizationBlockData;
 
 export interface VisualizationBlockDefinition {

@@ -578,7 +578,7 @@ class TestGetIndicatorVisualization:
         )
         assert response.status_code == 200
         viz_blocks = response.json["vizBlocks"]
-        assert len(viz_blocks) == 2
+        assert len(viz_blocks) == 3
         scalar_viz_block = viz_blocks[0]
         assert scalar_viz_block["data"]["figure"] == "6.5"
         barchart_viz_block = viz_blocks[1]
@@ -589,6 +589,10 @@ class TestGetIndicatorVisualization:
             "6.5",
             "5.4",
         ]
+        table_viz_block = viz_blocks[2]
+        table_data = table_viz_block["data"]
+        assert table_data["headers"] == ["Quadrats", "Valeurs He"]
+        assert table_data["rows"][0] == ["Transect 1 Quadrat 1", "8.79"]
 
     @pytest.mark.usefixtures(
         "calculatrice_permissions",

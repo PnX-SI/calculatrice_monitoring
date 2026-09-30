@@ -1,0 +1,19 @@
+<div class="table-wrapper">
+  <table class="table table-sm table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th
+          *ngFor="let header of data.headers"
+          scope="col"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of data.rows">
+        <td *ngFor="let value of row">{{ value }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
