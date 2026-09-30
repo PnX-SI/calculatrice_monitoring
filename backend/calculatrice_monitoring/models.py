@@ -9,6 +9,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 class VizBlockType(enum.Enum):
     scalar = "scalaire"
     bar_chart = "barChart"
+    table = "table"
+    line_chart = "lineChart"
 
 
 VIZ_BLOCK_CONFIG_PARAMS = {
@@ -16,6 +18,14 @@ VIZ_BLOCK_CONFIG_PARAMS = {
         {"name": "variable", "type": "variable"},
     ],
     VizBlockType.bar_chart: [
+        {"name": "variable", "type": "variable"},
+        {"name": "entity_prop", "type": "text"},
+        {"name": "dataset_label", "type": "text"},
+    ],
+    VizBlockType.table: [
+        {"name": "variable", "type": "variable"},
+    ],
+    VizBlockType.line_chart: [
         {"name": "variable", "type": "variable"},
         {"name": "entity_prop", "type": "text"},
         {"name": "dataset_label", "type": "text"},
