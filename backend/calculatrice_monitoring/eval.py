@@ -411,6 +411,17 @@ def build_viz_blocks(variables, indicator):
                 ],
                 "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
             }
+        elif vizblock_type == VizBlockType.line_chart:
+            varname = viz_conf_item.params["variable"]
+            prop_values = variables[varname].values
+            values = [prop.value for prop in prop_values]
+            data = {
+                "labels": [
+                    getattr(prop.entity, viz_conf_item.params["entity_prop"])
+                    for prop in prop_values
+                ],
+                "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
+            }
         elif vizblock_type == VizBlockType.table:
             varname = viz_conf_item.params["variable"]
             # TODO: enforce the value has the right type/interface

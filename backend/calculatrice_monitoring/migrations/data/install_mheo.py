@@ -565,6 +565,19 @@ def install_i02_abondance_visualization_config(indicators):
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE par quadrat (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne",
+                "entity_prop": "base_site_name",
+                "dataset_label": "Moyenne HE par quadrat",
+            },
+        )
+        db.session.add(linechart_block)
         table_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Moyenne HE par quadrat (pondérée par abondance)",
@@ -577,7 +590,7 @@ def install_i02_abondance_visualization_config(indicators):
         )
         db.session.add(table_block)
 
-    return scalar_block, barchart_block, table_block
+    return scalar_block, barchart_block, table_block, linechart_block
 
 
 def install_i02_visualization_config(indicators):

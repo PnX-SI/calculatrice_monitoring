@@ -26,6 +26,7 @@ class VizBlockType(enum.Enum):
     scalar = "scalaire"
     bar_chart = "barChart"
     table = "table"
+    line_chart = "lineChart"
 
 
 def upgrade():
