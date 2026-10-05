@@ -6,7 +6,7 @@ import enum
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from io import StringIO
@@ -22,7 +22,13 @@ from gn_module_monitoring.monitoring.models import (
 )
 from marshmallow import ValidationError
 
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import (
+    Indicator,
+    ReferenceTable,
+    VizBlockConfig,
+    VizBlockScope,
+    VizBlockType,
+)
 from calculatrice_monitoring.schemas import VizDataSchema
 
 
@@ -207,6 +213,25 @@ def create_monitoring_collection(
 
 
 @dataclass
+class Campaign:
+    start_date: datetime
+    end_date: datetime
+
+
+class CampaignVars:
+    def __init__(self, vars):
+        for name, value in vars.items():
+            setattr(self, name, value)
+
+
+class CampaignResult:
+    def __init__(self, start_date, end_date, vars):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.vars = CampaignVars(vars)
+
+
+@dataclass
 class VizDataset:
     label: str
     data: list[Decimal]
@@ -348,6 +373,17 @@ class IndicatorError(Exception):
     pass
 
 
+class UnexpectedIndicatorErrorScope(enum.Enum):
+    campaign = "campaign"
+    overview = "overview"
+
+
+class UnexpectedIndicatorError(Exception):
+    def __init__(self, *args, scope: UnexpectedIndicatorErrorScope):
+        self.scope = scope
+        super().__init__(*args)
+
+
 class VisualizationConfigError(Exception):
     pass
 
@@ -375,6 +411,17 @@ def create_context(
     return context
 
 
+def create_overview_context(campaign_results):
+    context = {}
+    context["campaigns"] = campaign_results
+    context["gn_mean"] = gn_mean
+    context["gn_median"] = gn_median
+    context["Scope"] = Scope
+    context["gn_extract"] = gn_extract
+    context["IndicatorError"] = IndicatorError
+    return context
+
+
 def evaluate(code, context):
     global_context = context
     local_context = {}
@@ -386,8 +433,7 @@ def _truncate(value):
     return value.quantize(Decimal(".00"))
 
 
-# TODO: type the input
-def convert_datasets_to_table_data(viz_data):
+def convert_datasets_to_table_data(viz_data: VizData):
     headers = [""]
     columns = []
     for ds in viz_data["datasets"]:
@@ -400,9 +446,21 @@ def convert_datasets_to_table_data(viz_data):
     }
 
 
-def build_viz_blocks(variables, indicator):
+def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
+    def get_vizblock_variable_value(viz_conf_item, variable_name):
+        try:
+            return variables[variable_name]
+        except KeyError as error:
+            raise VisualizationConfigError(
+                f"Configured variable '{variable_name}' "
+                f"for visualization block '{viz_conf_item.title}' does not exist."
+            ) from error
+
     viz_config = db.session.scalars(
-        db.select(VizBlockConfig).filter(VizBlockConfig.id_indicator == indicator.id_indicator)
+        db.select(VizBlockConfig).filter(
+            VizBlockConfig.id_indicator == indicator.id_indicator,
+            VizBlockConfig.scope == scope,
+        )
     ).all()
     viz_blocks = []
     for viz_conf_item in viz_config:
@@ -411,18 +469,19 @@ def build_viz_blocks(variables, indicator):
         try:
             if vizblock_type == VizBlockType.scalar:
                 varname = viz_conf_item.params["variable"]
-                data = {"figure": variables[varname].values[0].value}
+                value = get_vizblock_variable_value(viz_conf_item, varname)
+                data = {"figure": value.values[0].value}
             elif vizblock_type == VizBlockType.bar_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = variables[varname]
+                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.line_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = variables[varname]
+                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.table:
                 varname = viz_conf_item.params["variable"]
-                raw_data = variables[varname]
+                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
                 clean_data = VizDataSchema().load(raw_data)
                 data = convert_datasets_to_table_data(clean_data)
             else:
@@ -454,13 +513,9 @@ def _get_error_line_number(error: Exception) -> int:
     return lineno
 
 
-def visualize(
-    indicator: Indicator,
-    monitoring_sites: list[TMonitoringSites],
-    campaigns,
-    viz_type,  # noqa: ARG001
+def evaluate_campaign(
+    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
 ):
-    campaign = campaigns[0]
     code = indicator.code
 
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
@@ -469,8 +524,8 @@ def visualize(
     visits_query = (
         db.select(TMonitoringVisits)
         .filter(TMonitoringVisits.id_base_site.in_(sites_ids))
-        .filter(TMonitoringVisits.visit_date_min >= campaign["start_date"])
-        .filter(TMonitoringVisits.visit_date_min <= campaign["end_date"])
+        .filter(TMonitoringVisits.visit_date_min >= campaign.start_date)
+        .filter(TMonitoringVisits.visit_date_min <= campaign.end_date)
     )
     monitoring_visits = db.session.scalars(visits_query).unique().all()
 
@@ -488,25 +543,74 @@ def visualize(
     context = create_context(collections, indicator.reference_tables)
     try:
         variables = evaluate(code, context)
+    except IndicatorError:
+        # Expected error continue
+        raise
+    except Exception as error:
+        raise UnexpectedIndicatorError(scope=UnexpectedIndicatorErrorScope.campaign) from error
+    return variables
+
+
+def visualize_campaign(
+    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
+):
+    variables = evaluate_campaign(indicator, monitoring_sites, campaign)
+    return build_viz_blocks(variables, indicator)
+
+
+def visualize_overview(
+    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns: list[Campaign]
+):
+    campaign_results = []
+    for campaign in campaigns:
+        campaign_results.append(
+            CampaignResult(
+                start_date=campaign.start_date,
+                end_date=campaign.end_date,
+                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+            )
+        )
+    context = create_overview_context(campaign_results)
+    try:
+        variables = evaluate(indicator.overview_code, context)
+    except IndicatorError:
+        # Expected error continue
+        raise
+    except Exception as error:
+        raise UnexpectedIndicatorError(scope=UnexpectedIndicatorErrorScope.overview) from error
+    return build_viz_blocks(variables, indicator, scope=VizBlockScope.overview)
+
+
+def visualize(
+    indicator: Indicator,
+    monitoring_sites: list[TMonitoringSites],
+    campaigns: list[Campaign],
+    viz_type: str,
+):
+    try:
+        if viz_type == "campaign":
+            viz_blocks = visualize_campaign(indicator, monitoring_sites, campaigns[0])
+        elif viz_type == "overview":
+            viz_blocks = visualize_overview(indicator, monitoring_sites, campaigns)
     except IndicatorError as error:
         return {
             "error": {"type": VisualizationErrorType.public.value, "message": str(error)},
             "vizBlocks": [],
         }
-    except Exception as error:
-        error_type = type(error).__name__
-        error_message = str(error)
-        error_line_number = _get_error_line_number(error)
+    except UnexpectedIndicatorError as error:
+        cause = error.__cause__
+        scope = error.scope
+        error_type = type(cause).__name__
+        error_message = str(cause)
+        error_line_number = _get_error_line_number(cause)
+        message = f"{error_type}: {error_message} at line {error_line_number} of {scope.name}"
         return {
             "error": {
                 "type": VisualizationErrorType.internal.value,
-                "message": f"{error_type}: {error_message} at line {error_line_number}",
+                "message": message,
             },
             "vizBlocks": [],
         }
-
-    try:
-        viz_blocks = build_viz_blocks(variables, indicator)
     except VisualizationConfigError as error:
         return {
             "error": {

@@ -4,7 +4,13 @@ from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import (
+    Indicator,
+    ReferenceTable,
+    VizBlockConfig,
+    VizBlockScope,
+    VizBlockType,
+)
 from geoalchemy2.shape import from_shape
 from geonature.core.gn_commons.models import TModules
 from geonature.core.gn_meta.models import TAcquisitionFramework, TDatasets
@@ -462,6 +468,37 @@ moyenne_viz_data = {
 }
 """
 
+OVERVIEW_CODE_I02_ABONDANCE = """labels = []
+data = []
+for campaign in campaigns:
+  labels.append(campaign.start_date)
+  data.append(campaign.vars.médiane.values[0].value)
+datasets = [
+  {
+    "label": "I02 (médiane)",
+    "data": data,
+  }
+]
+évolution = {
+  "datasets": datasets,
+  "labels": labels
+}
+
+labels = ["I02 (médiane)"]
+datasets = []
+for campaign in campaigns:
+	datasets.append(
+		{
+			"label": campaign.start_date,
+			"data": [prop.value for prop in campaign.vars.médiane.values],
+		}
+	)
+tableau_médianes = {
+	"datasets": datasets,
+	"labels": labels,
+}
+"""
+
 CODE_I06 = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
@@ -537,6 +574,7 @@ def install_test_indicators(protocols, reference_tables):
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
             "code": CODE_I02_ABONDANCE,
+            "overview_code": OVERVIEW_CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {
@@ -618,6 +656,37 @@ def install_i02_abondance_visualization_config(indicators):
         db.session.add(table_block)
 
     return scalar_block, barchart_block, table_block, linechart_block
+
+
+def install_i02_abondance_overview_visualization_config(indicators):
+    i02_abondance = indicators["i02_abondance"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Médiane des valeurs HE des quadrats par année",
+            info="???",
+            description="???",
+            type=VizBlockType.table,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "tableau_médianes",
+            },
+        )
+        db.session.add(scalar_block)
+        line_chart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Évolution de la valeur de l'indicateur",
+            info="???",
+            description="???",
+            type=VizBlockType.line_chart,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "évolution",
+            },
+        )
+        db.session.add(line_chart_block)
+
+    return scalar_block, line_chart_block
 
 
 def install_i02_visualization_config(indicators):
@@ -722,6 +791,7 @@ def install_all_test_sample_objects():
     reference_tables = install_reference_tables()
     indicators = install_test_indicators(protocols, reference_tables)
     install_i02_abondance_visualization_config(indicators)
+    install_i02_abondance_overview_visualization_config(indicators)
     install_i02_visualization_config(indicators)
     install_i06_visualization_config(indicators)
     install_i06_abondance_visualization_config(indicators)
