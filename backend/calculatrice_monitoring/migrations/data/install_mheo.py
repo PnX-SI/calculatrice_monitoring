@@ -4,7 +4,13 @@ from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import (
+    Indicator,
+    ReferenceTable,
+    VizBlockConfig,
+    VizBlockScope,
+    VizBlockType,
+)
 from geoalchemy2.shape import from_shape
 from geonature.core.gn_commons.models import TModules
 from geonature.core.gn_meta.models import TAcquisitionFramework, TDatasets
@@ -462,6 +468,22 @@ moyenne_viz_data = {
 }
 """
 
+# Copy of CODE_I02_ABONDANCE, intentionally not shared as the overview code is going to diverge
+OVERVIEW_CODE_I02_ABONDANCE = """valeurs_he = gn_extract(
+    ref_table=indices_he,
+    origin_field="cdnom",
+    target_field="indice_he",
+    properties=observations.cd_nom)
+abondance_perc = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = gn_median(moyenne)
+"""
+
 CODE_I06 = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
@@ -537,6 +559,7 @@ def install_test_indicators(protocols, reference_tables):
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
             "code": CODE_I02_ABONDANCE,
+            "overview_code": OVERVIEW_CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {
@@ -618,6 +641,39 @@ def install_i02_abondance_visualization_config(indicators):
         db.session.add(table_block)
 
     return scalar_block, barchart_block, table_block, linechart_block
+
+
+def install_i02_abondance_overview_visualization_config(indicators):
+    i02_abondance = indicators["i02_abondance"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Médiane HE",
+            info="???",
+            description="???",
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "médiane",
+            },
+        )
+        db.session.add(scalar_block)
+        barchart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.bar_chart,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "moyenne",
+                "entity_prop": "base_site_name",
+                "dataset_label": "Moyenne HE par quadrat",
+            },
+        )
+        db.session.add(barchart_block)
+
+    return scalar_block, barchart_block
 
 
 def install_i02_visualization_config(indicators):
@@ -722,6 +778,7 @@ def install_all_test_sample_objects():
     reference_tables = install_reference_tables()
     indicators = install_test_indicators(protocols, reference_tables)
     install_i02_abondance_visualization_config(indicators)
+    install_i02_abondance_overview_visualization_config(indicators)
     install_i02_visualization_config(indicators)
     install_i06_visualization_config(indicators)
     install_i06_abondance_visualization_config(indicators)

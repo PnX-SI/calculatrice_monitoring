@@ -13,6 +13,11 @@ class VizBlockType(enum.Enum):
     line_chart = "lineChart"
 
 
+class VizBlockScope(enum.Enum):
+    campaign = "campaign"
+    overview = "overview"
+
+
 VIZ_BLOCK_CONFIG_PARAMS = {
     VizBlockType.scalar: [
         {"name": "variable", "type": "variable"},
@@ -57,6 +62,7 @@ class Indicator(db.Model):
     id_protocol = db.Column(db.ForeignKey("gn_monitoring.t_module_complements.id_module"))
     description = db.Column(db.Unicode, default="")
     code = db.Column(db.Unicode, nullable=False, default="")
+    overview_code = db.Column(db.Unicode, nullable=False, default="")
     protocol = db.relationship(TMonitoringModules)
     reference_tables = db.relationship(
         "ReferenceTable",
@@ -81,6 +87,12 @@ class VizBlockConfig(db.Model):
     info = db.Column(db.Unicode, nullable=False, default="")
     description = db.Column(db.Unicode, nullable=False, default="")
     type = db.Column(Enum(VizBlockType, inherit_schema=True), nullable=False)
+    scope = db.Column(
+        Enum(VizBlockScope, inherit_schema=True),
+        nullable=False,
+        default=VizBlockScope.campaign,
+        server_default=VizBlockScope.campaign.name,
+    )
     params = db.Column(JSONB)
     indicator = db.relationship(Indicator)
 

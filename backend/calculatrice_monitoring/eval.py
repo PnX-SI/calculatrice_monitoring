@@ -22,7 +22,13 @@ from gn_module_monitoring.monitoring.models import (
 )
 from marshmallow import ValidationError
 
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import (
+    Indicator,
+    ReferenceTable,
+    VizBlockConfig,
+    VizBlockScope,
+    VizBlockType,
+)
 from calculatrice_monitoring.schemas import VizDataSchema
 
 
@@ -402,7 +408,10 @@ def convert_datasets_to_table_data(viz_data):
 
 def build_viz_blocks(variables, indicator):
     viz_config = db.session.scalars(
-        db.select(VizBlockConfig).filter(VizBlockConfig.id_indicator == indicator.id_indicator)
+        db.select(VizBlockConfig).filter(
+            VizBlockConfig.id_indicator == indicator.id_indicator,
+            VizBlockConfig.scope == VizBlockScope.campaign,
+        )
     ).all()
     viz_blocks = []
     for viz_conf_item in viz_config:
