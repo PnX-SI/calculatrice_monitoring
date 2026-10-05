@@ -16,7 +16,13 @@ from calculatrice_monitoring.blueprint import (
     REFERENCE_TABLE_MAX_VALUE_LENGTH,
 )
 from calculatrice_monitoring.eval import VisualizationErrorType
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.models import (
+    Indicator,
+    ReferenceTable,
+    VizBlockConfig,
+    VizBlockScope,
+    VizBlockType,
+)
 
 
 class TestGetIndicators:
@@ -978,6 +984,26 @@ class TestGetIndicatorDetails:
         assert "referenceTables" in data
         assert len(data["referenceTables"]) == 2
 
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "i02_abondance_viz_blocks",
+        "i02_abondance_overview_viz_blocks",
+    )
+    def test_get_indicator_details_separates_campaign_and_overview(self, client, users, indicators):
+        i02_abondance = indicators["i02_abondance"]
+        set_logged_user(client, users["admin"])
+        response = client.get(
+            url_for("calculatrice.get_indicator_details", indicator_id=i02_abondance.id_indicator)
+        )
+        assert response.status_code == 200
+        data = response.json
+        assert data["overviewCode"] == i02_abondance.overview_code
+        assert len(data["visualizationBlockConfigs"]) == 2
+        assert len(data["overviewVisualizationBlockConfigs"]) == 2
+        campaign_ids = {vb["id"] for vb in data["visualizationBlockConfigs"]}
+        overview_ids = {vb["id"] for vb in data["overviewVisualizationBlockConfigs"]}
+        assert campaign_ids.isdisjoint(overview_ids)
+
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_get_indicator_details_login_required_error(self, client, indicators):
         logout_user()
@@ -1118,6 +1144,324 @@ class TestEditIndicatorVizBlocks:
                 "calculatrice.update_indicator_viz_blocks", indicator_id=indicator.id_indicator
             ),
             json=[{"title": "foobar", "type": unknown_type}],
+        )
+
+        assert response.status_code == 400
+        assert "type" in response.json["description"]
+
+
+class TestEditIndicatorOverviewCode:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_overview_code(self, client, users, protocol_with_indicators):
+        set_logged_user(client, users["admin"])
+        indicator = protocol_with_indicators["indicators"][0]
+        original_code = indicator.code
+        new_code = "température_fraîche = True"
+        response = client.put(
+            url_for(
+                "calculatrice.edit_indicator_overview_code", indicator_id=indicator.id_indicator
+            ),
+            json={"code": new_code},
+        )
+        assert response.status_code == 204
+
+        db.session.refresh(indicator)
+        assert indicator.overview_code == new_code
+        assert indicator.code == original_code
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_indicator_overview_code_login_required_error(self, client):
+        logout_user()
+        response = client.put(
+            url_for("calculatrice.edit_indicator_overview_code", indicator_id=12345),
+            json={"code": "moyenne = 1"},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_indicator_overview_code_needs_permission_error(
+        self, client, users, protocol_with_indicators
+    ):
+        set_logged_user(client, users["gestionnaire"])
+        indicator = protocol_with_indicators["indicators"][0]
+        response = client.put(
+            url_for(
+                "calculatrice.edit_indicator_overview_code", indicator_id=indicator.id_indicator
+            ),
+            json={"code": "moyenne = 1"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "protocol_with_indicators")
+    def test_edit_indicator_overview_code_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for("calculatrice.edit_indicator_overview_code", indicator_id=12345),
+            json={"code": "moyenne = 1"},
+        )
+        assert response.status_code == 404
+
+
+class TestGetIndicatorOverviewCodeVariables:
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_indicator_overview_code_variables(self, client, users, indicators):
+        set_logged_user(client, users["admin"])
+        i02_abondance = indicators["i02_abondance"]
+        response = client.get(
+            url_for(
+                "calculatrice.get_indicator_overview_code_variables",
+                indicator_id=i02_abondance.id_indicator,
+            )
+        )
+        assert response.status_code == 200
+        assert response.json == ["valeurs_he", "abondance_perc", "moyenne", "médiane"]
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_indicator_overview_code_variables_ignores_campaign_code(
+        self, client, users, protocol_with_indicators
+    ):
+        set_logged_user(client, users["admin"])
+        indicator = protocol_with_indicators["indicators"][0]
+        with db.session.begin_nested():
+            indicator.code = "campaign_var = 1"
+            indicator.overview_code = "overview_var = 2"
+        response = client.get(
+            url_for(
+                "calculatrice.get_indicator_overview_code_variables",
+                indicator_id=indicator.id_indicator,
+            )
+        )
+        assert response.status_code == 200
+        assert response.json == ["overview_var"]
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_get_indicator_overview_code_variables_login_required_error(self, client):
+        logout_user()
+        response = client.get(
+            url_for("calculatrice.get_indicator_overview_code_variables", indicator_id=12345)
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_get_indicator_overview_code_variables_needs_permission_error(
+        self, client, users, indicators
+    ):
+        set_logged_user(client, users["gestionnaire"])
+        i02_abondance = indicators["i02_abondance"]
+        response = client.get(
+            url_for(
+                "calculatrice.get_indicator_overview_code_variables",
+                indicator_id=i02_abondance.id_indicator,
+            )
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "indicators")
+    def test_get_indicator_overview_code_variables_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.get(
+            url_for("calculatrice.get_indicator_overview_code_variables", indicator_id=12345)
+        )
+        assert response.status_code == 404
+
+
+class TestEditIndicatorOverviewVizBlocks:
+    @staticmethod
+    def _create_indicator(protocol, code=""):
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="TestIndicator",
+                id_protocol=protocol.id_module,
+                description="This is the test indicator description.",
+                code=code,
+            )
+            db.session.add(indicator)
+        return indicator
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks(self, client, users, protocol):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json=[{"title": "foobar", "type": "bar_chart"}],
+        )
+
+        assert response.status_code == 204
+        assert len(indicator.viz_block_configs) == 1
+        assert indicator.viz_block_configs[0].scope == VizBlockScope.overview
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_with_overwriting(self, client, users, protocol):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol, code="foo=42")
+        with db.session.begin_nested():
+            indicator.viz_block_configs.append(
+                VizBlockConfig(
+                    title="Old overview 1", type=VizBlockType.scalar, scope=VizBlockScope.overview
+                )
+            )
+            indicator.viz_block_configs.append(
+                VizBlockConfig(
+                    title="Old overview 2",
+                    type=VizBlockType.bar_chart,
+                    scope=VizBlockScope.overview,
+                )
+            )
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json=[{"title": "New vizblock", "type": "scalar", "params": {"variable": "bar"}}],
+        )
+
+        assert response.status_code == 204
+        assert len(indicator.viz_block_configs) == 1
+        vizblock = indicator.viz_block_configs[0]
+        assert vizblock.title == "New vizblock"
+        assert vizblock.type == VizBlockType.scalar
+        assert vizblock.scope == VizBlockScope.overview
+        assert vizblock.params == {"variable": "bar"}
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_leaves_campaign_vizblocks_untouched(
+        self, client, users, protocol
+    ):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+        with db.session.begin_nested():
+            indicator.viz_block_configs.append(
+                VizBlockConfig(
+                    title="Campaign block", type=VizBlockType.scalar, scope=VizBlockScope.campaign
+                )
+            )
+            indicator.viz_block_configs.append(
+                VizBlockConfig(
+                    title="Old overview", type=VizBlockType.scalar, scope=VizBlockScope.overview
+                )
+            )
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json=[{"title": "New overview", "type": "scalar"}],
+        )
+
+        assert response.status_code == 204
+        titles_by_scope = {vb.scope: vb.title for vb in indicator.viz_block_configs}
+        assert titles_by_scope == {
+            VizBlockScope.campaign: "Campaign block",
+            VizBlockScope.overview: "New overview",
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_campaign_vizblocks_leaves_overview_vizblocks_untouched(
+        self, client, users, protocol
+    ):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+        with db.session.begin_nested():
+            indicator.viz_block_configs.append(
+                VizBlockConfig(title="Old campaign", type=VizBlockType.scalar)
+            )
+            indicator.viz_block_configs.append(
+                VizBlockConfig(
+                    title="Overview block", type=VizBlockType.scalar, scope=VizBlockScope.overview
+                )
+            )
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_viz_blocks", indicator_id=indicator.id_indicator
+            ),
+            json=[{"title": "New campaign", "type": "scalar"}],
+        )
+
+        assert response.status_code == 204
+        titles_by_scope = {vb.scope: vb.title for vb in indicator.viz_block_configs}
+        assert titles_by_scope == {
+            VizBlockScope.campaign: "New campaign",
+            VizBlockScope.overview: "Overview block",
+        }
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_scope_in_payload_error(self, client, users, protocol):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json=[{"title": "foobar", "type": "scalar", "scope": "campaign"}],
+        )
+
+        assert response.status_code == 400
+        # FIXME
+        assert "scope" in response.json
+
+    @pytest.mark.usefixtures("calculatrice_permissions", "users")
+    def test_edit_overview_vizblocks_login_required_error(self, client):
+        logout_user()
+        response = client.put(
+            url_for("calculatrice.update_indicator_overview_viz_blocks", indicator_id=12345),
+            json=[],
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_needs_permission_error(self, client, users):
+        set_logged_user(client, users["gestionnaire"])
+        response = client.put(
+            url_for("calculatrice.update_indicator_overview_viz_blocks", indicator_id=12345),
+            json=[],
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_indicator_not_found_error(self, client, users):
+        set_logged_user(client, users["admin"])
+        response = client.put(
+            url_for("calculatrice.update_indicator_overview_viz_blocks", indicator_id=12345),
+            json=[],
+        )
+        assert response.status_code == 404
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_list_expected_error(self, client, users, protocol):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json={"title": "foobar", "type": "bar_chart"},
+        )
+
+        assert response.status_code == 400
+
+    @pytest.mark.usefixtures("calculatrice_permissions")
+    def test_edit_overview_vizblocks_unknown_type_error(self, client, users, protocol):
+        set_logged_user(client, users["admin"])
+        indicator = self._create_indicator(protocol)
+
+        response = client.put(
+            url_for(
+                "calculatrice.update_indicator_overview_viz_blocks",
+                indicator_id=indicator.id_indicator,
+            ),
+            json=[{"title": "foobar", "type": "unknown_enum_value"}],
         )
 
         assert response.status_code == 400

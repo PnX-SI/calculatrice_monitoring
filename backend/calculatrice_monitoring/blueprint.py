@@ -17,7 +17,7 @@ from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
 from calculatrice_monitoring.eval import Scope, visualize
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig
+from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockScope
 from calculatrice_monitoring.schemas import (
     REFERENCE_TABLE_ENCODINGS,
     IndicatorAttributesSchema,
@@ -247,22 +247,51 @@ def edit_indicator_code(indicator_id: int):
     return "", 204
 
 
+def _replace_indicator_viz_blocks(
+    indicator: Indicator, scope: VizBlockScope, vizblock_configs: list[VizBlockConfig]
+):
+    """Replace the visualization block configs of the given scope with the ones in the request."""
+    # vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    # Delete previous vizblock configs of this scope only
+    for old_vb in [vb for vb in indicator.viz_block_configs if vb.scope == scope]:
+        indicator.viz_block_configs.remove(old_vb)
+        db.session.delete(old_vb)
+    # Create and attach new ones
+    for vb_config in vizblock_configs:
+        vb = VizBlockConfig(**vb_config, scope=scope)
+        indicator.viz_block_configs.append(vb)
+    db.session.add(indicator)
+    db.session.commit()
+
+
 @blueprint.route("/indicator/<int:indicator_id>/viz-blocks", methods=["PUT"])
 @check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
 def update_indicator_viz_blocks(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    data = VizBlockConfigSchema(many=True).load(request.json)
-    # Delete previous vizblock configs
-    for old_vb in indicator.viz_block_configs:
-        db.session.delete(old_vb)
-    indicator.viz_block_configs.clear()
-    # Create and attach new ones
-    for vb_config in data:
-        vb = VizBlockConfig(**vb_config)
-        indicator.viz_block_configs.append(vb)
+    vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    _replace_indicator_viz_blocks(indicator, VizBlockScope.campaign, vizblock_configs)
+    return "", 204
+
+
+@blueprint.route("/indicator/<int:indicator_id>/overview-code", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_indicator_overview_code(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    indicator.overview_code = request.json["code"]
     db.session.add(indicator)
     db.session.commit()
+    return "", 204
+
+
+@blueprint.route("/indicator/<int:indicator_id>/overview-viz-blocks", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def update_indicator_overview_viz_blocks(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    _replace_indicator_viz_blocks(indicator, VizBlockScope.overview, vizblock_configs)
     return "", 204
 
 
@@ -288,6 +317,15 @@ def get_indicator_code_variables(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
     variables = extract_variable_names(indicator.code)
+    return variables, 200
+
+
+@blueprint.route("/indicator/<int:indicator_id>/overview-code-variables", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def get_indicator_overview_code_variables(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    variables = extract_variable_names(indicator.overview_code)
     return variables, 200
 
 
