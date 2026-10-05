@@ -6,6 +6,7 @@ from calculatrice_monitoring.models import (
     Indicator,
     ReferenceTable,
     VizBlockConfig,
+    VizBlockScope,
 )
 
 # A reference table's code must look like a Python variable name: it must start with a
@@ -56,6 +57,8 @@ class VizBlockConfigSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = VizBlockConfig
+        # The scope is not set by the client: it is determined by the endpoint used
+        exclude = ["scope"]
 
 
 class VizDatasetsSchema(ma.Schema):
@@ -125,7 +128,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indicator
         include_fk = True
-        exclude = ["code"]
+        exclude = ["code", "overview_code"]
 
 
 class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
@@ -148,8 +151,14 @@ class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
 class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     id_indicator = ma.Integer(data_key="id")
     protocol = ma.Nested("ProtocolSchema", data_key="protocol")
-    viz_block_configs = ma.Nested(
-        "VizBlockConfigSchema", many=True, data_key="visualizationBlockConfigs"
+    overview_code = ma.String(data_key="overviewCode")
+    viz_block_configs = ma.Method(
+        serialize="serialize_campaign_viz_block_configs",
+        data_key="visualizationBlockConfigs",
+    )
+    overview_viz_block_configs = ma.Method(
+        serialize="serialize_overview_viz_block_configs",
+        data_key="overviewVisualizationBlockConfigs",
     )
     reference_tables = ma.Nested(
         "ReferenceTableSchema",
@@ -157,6 +166,17 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
         only=["id_reference_table", "name", "code", "description"],
         data_key="referenceTables",
     )
+
+    @staticmethod
+    def _serialize_viz_block_configs(obj, scope):
+        configs = [vb for vb in obj.viz_block_configs if vb.scope == scope]
+        return VizBlockConfigSchema(many=True).dump(configs)
+
+    def serialize_campaign_viz_block_configs(self, obj):
+        return self._serialize_viz_block_configs(obj, VizBlockScope.campaign)
+
+    def serialize_overview_viz_block_configs(self, obj):
+        return self._serialize_viz_block_configs(obj, VizBlockScope.overview)
 
     class Meta:
         model = Indicator
