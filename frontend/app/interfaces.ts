@@ -93,23 +93,29 @@ export type ScalarVisualizationBlockData = {
   figure: number;
 };
 
-export type BarChartVisualizationBlockData = {
+export type ChartVisualizationBlockData = {
   labels: string[];
   datasets: any[];
 };
+
+export type BarChartVisualizationBlockData = ChartVisualizationBlockData;
+export type LineChartVisualizationBlockData = ChartVisualizationBlockData;
 
 export type TableVisualizationBlockData = {
   headers: string[];
   rows: string[][];
 };
 
-export type VisualizationBlockData = ScalarVisualizationBlockData | BarChartVisualizationBlockData;
+export type VisualizationBlockData =
+  | ScalarVisualizationBlockData
+  | ChartVisualizationBlockData
+  | TableVisualizationBlockData;
 
 export interface VisualizationBlockDefinition {
   title: string;
   info: string;
   description: string;
-  type: 'scalaire' | 'barChart';
+  type: 'scalaire' | 'barChart' | 'lineChart' | 'table';
   data: VisualizationBlockData;
 }
 
