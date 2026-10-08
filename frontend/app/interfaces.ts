@@ -11,7 +11,9 @@ export interface IndicatorDetails {
   description: string;
   protocol: Protocol;
   code: string;
+  overviewCode?: string;
   visualizationBlockConfigs: VisualizationBlockConfigDetails[];
+  overviewVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];
   referenceTables: ReferenceTable[];
 }
 
@@ -132,4 +134,22 @@ export interface Visualization {
 export interface Campaign {
   startDate: string;
   endDate: string;
+}
+
+export function serializeCampaigns(campaigns: Campaign[]): string {
+  return (campaigns || [])
+    .filter((campaign) => Boolean(campaign.startDate && campaign.endDate))
+    .map((campaign) => `${campaign.startDate}_${campaign.endDate}`)
+    .join(',');
+}
+
+export function parseCampaigns(serializedCampaigns: string): Campaign[] {
+  if (!serializedCampaigns) return [];
+  return serializedCampaigns
+    .split(',')
+    .map((item) => {
+      const [startDate, endDate] = item.split('_');
+      return { startDate, endDate };
+    })
+    .filter((campaign) => Boolean(campaign.startDate && campaign.endDate));
 }

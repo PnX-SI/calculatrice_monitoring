@@ -1,4 +1,13 @@
 <div class="container mt-4">
+  <a
+    mat-raised-button
+    routerLink="/calculatrice"
+    [queryParams]="protocolId ? { protocol: protocolId } : null"
+    class="mb-3"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
   <form
     [formGroup]="campaignForm"
     (ngSubmit)="onSubmit()"

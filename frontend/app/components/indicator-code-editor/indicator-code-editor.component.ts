@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +15,7 @@ export class IndicatorCodeEditorComponent implements OnInit {
   indicatorForm: FormGroup;
   indicator: IndicatorDetails;
   protocolProperties: ProtocolProperties;
+  scope: 'campaign' | 'overview' = 'campaign';
 
   constructor(
     private _data: DataService,
@@ -30,10 +30,12 @@ export class IndicatorCodeEditorComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.scope = this._route.snapshot.data['scope'] || 'campaign';
     this._route.params.subscribe((params) => {
       this._data.getIndicatorDetails(params.indicatorId).subscribe((data: IndicatorDetails) => {
         this.indicator = data;
-        this.indicatorForm.controls.code.setValue(data.code);
+        const codeValue = this.scope === 'overview' ? data.overviewCode || '' : data.code;
+        this.indicatorForm.controls.code.setValue(codeValue);
         this._data.getProtocolProperties(this.indicator.protocol.id).subscribe((data) => {
           this.protocolProperties = data;
         });
@@ -43,12 +45,14 @@ export class IndicatorCodeEditorComponent implements OnInit {
 
   onSubmit() {
     if (this.indicatorForm.valid) {
-      this._data
-        .editIndicatorCode(this.indicator.id, this.indicatorForm.value.code)
-        .pipe(catchError(this._utils.handleError))
-        .subscribe((data: HttpResponse<String>) => {
-          this._router.navigate(['/calculatrice/indicator', this.indicator.id, 'viz-blocks']);
-        });
+      const save$ =
+        this.scope === 'overview'
+          ? this._data.editIndicatorOverviewCode(this.indicator.id, this.indicatorForm.value.code)
+          : this._data.editIndicatorCode(this.indicator.id, this.indicatorForm.value.code);
+
+      save$.pipe(catchError(this._utils.handleError)).subscribe(() => {
+        this._router.navigate(['/calculatrice/indicator', this.indicator.id, 'details']);
+      });
     }
   }
 

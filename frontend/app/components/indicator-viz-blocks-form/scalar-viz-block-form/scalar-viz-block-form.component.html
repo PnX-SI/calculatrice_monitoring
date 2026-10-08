@@ -14,6 +14,13 @@
         [class.invalid-variable]="variableControl?.hasError('unknownVariable')"
       >
         <option
+          *ngIf="!variableOptions || variableOptions.length === 0"
+          value=""
+          disabled
+        >
+          Aucune variable disponible
+        </option>
+        <option
           *ngFor="let variable of variableOptions"
           [disabled]="!variableValueIsValid(variable)"
           value="{{ variable }}"

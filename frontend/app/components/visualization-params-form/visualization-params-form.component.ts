@@ -11,13 +11,15 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as moment from 'moment';
-import { Indicator, Protocol, SitesGroup } from '../../interfaces';
+import {
+  Campaign,
+  Indicator,
+  parseCampaigns,
+  Protocol,
+  serializeCampaigns,
+  SitesGroup,
+} from '../../interfaces';
 import { DataService } from '../../services/data.service';
-
-interface Campaign {
-  startDate: string;
-  endDate: string;
-}
 
 interface SitesGroupChoice extends SitesGroup {
   disabled?: boolean;
@@ -65,6 +67,7 @@ const endAfterStartValidator: ValidatorFn = (control: AbstractControl): Validati
 export class VisualizationParamsFormComponent implements OnInit {
   campaignForm: FormGroup;
   sitesGroupChoices: Array<SitesGroupChoice> = undefined;
+  protected protocolId: number | undefined;
   private sitesGroups: Array<SitesGroup> = undefined;
   private protocolCode: string = undefined;
 
@@ -82,17 +85,34 @@ export class VisualizationParamsFormComponent implements OnInit {
 
   ngOnInit(): void {
     this._route.params.subscribe((params) => {
-      this._data.getIndicator(params.indicatorId).subscribe((indicator: Indicator) => {
+      const indicatorId = Number(params.indicatorId);
+      this._data.getIndicator(indicatorId).subscribe((indicator: Indicator) => {
+        this.protocolId = indicator.protocolId;
         this._data.getProtocol(indicator.protocolId).subscribe((protocol: Protocol) => {
           this.protocolCode = protocol.code;
           this._data.getSitesGroups(this.protocolCode).subscribe((data: Array<SitesGroup>) => {
             this.sitesGroups = data;
             this.sitesGroupChoices = this.getSitesGroupChoices(data);
+            this._initFormValues(indicatorId);
           });
         });
       });
     });
-    this.addCampaign();
+
+    this.campaignForm.valueChanges.subscribe((formValues) => {
+      if (formValues.sitesGroup || (formValues.campaigns && formValues.campaigns.length > 0)) {
+        const campaignsStr = serializeCampaigns(formValues.campaigns);
+        this._router.navigate([], {
+          relativeTo: this._route,
+          queryParams: {
+            sitesGroup: formValues.sitesGroup || null,
+            campaigns: campaignsStr || null,
+          },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      }
+    });
   }
 
   /**
@@ -150,25 +170,76 @@ export class VisualizationParamsFormComponent implements OnInit {
    */
   onSubmit() {
     if (this.campaignForm.valid) {
+      const sitesGroupId = this.campaignForm.value.sitesGroup;
+      const campaigns = this.campaignForm.value.campaigns;
       this._data
         .getSites(
           this.protocolCode,
-          this.sitesGroups.find((item) => item.id === this.campaignForm.value.sitesGroup)
+          this.sitesGroups.find((item) => item.id === sitesGroupId)
         )
         .subscribe((sites) => {
-          // We use the sessionStorage to pass parameters to the visualization page in
-          // order to be able to refresh the page (it does not work with the window history
-          // states: refreshing loses the parameters. The storage item key includes the
-          // indicator ID in order to avoid conflict when navigating directly between
-          // visualizations.
+          const indicatorId = this._route.snapshot.params.indicatorId;
           sessionStorage.setItem(
-            `calc-viz-params:${this._route.snapshot.params.indicatorId}`,
-            JSON.stringify({ sites, campaigns: this.campaignForm.value.campaigns })
+            `calc-viz-params:${indicatorId}`,
+            JSON.stringify({ sites, campaigns, sitesGroupId })
           );
-          this._router.navigate(['..'], { relativeTo: this._route });
+          this._router.navigate(['..'], {
+            relativeTo: this._route,
+            queryParams: {
+              sitesGroup: sitesGroupId,
+              campaigns: serializeCampaigns(campaigns),
+            },
+          });
         });
     } else {
       console.error('Le formulaire contient des erreurs.');
+    }
+  }
+
+  private _initFormValues(indicatorId: number) {
+    const queryParams = this._route.snapshot.queryParams;
+    let sitesGroupId: number | undefined = queryParams['sitesGroup']
+      ? Number(queryParams['sitesGroup'])
+      : undefined;
+    let campaignsList: Campaign[] = queryParams['campaigns']
+      ? parseCampaigns(queryParams['campaigns'])
+      : [];
+
+    if (!sitesGroupId || campaignsList.length === 0) {
+      const cachedParams = sessionStorage.getItem(`calc-viz-params:${indicatorId}`);
+      if (cachedParams) {
+        try {
+          const parsed = JSON.parse(cachedParams);
+          if (!sitesGroupId && parsed.sitesGroupId) {
+            sitesGroupId = Number(parsed.sitesGroupId);
+          }
+          if (campaignsList.length === 0 && Array.isArray(parsed.campaigns)) {
+            campaignsList = parsed.campaigns;
+          }
+        } catch (error) {
+          console.error('Failed to parse cached viz params', error);
+        }
+      }
+    }
+
+    if (sitesGroupId) {
+      this.campaignForm.patchValue({ sitesGroup: sitesGroupId });
+    }
+
+    if (campaignsList.length > 0) {
+      while (this.campaigns.length > 0) {
+        this.campaigns.removeAt(0);
+      }
+      campaignsList.forEach((campaign) => {
+        const group = this.newCampaign();
+        group.patchValue({
+          startDate: campaign.startDate,
+          endDate: campaign.endDate,
+        });
+        this.campaigns.push(group);
+      });
+    } else if (this.campaigns.length === 0) {
+      this.addCampaign();
     }
   }
 

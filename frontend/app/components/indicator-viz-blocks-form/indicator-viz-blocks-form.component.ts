@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@librairies/@angular/common/http';
-import { IndicatorDetails } from '../../interfaces';
+import { IndicatorDetails, VisualizationBlockConfigDetails } from '../../interfaces';
 import { DataService } from '../../services/data.service';
 import { VizBlockFormComponent } from './viz-block-form/viz-block-form.component';
 
@@ -15,6 +14,7 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
   form: FormGroup;
   indicatorDetails: IndicatorDetails;
   variables: string[];
+  scope: 'campaign' | 'overview' = 'campaign';
 
   constructor(
     private _route: ActivatedRoute,
@@ -30,21 +30,60 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
     return this.form.controls.vizBlocks as FormArray<FormGroup>;
   }
 
+  get blockConfigs(): VisualizationBlockConfigDetails[] {
+    if (this.scope === 'overview') {
+      if (!this.indicatorDetails.overviewVisualizationBlockConfigs) {
+        this.indicatorDetails.overviewVisualizationBlockConfigs = [];
+      }
+      return this.indicatorDetails.overviewVisualizationBlockConfigs;
+    }
+    if (!this.indicatorDetails.visualizationBlockConfigs) {
+      this.indicatorDetails.visualizationBlockConfigs = [];
+    }
+    return this.indicatorDetails.visualizationBlockConfigs;
+  }
+
   addVizBlockForm() {
     this.vizBlocks.push(VizBlockFormComponent.buildForm(null, () => this.variables));
-    this.indicatorDetails.visualizationBlockConfigs.push(null);
+    this.blockConfigs.push(null);
   }
 
   removeVizBlock(index: number) {
     this.vizBlocks.removeAt(index);
-    this.indicatorDetails.visualizationBlockConfigs.splice(index, 1);
+    this.blockConfigs.splice(index, 1);
+  }
+
+  moveVizBlockUp(index: number) {
+    if (index <= 0) {
+      return;
+    }
+    this._swapVizBlocks(index, index - 1);
+  }
+
+  moveVizBlockDown(index: number) {
+    if (index >= this.vizBlocks.length - 1) {
+      return;
+    }
+    this._swapVizBlocks(index, index + 1);
+  }
+
+  private _swapVizBlocks(fromIndex: number, toIndex: number) {
+    const control = this.vizBlocks.at(fromIndex);
+    this.vizBlocks.removeAt(fromIndex);
+    this.vizBlocks.insert(toIndex, control);
+
+    const config = this.blockConfigs.splice(fromIndex, 1)[0];
+    this.blockConfigs.splice(toIndex, 0, config);
+  }
+
+  get hasNoVariables(): boolean {
+    return this.variables !== undefined && this.variables.length === 0;
   }
 
   initVizBlocksForm() {
-    this.indicatorDetails.visualizationBlockConfigs.forEach((config) => {
+    this.blockConfigs.forEach((config) => {
       this.vizBlocks.push(VizBlockFormComponent.buildForm(config, () => this.variables));
     });
-    if (this.indicatorDetails.visualizationBlockConfigs.length === 0) this.addVizBlockForm();
   }
 
   /**
@@ -63,6 +102,7 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.scope = this._route.snapshot.data['scope'] || 'campaign';
     this._route.params.subscribe((params) => {
       this._data.getIndicatorDetails(params.indicatorId).subscribe((data: IndicatorDetails) => {
         this.indicatorDetails = data;
@@ -70,7 +110,11 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
       });
     });
     this._route.params.subscribe((params) => {
-      this._data.getIndicatorCodeVariables(params.indicatorId).subscribe((data: string[]) => {
+      const getVars$ =
+        this.scope === 'overview'
+          ? this._data.getIndicatorOverviewCodeVariables(params.indicatorId)
+          : this._data.getIndicatorCodeVariables(params.indicatorId);
+      getVars$.subscribe((data: string[]) => {
         this.variables = data;
         this.revalidateForm();
       });
@@ -79,11 +123,19 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
 
   onSubmit() {
     if (this.form.valid) {
-      this._data
-        .updateIndicatorVizBlocks(this.indicatorDetails.id, this.form.value.vizBlocks)
-        .subscribe((data: HttpResponse<String>) => {
-          this._router.navigate(['/calculatrice/indicator', this.indicatorDetails.id, 'details']);
-        });
+      const save$ =
+        this.scope === 'overview'
+          ? this._data.updateIndicatorOverviewVizBlocks(
+              this.indicatorDetails.id,
+              this.form.value.vizBlocks
+            )
+          : this._data.updateIndicatorVizBlocks(
+              this.indicatorDetails.id,
+              this.form.value.vizBlocks
+            );
+      save$.subscribe(() => {
+        this._router.navigate(['/calculatrice/indicator', this.indicatorDetails.id, 'details']);
+      });
     }
   }
 }

@@ -4,7 +4,7 @@
 >
   <a
     mat-raised-button
-    routerLink="/calculatrice"
+    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
     class="mb-2"
   >
     <mat-icon>chevron_left</mat-icon>
@@ -12,7 +12,9 @@
   </a>
   <div class="card">
     <div class="card-header">
-      <h2>Indicateur: {{ indicator.name }}</h2>
+      <h2>
+        {{ indicator.name }} : {{ scope === 'overview' ? 'Code de synthèse' : 'Code (campagnes)' }}
+      </h2>
     </div>
     <div class="card-body">
       <form
@@ -21,7 +23,9 @@
       >
         <div class="code-editor-container">
           <div class="textarea-wrapper">
-            <label for="code">Code de l'indicateur</label>
+            <label for="code">
+              {{ scope === 'overview' ? 'Code de synthèse' : "Code de l'indicateur (campagnes)" }}
+            </label>
             <textarea
               id="code"
               formControlName="code"
@@ -381,7 +385,7 @@
           class="btn btn-success"
           [disabled]="!indicatorForm.valid"
         >
-          Suivant
+          Enregistrer
         </button>
       </form>
     </div>
