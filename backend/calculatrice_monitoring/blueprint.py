@@ -269,7 +269,10 @@ def _replace_indicator_viz_blocks(
 def update_indicator_viz_blocks(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    try:
+        vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    except ValidationError as error:
+        return error.messages, 400
     _replace_indicator_viz_blocks(indicator, VizBlockScope.campaign, vizblock_configs)
     return "", 204
 
@@ -290,7 +293,10 @@ def edit_indicator_overview_code(indicator_id: int):
 def update_indicator_overview_viz_blocks(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    try:
+        vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    except ValidationError as error:
+        return error.messages, 400
     _replace_indicator_viz_blocks(indicator, VizBlockScope.overview, vizblock_configs)
     return "", 204
 

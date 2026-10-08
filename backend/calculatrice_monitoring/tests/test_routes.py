@@ -1072,7 +1072,7 @@ class TestGetIndicatorDetails:
         assert response.status_code == 200
         data = response.json
         assert data["overviewCode"] == i02_abondance.overview_code
-        assert len(data["visualizationBlockConfigs"]) == 2
+        assert len(data["visualizationBlockConfigs"]) == 4
         assert len(data["overviewVisualizationBlockConfigs"]) == 2
         campaign_ids = {vb["id"] for vb in data["visualizationBlockConfigs"]}
         overview_ids = {vb["id"] for vb in data["overviewVisualizationBlockConfigs"]}
@@ -1480,8 +1480,7 @@ class TestEditIndicatorOverviewVizBlocks:
         )
 
         assert response.status_code == 400
-        # FIXME
-        assert "scope" in response.json
+        assert "scope" in response.json["0"]
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_edit_overview_vizblocks_login_required_error(self, client):
