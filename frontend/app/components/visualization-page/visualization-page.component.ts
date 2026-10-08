@@ -1,7 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Campaign, Site, VisualizationBlockDefinition, VisualizationError } from '../../interfaces';
+import {
+  Campaign,
+  Indicator,
+  parseCampaigns,
+  Protocol,
+  serializeCampaigns,
+  Site,
+  SitesGroup,
+  VisualizationBlockDefinition,
+  VisualizationError,
+} from '../../interfaces';
 import { DataService } from '../../services/data.service';
 import { PermissionService } from '../../services/permission.service';
 
@@ -20,6 +30,8 @@ export class VisualizationPageComponent implements OnInit {
   protected vizBlocks: VisualizationBlockDefinition[];
   protected visualizationError?: VisualizationError;
   protected selections: Selection[];
+  protected indicatorId: number;
+  protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
   private _campaigns: Campaign[];
   private _indicatorId: number;
@@ -33,20 +45,76 @@ export class VisualizationPageComponent implements OnInit {
 
   ngOnInit() {
     this._route.params.subscribe((params) => {
-      this._indicatorId = params.indicatorId;
-      const raw = sessionStorage.getItem(`calc-viz-params:${this._indicatorId}`);
-      const parsed = raw ? JSON.parse(raw) : undefined;
+      this.indicatorId = Number(params.indicatorId);
+      this._indicatorId = this.indicatorId;
+
+      const queryParams = this._route.snapshot.queryParams;
+      let sitesGroupId = queryParams['sitesGroup'] ? Number(queryParams['sitesGroup']) : undefined;
+      let campaignsParam = queryParams['campaigns']
+        ? parseCampaigns(queryParams['campaigns'])
+        : undefined;
+
+      const cachedParams = sessionStorage.getItem(`calc-viz-params:${this._indicatorId}`);
+      const parsed = cachedParams ? JSON.parse(cachedParams) : undefined;
+
+      if (!sitesGroupId && parsed?.sitesGroupId) {
+        sitesGroupId = Number(parsed.sitesGroupId);
+      }
+      if ((!campaignsParam || campaignsParam.length === 0) && parsed?.campaigns) {
+        campaignsParam = parsed.campaigns;
+      }
+
+      this._campaigns = campaignsParam;
       this._sites = parsed?.sites;
-      this._campaigns = parsed?.campaigns;
-      if (this._sites === undefined || this._campaigns === undefined) {
-        this._router.navigate(['./params'], { relativeTo: this._route });
+
+      this.queryParams = {
+        sitesGroup: sitesGroupId,
+        campaigns: campaignsParam ? serializeCampaigns(campaignsParam) : undefined,
+      };
+
+      if (!this._campaigns || this._campaigns.length === 0) {
+        this._router.navigate(['./params'], {
+          relativeTo: this._route,
+          queryParams: this.queryParams,
+        });
         return;
       }
-      this.selections = this._buildSelections(this._campaigns);
-      const firstSelection = this.selections[0];
-      // The first selection is also visually selected in the template.
-      this._updateVisualization(firstSelection);
+
+      if (this._sites) {
+        this._renderVisualization();
+      } else if (sitesGroupId) {
+        this._data.getIndicator(this._indicatorId).subscribe((indicator: Indicator) => {
+          this._data.getProtocol(indicator.protocolId).subscribe((protocol: Protocol) => {
+            this._data
+              .getSites(protocol.code, { id: sitesGroupId } as SitesGroup)
+              .subscribe((sites) => {
+                this._sites = sites;
+                sessionStorage.setItem(
+                  `calc-viz-params:${this._indicatorId}`,
+                  JSON.stringify({
+                    sites,
+                    campaigns: this._campaigns,
+                    sitesGroupId,
+                  })
+                );
+                this._renderVisualization();
+              });
+          });
+        });
+      } else {
+        this._router.navigate(['./params'], {
+          relativeTo: this._route,
+          queryParams: this.queryParams,
+        });
+      }
     });
+  }
+
+  private _renderVisualization() {
+    this.selections = this._buildSelections(this._campaigns);
+    if (this.selections.length > 0) {
+      this._updateVisualization(this.selections[0]);
+    }
   }
 
   onSelectionsChange(items: MatListOption[]) {

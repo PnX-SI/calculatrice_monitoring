@@ -2,14 +2,15 @@
   *ngIf="mode"
   class="container"
 >
-  <a
+  <button
+    type="button"
     mat-raised-button
-    routerLink="/calculatrice"
+    (click)="onBack()"
     class="mb-2"
   >
     <mat-icon>chevron_left</mat-icon>
     Retour
-  </a>
+  </button>
   <div class="card">
     <div class="card-header">
       <h2>{{ mode === 'create' ? 'Créer un indicateur' : "Éditer l'indicateur" }}</h2>
@@ -71,7 +72,7 @@
           class="btn btn-success"
           [disabled]="!indicatorForm.valid"
         >
-          Suivant
+          {{ mode === 'create' ? 'Créer' : 'Enregistrer' }}
         </button>
       </form>
     </div>

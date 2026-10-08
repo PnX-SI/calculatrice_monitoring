@@ -3,6 +3,10 @@
   padding: 1rem;
 }
 
+[mat-raised-button] mat-icon {
+  margin-right: 0.25rem;
+}
+
 .form-container {
   display: flex;
   flex-direction: column;

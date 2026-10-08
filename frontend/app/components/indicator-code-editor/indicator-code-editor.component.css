@@ -21,6 +21,7 @@ form .code-editor-container {
 
 .textarea-wrapper textarea {
   width: 100%;
+  min-height: 450px;
   font-family: monospace;
   font-size: 14px;
   border: 1px solid #ccc;
