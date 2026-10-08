@@ -814,6 +814,80 @@ result = foo()
         viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 0
 
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
+    @pytest.mark.parametrize(
+        "code, expected_fragment",
+        [
+            pytest.param(
+                'chart = {"labels": ["a", "b", "c"], "datasets": [{"label": "x", "data": [1, 2]}]}',
+                "La liste 'data' de 'datasets' doit avoir la même taille que 'labels'.",
+                id="datasets_length_mismatch",
+            ),
+            pytest.param(
+                'chart = {"datasets": [{"label": "x", "data": [1]}]}',
+                "'labels': ['Missing data for required field.']",
+                id="missing_labels",
+            ),
+            pytest.param(
+                'chart = {"labels": ["a"]}',
+                "'datasets': ['Missing data for required field.']",
+                id="missing_datasets",
+            ),
+            pytest.param(
+                'chart = {"labels": ["a", "b"], "datasets": [{"label": "x", "data": [1, "oops"]}]}',
+                "'data': {1: ['Not a valid number.']}",
+                id="non_numeric_data",
+            ),
+            pytest.param(
+                'chart = {"labels": ["a"], "datasets": [{"label": "x"}]}',
+                "'data': ['Missing data for required field.']",
+                id="missing_dataset_data",
+            ),
+        ],
+    )
+    def test_get_visualization_of_barchart_misconfiguration(
+        self, client, users, monitoring_objects, protocols, code, expected_fragment
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing barChart misconfiguration",
+                id_protocol=flore_protocol.id_module,
+                code=code,
+            )
+            db.session.add(indicator)
+
+            barchart_block = VizBlockConfig(
+                indicator=indicator,
+                title="Mon histogramme",
+                type=VizBlockType.bar_chart,
+                params={"variable": "chart"},
+            )
+            db.session.add(barchart_block)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        error = response.json["error"]
+        assert error["type"] == VisualizationErrorType.internal.value
+        assert "Mon histogramme" in error["message"]
+        assert "bar_chart" in error["message"]
+        assert expected_fragment in error["message"]
+        assert response.json["vizBlocks"] == []
+
     def test_error_login_required(self, client, monitoring_objects, indicators):
         logout_user()
         i02_abondance = indicators["i02_abondance"]

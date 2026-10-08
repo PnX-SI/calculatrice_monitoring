@@ -5,6 +5,7 @@ import csv
 import enum
 import statistics
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from enum import Enum
@@ -19,8 +20,10 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringSites,
     TMonitoringVisits,
 )
+from marshmallow import ValidationError
 
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.schemas import VizDataSchema
 
 
 class Scope(Enum):
@@ -203,6 +206,18 @@ def create_monitoring_collection(
     return coll
 
 
+@dataclass
+class VizDataset:
+    label: str
+    data: list[Decimal]
+
+
+@dataclass
+class VizData:
+    datasets: list[VizDataset]
+    labels: list[str]
+
+
 # --- UTILITY FUNCTIONS INJECTED IN EVAL CONTEXT ---
 
 
@@ -333,6 +348,10 @@ class IndicatorError(Exception):
     pass
 
 
+class VisualizationConfigError(Exception):
+    pass
+
+
 class VisualizationErrorType(enum.Enum):
     public = "public"
     internal = "internal"
@@ -389,23 +408,30 @@ def build_viz_blocks(variables, indicator):
     for viz_conf_item in viz_config:
         vizblock_type = viz_conf_item.type
         data = None
-        if vizblock_type == VizBlockType.scalar:
-            varname = viz_conf_item.params["variable"]
-            data = {"figure": variables[varname].values[0].value}
-        elif vizblock_type == VizBlockType.bar_chart:
-            varname = viz_conf_item.params["variable"]
-            # TODO: enforce the value has the right type/interface
-            data = variables[varname]
-        elif vizblock_type == VizBlockType.line_chart:
-            varname = viz_conf_item.params["variable"]
-            # TODO: enforce the value has the right type/interface
-            data = variables[varname]
-        elif vizblock_type == VizBlockType.table:
-            varname = viz_conf_item.params["variable"]
-            # TODO: enforce the value has the right type/interface
-            data = convert_datasets_to_table_data(variables[varname])
-        else:
-            raise Exception(f"not implemented viz block type {vizblock_type}")
+        try:
+            if vizblock_type == VizBlockType.scalar:
+                varname = viz_conf_item.params["variable"]
+                data = {"figure": variables[varname].values[0].value}
+            elif vizblock_type == VizBlockType.bar_chart:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                data = VizDataSchema().load(raw_data)
+            elif vizblock_type == VizBlockType.line_chart:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                data = VizDataSchema().load(raw_data)
+            elif vizblock_type == VizBlockType.table:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                clean_data = VizDataSchema().load(raw_data)
+                data = convert_datasets_to_table_data(clean_data)
+            else:
+                raise Exception(f"not implemented viz block type {vizblock_type}")
+        except ValidationError as err:
+            raise VisualizationConfigError(
+                'Il y a une erreur dans le format de la variable du bloc de visualisation "'
+                f'{viz_conf_item.title}" de type "{viz_conf_item.type.name}": {err.messages_dict}'
+            ) from err
         viz_blocks.append(
             {
                 "type": viz_conf_item.type.value,
@@ -478,7 +504,19 @@ def visualize(
             },
             "vizBlocks": [],
         }
+
+    try:
+        viz_blocks = build_viz_blocks(variables, indicator)
+    except VisualizationConfigError as error:
+        return {
+            "error": {
+                "type": VisualizationErrorType.internal.value,
+                "message": str(error),
+            },
+            "vizBlocks": [],
+        }
+
     return {
         "error": None,
-        "vizBlocks": build_viz_blocks(variables, indicator),
+        "vizBlocks": viz_blocks,
     }
