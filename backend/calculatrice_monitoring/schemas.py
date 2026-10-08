@@ -1,5 +1,5 @@
 from geonature.utils.env import ma
-from marshmallow import post_load, validate
+from marshmallow import ValidationError, post_load, validate, validates_schema
 
 from calculatrice_monitoring.models import (
     VIZ_BLOCK_CONFIG_PARAMS,
@@ -56,6 +56,24 @@ class VizBlockConfigSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = VizBlockConfig
+
+
+class VizDatasetsSchema(ma.Schema):
+    label = ma.Str()
+    data = ma.List(ma.Decimal(), required=True)
+
+
+class VizDataSchema(ma.Schema):
+    datasets = ma.List(ma.Nested(VizDatasetsSchema), required=True)
+    labels = ma.List(ma.Str(), required=True)
+
+    @validates_schema
+    def validate_lengths(self, data, **kwargs):  # noqa: ARG002 Unused method argument: `kwargs`
+        for ds in data["datasets"]:
+            if len(ds["data"]) != len(data["labels"]):
+                raise ValidationError(
+                    "La liste 'data' de 'datasets' doit avoir la même taille que 'labels'."
+                )
 
 
 class ReferenceTableSchema(ma.SQLAlchemyAutoSchema):
