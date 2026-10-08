@@ -28,10 +28,6 @@ export class ChartVizBlockFormComponent {
         nonNullable: true,
         validators: (control) => this.validateVariable(control, getVariables()),
       }),
-      entity_prop: new FormControl(this.getParamValue(params, 'entity_prop') || '', {
-        nonNullable: true,
-      }),
-      dataset_label: new FormControl(this.getParamValue(params, 'dataset_label') || ''),
     });
   }
 
