@@ -599,7 +599,7 @@ class TestGetIndicatorVisualization:
         ]
         table_viz_block = viz_blocks[3]
         table_data = table_viz_block["data"]
-        assert table_data["headers"] == ["Quadrats", "Valeurs He"]
+        assert table_data["headers"] == ["", "Moyenne HE par quadrat"]
         assert table_data["rows"][0] == ["Transect 1 Quadrat 1", "8.79"]
 
     @pytest.mark.usefixtures(
