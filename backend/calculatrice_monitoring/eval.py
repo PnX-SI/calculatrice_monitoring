@@ -203,31 +203,6 @@ def create_monitoring_collection(
     return coll
 
 
-class TableData:
-    _columns: list
-
-    def __init__(self, headers: list[str]):
-        self._columns = []
-        for header in headers:
-            self._columns.append({"header": header, "data": []})
-
-    def add_row(self, values: list):
-        # TODO: gérer trop de valeurs ?
-        # TODO: gérer pas assez de valeurs ?
-        # TODO: convertir en strings
-        # TODO: formater les nombres pour avoir 2 chiffres après la virgule
-        for index, value in enumerate(values):
-            if isinstance(value, Decimal):
-                value = value.quantize(Decimal(".00"))
-            self._columns[index]["data"].append(value)
-
-    def serialize(self) -> dict:
-        return {
-            "headers": [col["header"] for col in self._columns],
-            "rows": list(zip(*[col["data"] for col in self._columns])),
-        }
-
-
 # --- UTILITY FUNCTIONS INJECTED IN EVAL CONTEXT ---
 
 
@@ -376,7 +351,6 @@ def create_context(
     context["Scope"] = Scope
     context["gn_extract"] = gn_extract
     context["IndicatorError"] = IndicatorError
-    context["TableData"] = TableData
     for rf in reference_tables:
         context[rf.code] = rf
     return context
@@ -387,6 +361,24 @@ def evaluate(code, context):
     local_context = {}
     exec(code, global_context, local_context)
     return local_context
+
+
+def _truncate(value):
+    return value.quantize(Decimal(".00"))
+
+
+# TODO: type the input
+def convert_datasets_to_table_data(viz_data):
+    headers = [""]
+    columns = []
+    for ds in viz_data["datasets"]:
+        headers.append(ds["label"])
+        columns.append(map(_truncate, ds["data"]))
+    rows = list(zip(viz_data["labels"], *columns))
+    return {
+        "headers": headers,
+        "rows": rows,
+    }
 
 
 def build_viz_blocks(variables, indicator):
@@ -402,31 +394,16 @@ def build_viz_blocks(variables, indicator):
             data = {"figure": variables[varname].values[0].value}
         elif vizblock_type == VizBlockType.bar_chart:
             varname = viz_conf_item.params["variable"]
-            prop_values = variables[varname].values
-            values = [prop.value for prop in prop_values]
-            data = {
-                "labels": [
-                    getattr(prop.entity, viz_conf_item.params["entity_prop"])
-                    for prop in prop_values
-                ],
-                "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
-            }
+            # TODO: enforce the value has the right type/interface
+            data = variables[varname]
         elif vizblock_type == VizBlockType.line_chart:
             varname = viz_conf_item.params["variable"]
-            prop_values = variables[varname].values
-            values = [prop.value for prop in prop_values]
-            data = {
-                "labels": [
-                    getattr(prop.entity, viz_conf_item.params["entity_prop"])
-                    for prop in prop_values
-                ],
-                "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
-            }
+            # TODO: enforce the value has the right type/interface
+            data = variables[varname]
         elif vizblock_type == VizBlockType.table:
             varname = viz_conf_item.params["variable"]
             # TODO: enforce the value has the right type/interface
-            table_data = variables[varname]
-            data = table_data.serialize()
+            data = convert_datasets_to_table_data(variables[varname])
         else:
             raise Exception(f"not implemented viz block type {vizblock_type}")
         viz_blocks.append(

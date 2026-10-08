@@ -28,9 +28,6 @@ export class TableVizBlockFormComponent {
         nonNullable: true,
         validators: (control) => this.validateVariable(control, getVariables()),
       }),
-      entity_prop: new FormControl(this.getParamValue(params, 'entity_prop') || '', {
-        nonNullable: true,
-      }),
     });
   }
 
