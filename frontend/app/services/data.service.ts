@@ -44,6 +44,19 @@ export class DataService {
     private _config: ConfigService
   ) {}
 
+  get selectedProtocolId(): number | undefined {
+    const stored = sessionStorage.getItem('calc:selected-protocol-id');
+    return stored ? Number(stored) : undefined;
+  }
+
+  set selectedProtocolId(protocolId: number | undefined) {
+    if (protocolId !== undefined) {
+      sessionStorage.setItem('calc:selected-protocol-id', String(protocolId));
+    } else {
+      sessionStorage.removeItem('calc:selected-protocol-id');
+    }
+  }
+
   getProtocol(protocolId: number) {
     return this._http.get<Protocol>(
       `${this._config.API_ENDPOINT}/calculatrice/protocol/${protocolId}`
@@ -107,6 +120,28 @@ export class DataService {
     );
   }
 
+  editIndicatorOverviewCode(indicatorId: number, code: string) {
+    return this._http.put<HttpResponse<string>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-code`,
+      { code: code },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  updateIndicatorOverviewVizBlocks(
+    indicatorId: number,
+    vizBlocksConfig: VisualizationBlockConfigPayload[]
+  ) {
+    return this._http.put<HttpResponse<string>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-viz-blocks`,
+      vizBlocksConfig,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        responseType: 'json',
+      }
+    );
+  }
+
   getIndicator(indicatorId: number) {
     return this._http.get<Indicator>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`
@@ -122,6 +157,12 @@ export class DataService {
   getIndicatorCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code-variables`
+    );
+  }
+
+  getIndicatorOverviewCodeVariables(indicatorId: number) {
+    return this._http.get<string[]>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-code-variables`
     );
   }
 

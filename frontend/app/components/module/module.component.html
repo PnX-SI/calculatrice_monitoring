@@ -7,13 +7,21 @@
       mat-raised-button
       color="primary"
     >
+      <mat-icon>table_chart</mat-icon>
       Gérer tableaux de référence
     </button>
   </div>
   <div class="indic-container">
     <div class="indic-protocol-list">
       <h3>Protocoles</h3>
+      <div
+        *ngIf="isLoadingProtocols"
+        class="protocol-loading"
+      >
+        <div class="loading-spinner-sm"></div>
+      </div>
       <mat-selection-list
+        *ngIf="!isLoadingProtocols && protocols.length > 0"
         role="list"
         hideSingleSelectionIndicator
         #protocolList
@@ -21,83 +29,106 @@
         (selectionChange)="onProtocolChange(protocolList.selectedOptions.selected)"
       >
         <mat-list-option
-          class="protocol"
+          class="protocol mat-elevation-z2"
           role="listitem"
-          *ngFor="let protocol of protocols; index as i"
+          *ngFor="let protocol of protocols"
           [value]="protocol.id"
-          [selected]="protocol && i === 0"
-          class="mat-elevation-z2"
+          [selected]="protocol.id === selectedProtocolId"
+          [title]="protocol.label"
         >
           {{ protocol.label }}
         </mat-list-option>
       </mat-selection-list>
+      <p
+        *ngIf="!isLoadingProtocols && protocols.length === 0"
+        class="text-muted p-3 text-center"
+      >
+        Vous n'avez accès à aucun protocole.
+      </p>
     </div>
     <div class="indic-list">
       <div>
-        <h2>Liste des indicateurs</h2>
-        <mat-nav-list
-          role="list"
-          *ngIf="indicators.length > 0"
-        >
-          <mat-list-item
-            class="mat-elevation-z2"
-            role="listitem"
-            *ngFor="let indicator of indicators"
+        <div class="list-header">
+          <h2>Liste des indicateurs</h2>
+          <button
+            *ngIf="canCreateIndicator()"
+            [routerLink]="['/calculatrice/indicator/create']"
+            mat-raised-button
+            color="primary"
           >
-            <div
-              matListItemTitle
-              class="list-item-container"
-            >
-              <a
-                class="list-item-link"
-                [routerLink]="['/calculatrice/visualization', indicator.id, 'params']"
-              >
-                {{ indicator.name }}
-              </a>
-              <span class="list-item-actions">
-                <button
-                  mat-icon-button
-                  (click)="onInformationClick($event, indicator)"
-                >
-                  <mat-icon>info</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  *ngIf="canReadIndicator()"
-                  [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
-                >
-                  <mat-icon>search</mat-icon>
-                </button>
-                <button
-                  mat-icon-button
-                  *ngIf="canEditIndicator()"
-                  [routerLink]="['/calculatrice/indicator', indicator.id, 'edit']"
-                >
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <mat-slide-toggle
-                  *ngIf="canEditIndicator()"
-                  [checked]="true"
-                >
-                  Publié
-                </mat-slide-toggle>
-              </span>
-            </div>
-          </mat-list-item>
-        </mat-nav-list>
-        <p *ngIf="protocols.length === 0; else elseBlock">Vous n'avez accès à aucun protocole.</p>
-        <ng-template #elseBlock>
-          <p *ngIf="indicators.length === 0">Le protocole choisi n'a pas d'indicateurs</p>
-        </ng-template>
-        <button
-          *ngIf="canCreateIndicator()"
-          [routerLink]="['/calculatrice/indicator/create']"
-          class="uppercase mr-1"
-          mat-raised-button
-          color="primary"
+            <mat-icon>add</mat-icon>
+            Ajouter un indicateur
+          </button>
+        </div>
+        <div
+          *ngIf="isLoadingIndicators || isLoadingProtocols"
+          class="loading-container"
         >
-          Ajouter un indicateur
-        </button>
+          <div class="loading-spinner"></div>
+          <p class="text-muted">Chargement des indicateurs...</p>
+        </div>
+        <ng-container *ngIf="!isLoadingIndicators && !isLoadingProtocols">
+          <mat-nav-list
+            role="list"
+            *ngIf="indicators.length > 0"
+          >
+            <mat-list-item
+              class="mat-elevation-z2"
+              role="listitem"
+              *ngFor="let indicator of indicators"
+            >
+              <div
+                matListItemTitle
+                class="list-item-container"
+              >
+                <a
+                  class="list-item-link"
+                  [title]="indicator.name"
+                  [routerLink]="['/calculatrice/visualization', indicator.id, 'params']"
+                >
+                  {{ indicator.name }}
+                </a>
+                <span class="list-item-actions">
+                  <button
+                    mat-icon-button
+                    matTooltip="Informations"
+                    (click)="onInformationClick($event, indicator)"
+                  >
+                    <mat-icon>info</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    *ngIf="canReadIndicator()"
+                    matTooltip="Fiche détail de l'indicateur"
+                    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
+                  >
+                    <mat-icon>visibility</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    *ngIf="canEditIndicator()"
+                    matTooltip="Éditer l'indicateur"
+                    [routerLink]="['/calculatrice/indicator', indicator.id, 'edit']"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <mat-slide-toggle
+                    *ngIf="canEditIndicator()"
+                    [checked]="true"
+                  >
+                    Publié
+                  </mat-slide-toggle>
+                </span>
+              </div>
+            </mat-list-item>
+          </mat-nav-list>
+          <p
+            *ngIf="protocols.length > 0 && indicators.length === 0"
+            class="text-muted text-center mt-4"
+          >
+            Le protocole choisi n'a pas d'indicateurs.
+          </p>
+        </ng-container>
       </div>
     </div>
   </div>

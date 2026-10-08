@@ -61,13 +61,25 @@ const routes: Routes = [
     path: 'indicator/:indicatorId/edit-code',
     component: IndicatorCodeEditorComponent,
     canActivate: [CruvedPermissionGuard],
-    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'campaign' },
+  },
+  {
+    path: 'indicator/:indicatorId/edit-overview-code',
+    component: IndicatorCodeEditorComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'overview' },
   },
   {
     path: 'indicator/:indicatorId/viz-blocks',
     component: IndicatorVizBlocksFormComponent,
     canActivate: [CruvedPermissionGuard],
-    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR' },
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'campaign' },
+  },
+  {
+    path: 'indicator/:indicatorId/overview-viz-blocks',
+    component: IndicatorVizBlocksFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'overview' },
   },
   {
     path: 'reference-tables',

@@ -2,13 +2,21 @@
   <a
     mat-raised-button
     routerLink="/calculatrice"
+    [queryParams]="indicatorDetails ? { protocol: indicatorDetails.protocol.id } : null"
     class="mb-2"
   >
     <mat-icon>chevron_left</mat-icon>
     Retour
   </a>
   <div
-    *ngIf="indicatorDetails"
+    *ngIf="isLoading"
+    class="loading-container"
+  >
+    <div class="loading-spinner"></div>
+    <p class="text-muted">Chargement des détails de l'indicateur...</p>
+  </div>
+  <div
+    *ngIf="!isLoading && indicatorDetails"
     class="card"
   >
     <div class="card-header">
@@ -45,13 +53,11 @@
       </section>
       <hr />
       <section>
-        <h3>Code</h3>
-        <pre class="indicator-code">{{ indicatorDetails.code }}</pre>
-      </section>
-      <hr />
-      <section>
         <h3>Tableaux de référence</h3>
-        <table class="ref-tables">
+        <table
+          *ngIf="indicatorDetails.referenceTables?.length > 0; else noRefTables"
+          class="ref-tables"
+        >
           <thead>
             <tr>
               <th>Nom</th>
@@ -65,11 +71,60 @@
             </tr>
           </tbody>
         </table>
+        <ng-template #noRefTables>
+          <p class="text-muted">Aucun tableau de référence associé.</p>
+        </ng-template>
       </section>
       <hr />
       <section>
-        <h3>Blocs de visualisation</h3>
-        <div class="cards">
+        <div class="flex-row mb-2">
+          <h3>Code (campagnes)</h3>
+          <button
+            *ngIf="canEditIndicator()"
+            [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit-code']"
+            mat-stroked-button
+            color="primary"
+          >
+            <mat-icon>edit</mat-icon>
+            Éditer le code
+          </button>
+        </div>
+        <pre
+          *ngIf="indicatorDetails.code; else noCampaignCode"
+          class="indicator-code"
+          >{{ indicatorDetails.code }}</pre
+        >
+        <ng-template #noCampaignCode>
+          <p class="text-muted">Aucun code configuré pour les campagnes.</p>
+        </ng-template>
+      </section>
+      <hr />
+      <section>
+        <div class="flex-row mb-2">
+          <h3>Blocs de visualisation (campagnes)</h3>
+          <span
+            *ngIf="canEditIndicator()"
+            [matTooltip]="getCampaignBlocksTooltip()"
+          >
+            <button
+              [disabled]="!canConfigureCampaignBlocks()"
+              [routerLink]="
+                canConfigureCampaignBlocks()
+                  ? ['/calculatrice/indicator', indicatorDetails.id, 'viz-blocks']
+                  : null
+              "
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>edit</mat-icon>
+              Éditer les blocs
+            </button>
+          </span>
+        </div>
+        <div
+          class="cards"
+          *ngIf="indicatorDetails.visualizationBlockConfigs?.length > 0; else noCampaignBlocks"
+        >
           <div
             *ngFor="let vizBlockConfig of indicatorDetails.visualizationBlockConfigs"
             class="card"
@@ -110,6 +165,106 @@
             </div>
           </div>
         </div>
+        <ng-template #noCampaignBlocks>
+          <p class="text-muted">Aucun bloc de visualisation configuré pour les campagnes.</p>
+        </ng-template>
+      </section>
+      <hr />
+      <section>
+        <div class="flex-row mb-2">
+          <h3>Code de synthèse</h3>
+          <button
+            *ngIf="canEditIndicator()"
+            [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit-overview-code']"
+            mat-stroked-button
+            color="primary"
+          >
+            <mat-icon>edit</mat-icon>
+            Éditer le code de synthèse
+          </button>
+        </div>
+        <pre
+          *ngIf="indicatorDetails.overviewCode; else noOverviewCode"
+          class="indicator-code"
+          >{{ indicatorDetails.overviewCode }}</pre
+        >
+        <ng-template #noOverviewCode>
+          <p class="text-muted">Aucun code de synthèse configuré.</p>
+        </ng-template>
+      </section>
+      <hr />
+      <section>
+        <div class="flex-row mb-2">
+          <h3>Blocs de visualisation de synthèse</h3>
+          <span
+            *ngIf="canEditIndicator()"
+            [matTooltip]="getOverviewBlocksTooltip()"
+          >
+            <button
+              [disabled]="!canConfigureOverviewBlocks()"
+              [routerLink]="
+                canConfigureOverviewBlocks()
+                  ? ['/calculatrice/indicator', indicatorDetails.id, 'overview-viz-blocks']
+                  : null
+              "
+              mat-stroked-button
+              color="primary"
+            >
+              <mat-icon>edit</mat-icon>
+              Éditer les blocs de synthèse
+            </button>
+          </span>
+        </div>
+        <div
+          class="cards"
+          *ngIf="
+            indicatorDetails.overviewVisualizationBlockConfigs?.length > 0;
+            else noOverviewBlocks
+          "
+        >
+          <div
+            *ngFor="let vizBlockConfig of indicatorDetails.overviewVisualizationBlockConfigs"
+            class="card"
+          >
+            <div class="card-header">
+              <h4>{{ vizBlockConfig.title }}</h4>
+            </div>
+            <div class="card-body">
+              <h5>Attributs</h5>
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Info</th>
+                    <td>{{ vizBlockConfig.info }}</td>
+                  </tr>
+                  <tr>
+                    <th>Description</th>
+                    <td>{{ vizBlockConfig.description }}</td>
+                  </tr>
+                  <tr>
+                    <th>Type</th>
+                    <td>{{ vizBlockConfig.type }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <h5>Paramètres</h5>
+              <table>
+                <tbody>
+                  <tr *ngFor="let param of vizBlockConfig.params">
+                    <th>{{ param.name }}</th>
+                    <td>
+                      {{ param.value }}
+                      <span class="param-type">{{ param.type }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <ng-template #noOverviewBlocks>
+          <p class="text-muted">Aucun bloc de visualisation configuré pour la synthèse.</p>
+        </ng-template>
       </section>
     </div>
   </div>

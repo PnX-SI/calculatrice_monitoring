@@ -1,7 +1,7 @@
 <div class="container">
   <a
     mat-raised-button
-    routerLink="/calculatrice"
+    [routerLink]="['/calculatrice/indicator', indicatorDetails?.id, 'details']"
     class="mb-2"
   >
     <mat-icon>chevron_left</mat-icon>
@@ -9,37 +9,76 @@
   </a>
   <div class="card">
     <div class="card-header">
-      <h2>Éditer les blocs de visualisation</h2>
+      <h2>
+        Éditer les blocs de visualisation {{ scope === 'overview' ? 'de synthèse' : '(campagnes)' }}
+      </h2>
     </div>
     <div class="card-body">
-      <div class="action-buttons">
-        <button
-          type="button"
-          class="btn btn-primary"
-          (click)="addVizBlockForm()"
+      <div
+        *ngIf="hasNoVariables"
+        class="alert alert-warning mb-3"
+      >
+        <strong>Aucune variable disponible :</strong>
+        Le script de calcul ne définit aucune variable (ou n'a pas encore été renseigné). Veuillez
+        d'abord enregistrer du code contenant des assignations de variables (ex:
+        <code>ma_variable = ...</code>
+        ) pour pouvoir configurer des blocs de visualisation.
+        <a
+          *ngIf="indicatorDetails"
+          [routerLink]="
+            scope === 'overview'
+              ? ['/calculatrice/indicator', indicatorDetails.id, 'edit-overview-code']
+              : ['/calculatrice/indicator', indicatorDetails.id, 'edit-code']
+          "
+          class="alert-link ms-2"
         >
-          + Ajouter un bloc
-        </button>
+          Éditer le code
+        </a>
+      </div>
+      <div class="action-buttons mb-3">
+        <span
+          [matTooltip]="hasNoVariables ? 'Aucune variable disponible dans le script de calcul' : ''"
+        >
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="hasNoVariables"
+            (click)="addVizBlockForm()"
+          >
+            + Ajouter un bloc
+          </button>
+        </span>
       </div>
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
       >
+        <div
+          *ngIf="vizBlocks.controls.length === 0"
+          class="text-muted p-4 text-center border rounded mb-3"
+        >
+          Aucun bloc de visualisation configuré.
+          <span *ngIf="!hasNoVariables">Cliquez sur « + Ajouter un bloc » pour commencer.</span>
+        </div>
         <div formArrayName="vizBlocks">
           <div
-            *ngFor="let vizBlock of vizBlocks.controls; let i = index"
+            *ngFor="let vizBlock of vizBlocks.controls; let index = index"
             class="mb-3 p-3 border rounded"
           >
             <div class="vizblock-action-buttons">
               <button
                 type="button"
                 class="btn btn-primary btn-sm"
+                [disabled]="index === 0"
+                (click)="moveVizBlockUp(index)"
               >
                 Dépl. haut
               </button>
               <button
                 type="button"
                 class="btn btn-primary btn-sm"
+                [disabled]="index === vizBlocks.controls.length - 1"
+                (click)="moveVizBlockDown(index)"
               >
                 Dépl. bas
               </button>
@@ -47,7 +86,7 @@
                 *ngIf="vizBlocks.controls.length > 0"
                 type="button"
                 class="btn btn-danger btn-sm"
-                (click)="removeVizBlock(i)"
+                (click)="removeVizBlock(index)"
               >
                 Supprimer
               </button>
@@ -55,7 +94,7 @@
             <pnx-calc-viz-block-form
               [form]="vizBlock"
               [variables]="variables"
-              [vizBlock]="indicatorDetails.visualizationBlockConfigs[i]"
+              [vizBlock]="blockConfigs[index]"
             ></pnx-calc-viz-block-form>
           </div>
           <hr />
@@ -64,7 +103,7 @@
             [disabled]="!form.valid"
             class="btn btn-success"
           >
-            Valider
+            Enregistrer
           </button>
         </div>
       </form>

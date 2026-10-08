@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,7 +25,8 @@ export class IndicatorFormComponent implements OnInit {
     private _formBuilder: FormBuilder,
     private _router: Router,
     private _utils: UtilsService,
-    private _route: ActivatedRoute
+    private _route: ActivatedRoute,
+    private _location: Location
   ) {
     this.indicatorForm = this._formBuilder.group({
       name: ['', { nonNullable: true }],
@@ -45,6 +47,9 @@ export class IndicatorFormComponent implements OnInit {
     this._route.params.subscribe((params) => {
       if (params.indicatorId === undefined) {
         this.mode = 'create';
+        if (this._data.selectedProtocolId) {
+          this.indicatorForm.patchValue({ protocolId: this._data.selectedProtocolId });
+        }
         return;
       }
       this.mode = 'edit';
@@ -81,21 +86,21 @@ export class IndicatorFormComponent implements OnInit {
 
   onSubmit() {
     if (this.indicatorForm.valid) {
-      if (this.mode === 'create') {
-        this._data
-          .createIndicator(this.indicatorForm.value)
-          .pipe(catchError(this._utils.handleError))
-          .subscribe((data: Indicator) => {
-            this._router.navigate(['/calculatrice/indicator', data.id, 'edit-code']);
-          });
-      } else {
-        this._data
-          .editIndicator(this.indicatorDetails.id, this.indicatorForm.value)
-          .pipe(catchError(this._utils.handleError))
-          .subscribe((data: Indicator) => {
-            this._router.navigate(['/calculatrice/indicator', data.id, 'edit-code']);
-          });
-      }
+      const save$ =
+        this.mode === 'create'
+          ? this._data.createIndicator(this.indicatorForm.value)
+          : this._data.editIndicator(this.indicatorDetails.id, this.indicatorForm.value);
+
+      save$.pipe(catchError(this._utils.handleError)).subscribe((data: Indicator) => {
+        if (this.mode === 'create') {
+          this._data.selectedProtocolId = this.indicatorForm.value.protocolId;
+        }
+        this._router.navigate(['/calculatrice/indicator', data.id, 'details']);
+      });
     }
+  }
+
+  onBack() {
+    this._location.back();
   }
 }
