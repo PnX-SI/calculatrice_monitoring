@@ -397,8 +397,8 @@ def get_indicator_visualization(
     indicator = db.one_or_404(select(Indicator).filter(Indicator.id_indicator == indicator_id))
     monitoring_sites = db.session.scalars(
         select(TMonitoringSites).filter(TMonitoringSites.id_base_site.in_(sites_ids))
-    )
-    if viz_type == "campaign":
+    ).all()
+    if viz_type in ["campaign", "overview"]:
         return visualize(
             indicator,
             monitoring_sites,

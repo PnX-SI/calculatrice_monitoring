@@ -212,6 +212,19 @@ def create_monitoring_collection(
     return coll
 
 
+class CampaignVars:
+    def __init__(self, vars):
+        for name, value in vars.items():
+            setattr(self, name, value)
+
+
+class CampaignResult:
+    def __init__(self, start_date, end_date, vars):
+        self.start = start_date
+        self.end = end_date
+        self.vars = CampaignVars(vars)
+
+
 @dataclass
 class VizDataset:
     label: str
@@ -381,6 +394,17 @@ def create_context(
     return context
 
 
+def create_overview_context(campaign_results):
+    context = {}
+    context["campaigns"] = campaign_results
+    context["gn_mean"] = gn_mean
+    context["gn_median"] = gn_median
+    context["Scope"] = Scope
+    context["gn_extract"] = gn_extract
+    context["IndicatorError"] = IndicatorError
+    return context
+
+
 def evaluate(code, context):
     global_context = context
     local_context = {}
@@ -406,11 +430,11 @@ def convert_datasets_to_table_data(viz_data):
     }
 
 
-def build_viz_blocks(variables, indicator):
+def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
     viz_config = db.session.scalars(
         db.select(VizBlockConfig).filter(
             VizBlockConfig.id_indicator == indicator.id_indicator,
-            VizBlockConfig.scope == VizBlockScope.campaign,
+            VizBlockConfig.scope == scope,
         )
     ).all()
     viz_blocks = []
@@ -463,13 +487,7 @@ def _get_error_line_number(error: Exception) -> int:
     return lineno
 
 
-def visualize(
-    indicator: Indicator,
-    monitoring_sites: list[TMonitoringSites],
-    campaigns,
-    viz_type,  # noqa: ARG001
-):
-    campaign = campaigns[0]
+def evaluate_campaign(indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign):
     code = indicator.code
 
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
@@ -495,8 +513,13 @@ def visualize(
 
     collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
     context = create_context(collections, indicator.reference_tables)
+    variables = evaluate(code, context)
+    return variables
+
+
+def visualize_campaign(indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns):
     try:
-        variables = evaluate(code, context)
+        variables = evaluate_campaign(indicator, monitoring_sites, campaigns[0])
     except IndicatorError as error:
         return {
             "error": {"type": VisualizationErrorType.public.value, "message": str(error)},
@@ -529,3 +552,46 @@ def visualize(
         "error": None,
         "vizBlocks": viz_blocks,
     }
+
+
+def visualize_overview(indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns):
+    # pour chaque campagne
+    campaign_results = []
+    for campaign in campaigns:
+        campaign_results.append(
+            CampaignResult(
+                start_date=campaign["start_date"],
+                end_date=campaign["end_date"],
+                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+            )
+        )
+
+    # avec toutes les variables construire les objets campaigns et le contexte synthèse
+    context = create_overview_context(campaign_results)
+
+    # évaluer
+    variables = evaluate(indicator.overview_code, context)
+
+    # construire les vizblocks
+    try:
+        viz_blocks = build_viz_blocks(variables, indicator, scope=VizBlockScope.overview)
+    except VisualizationConfigError as error:
+        return {
+            "error": {
+                "type": VisualizationErrorType.internal.value,
+                "message": str(error),
+            },
+            "vizBlocks": [],
+        }
+
+    return {
+        "error": None,
+        "vizBlocks": viz_blocks,
+    }
+
+
+def visualize(indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns, viz_type):
+    if viz_type == "campaign":
+        return visualize_campaign(indicator, monitoring_sites, campaigns)
+    elif viz_type == "overview":
+        return visualize_overview(indicator, monitoring_sites, campaigns)

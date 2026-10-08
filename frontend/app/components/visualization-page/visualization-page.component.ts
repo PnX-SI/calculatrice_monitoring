@@ -17,7 +17,7 @@ import { PermissionService } from '../../services/permission.service';
 
 interface Selection {
   label: string;
-  type: 'synthese' | 'campaign' | 'evolution';
+  type: 'overview' | 'campaign' | 'evolution';
   campaigns: Campaign[];
 }
 
@@ -128,7 +128,7 @@ export class VisualizationPageComponent implements OnInit {
     if (campaigns.length > 1) {
       selections.push({
         label: 'Synthèse',
-        type: 'synthese',
+        type: 'overview',
         campaigns: campaigns,
       });
     }
