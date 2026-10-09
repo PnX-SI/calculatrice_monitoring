@@ -662,18 +662,18 @@ def install_i02_abondance_visualization_config(indicators):
 def install_i02_abondance_overview_visualization_config(indicators):
     i02_abondance = indicators["i02_abondance"]
     with db.session.begin_nested():
-        # scalar_block = VizBlockConfig(
-        #     id_indicator=i02_abondance.id_indicator,
-        #     title="Médiane HE",
-        #     info="???",
-        #     description="???",
-        #     type=VizBlockType.scalar,
-        #     scope=VizBlockScope.overview,
-        #     params={
-        #         "variable": "médiane",
-        #     },
-        # )
-        # db.session.add(scalar_block)
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Médiane des valeurs HE des quadrats par année",
+            info="???",
+            description="???",
+            type=VizBlockType.table,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "tableau_médianes",
+            },
+        )
+        db.session.add(scalar_block)
         line_chart_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Évolution de la valeur de l'indicateur",
