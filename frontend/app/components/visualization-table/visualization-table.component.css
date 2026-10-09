@@ -1,0 +1,35 @@
+.table-wrapper {
+  max-width: 800px;
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+}
+
+.table-wrapper table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f5f5f5;
+  font-weight: 500;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+}
+
+.table-wrapper table thead th,
+.table-wrapper table tbody td {
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+.table-wrapper table tbody td {
+  font-size: 0.875rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.table-wrapper table tbody tr:last-child td {
+  border-bottom: 0;
+}

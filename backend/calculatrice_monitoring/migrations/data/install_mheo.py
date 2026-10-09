@@ -427,6 +427,15 @@ CODE_I02 = """valeurs_he = gn_extract(
     properties=observations.cd_nom)
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE)
 médiane = gn_median(moyenne)
+moyenne_viz_data = {
+    "datasets": [
+        {
+            "label": "Moyenne HE par quadrat",
+            "data": [prop.value for prop in moyenne.values]
+        }
+    ],
+    "labels": [prop.entity.base_site_name for prop in moyenne.values]
+}
 """
 
 CODE_I02_ABONDANCE = """valeurs_he = gn_extract(
@@ -442,6 +451,15 @@ abondance_perc = gn_extract(
 )
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
 médiane = gn_median(moyenne)
+moyenne_viz_data = {
+    "datasets": [
+        {
+            "label": "Moyenne HE par quadrat",
+            "data": [prop.value for prop in moyenne.values]
+        }
+    ],
+    "labels": [prop.entity.base_site_name for prop in moyenne.values]
+}
 """
 
 CODE_I06 = """valeurs_ht = gn_extract(
@@ -451,6 +469,15 @@ CODE_I06 = """valeurs_ht = gn_extract(
     properties=observations.cd_nom)
 moyenne = gn_mean(valeurs_ht, scope=Scope.SITE)
 médiane = gn_median(moyenne)
+moyenne_viz_data = {
+    "datasets": [
+        {
+            "label": "Moyenne HT par quadrat",
+            "data": [prop.value for prop in moyenne.values]
+        }
+    ],
+    "labels": [prop.entity.base_site_name for prop in moyenne.values]
+}
 """
 
 CODE_I06_ABONDANCE = """valeurs_ht = gn_extract(
@@ -458,7 +485,7 @@ CODE_I06_ABONDANCE = """valeurs_ht = gn_extract(
     origin_field="cdnom",
     target_field="indice_ht",
     properties=observations.cd_nom)
-abondance_perc = = gn_extract(
+abondance_perc = gn_extract(
     ref_table=valeurs_abondance,
     origin_field="libellé_abondance",
     target_field="valeur_abondance",
@@ -466,6 +493,15 @@ abondance_perc = = gn_extract(
 )
 moyenne = gn_mean(valeurs_ht, scope=Scope.SITE, weights=abondance_perc)
 médiane = gn_median(moyenne)
+moyenne_viz_data = {
+    "datasets": [
+        {
+            "label": "Moyenne HT par quadrat",
+            "data": [prop.value for prop in moyenne.values]
+        }
+    ],
+    "labels": [prop.entity.base_site_name for prop in moyenne.values]
+}
 """
 
 
@@ -554,14 +590,34 @@ def install_i02_abondance_visualization_config(indicators):
             description="???",
             type=VizBlockType.bar_chart,
             params={
-                "variable": "moyenne",
-                "entity_prop": "base_site_name",
-                "dataset_label": "Moyenne HE par quadrat",
+                "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE par quadrat (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(linechart_block)
+        table_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Moyenne HE par quadrat (pondérée par abondance)",
+            info="???",
+            description="???",
+            type=VizBlockType.table,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(table_block)
 
-    return scalar_block, barchart_block
+    return scalar_block, barchart_block, table_block, linechart_block
 
 
 def install_i02_visualization_config(indicators):
@@ -585,9 +641,7 @@ def install_i02_visualization_config(indicators):
             description="???",
             type=VizBlockType.bar_chart,
             params={
-                "variable": "moyenne",
-                "entity_prop": "base_site_name",
-                "dataset_label": "Moyenne HE par quadrat",
+                "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
@@ -616,9 +670,7 @@ def install_i06_visualization_config(indicators):
             description="???",
             type=VizBlockType.bar_chart,
             params={
-                "variable": "moyenne",
-                "entity_prop": "base_site_name",
-                "dataset_label": "Moyenne HT par quadrat",
+                "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
@@ -647,9 +699,7 @@ def install_i06_abondance_visualization_config(indicators):
             description="???",
             type=VizBlockType.bar_chart,
             params={
-                "variable": "moyenne",
-                "entity_prop": "base_site_name",
-                "dataset_label": "Moyenne HT par quadrat",
+                "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)

@@ -5,6 +5,7 @@ import csv
 import enum
 import statistics
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
 from enum import Enum
@@ -19,8 +20,10 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringSites,
     TMonitoringVisits,
 )
+from marshmallow import ValidationError
 
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockType
+from calculatrice_monitoring.schemas import VizDataSchema
 
 
 class Scope(Enum):
@@ -203,6 +206,18 @@ def create_monitoring_collection(
     return coll
 
 
+@dataclass
+class VizDataset:
+    label: str
+    data: list[Decimal]
+
+
+@dataclass
+class VizData:
+    datasets: list[VizDataset]
+    labels: list[str]
+
+
 # --- UTILITY FUNCTIONS INJECTED IN EVAL CONTEXT ---
 
 
@@ -333,6 +348,10 @@ class IndicatorError(Exception):
     pass
 
 
+class VisualizationConfigError(Exception):
+    pass
+
+
 class VisualizationErrorType(enum.Enum):
     public = "public"
     internal = "internal"
@@ -363,6 +382,24 @@ def evaluate(code, context):
     return local_context
 
 
+def _truncate(value):
+    return value.quantize(Decimal(".00"))
+
+
+# TODO: type the input
+def convert_datasets_to_table_data(viz_data):
+    headers = [""]
+    columns = []
+    for ds in viz_data["datasets"]:
+        headers.append(ds["label"])
+        columns.append(map(_truncate, ds["data"]))
+    rows = list(zip(viz_data["labels"], *columns))
+    return {
+        "headers": headers,
+        "rows": rows,
+    }
+
+
 def build_viz_blocks(variables, indicator):
     viz_config = db.session.scalars(
         db.select(VizBlockConfig).filter(VizBlockConfig.id_indicator == indicator.id_indicator)
@@ -371,22 +408,30 @@ def build_viz_blocks(variables, indicator):
     for viz_conf_item in viz_config:
         vizblock_type = viz_conf_item.type
         data = None
-        if vizblock_type == VizBlockType.scalar:
-            varname = viz_conf_item.params["variable"]
-            data = {"figure": variables[varname].values[0].value}
-        elif vizblock_type == VizBlockType.bar_chart:
-            varname = viz_conf_item.params["variable"]
-            prop_values = variables[varname].values
-            values = [prop.value for prop in prop_values]
-            data = {
-                "labels": [
-                    getattr(prop.entity, viz_conf_item.params["entity_prop"])
-                    for prop in prop_values
-                ],
-                "datasets": [{"data": values, "label": viz_conf_item.params["dataset_label"]}],
-            }
-        else:
-            raise Exception(f"not implemented viz block type {vizblock_type}")
+        try:
+            if vizblock_type == VizBlockType.scalar:
+                varname = viz_conf_item.params["variable"]
+                data = {"figure": variables[varname].values[0].value}
+            elif vizblock_type == VizBlockType.bar_chart:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                data = VizDataSchema().load(raw_data)
+            elif vizblock_type == VizBlockType.line_chart:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                data = VizDataSchema().load(raw_data)
+            elif vizblock_type == VizBlockType.table:
+                varname = viz_conf_item.params["variable"]
+                raw_data = variables[varname]
+                clean_data = VizDataSchema().load(raw_data)
+                data = convert_datasets_to_table_data(clean_data)
+            else:
+                raise Exception(f"not implemented viz block type {vizblock_type}")
+        except ValidationError as err:
+            raise VisualizationConfigError(
+                'Il y a une erreur dans le format de la variable du bloc de visualisation "'
+                f'{viz_conf_item.title}" de type "{viz_conf_item.type.name}": {err.messages_dict}'
+            ) from err
         viz_blocks.append(
             {
                 "type": viz_conf_item.type.value,
@@ -459,7 +504,19 @@ def visualize(
             },
             "vizBlocks": [],
         }
+
+    try:
+        viz_blocks = build_viz_blocks(variables, indicator)
+    except VisualizationConfigError as error:
+        return {
+            "error": {
+                "type": VisualizationErrorType.internal.value,
+                "message": str(error),
+            },
+            "vizBlocks": [],
+        }
+
     return {
         "error": None,
-        "vizBlocks": build_viz_blocks(variables, indicator),
+        "vizBlocks": viz_blocks,
     }

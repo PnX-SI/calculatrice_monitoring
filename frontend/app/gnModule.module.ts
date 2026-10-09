@@ -13,9 +13,10 @@ import { NgChartsModule } from 'ng2-charts';
 import { IndicatorCodeEditorComponent } from './components/indicator-code-editor/indicator-code-editor.component';
 import { IndicatorDetailsComponent } from './components/indicator-details/indicator-details.component';
 import { IndicatorFormComponent } from './components/indicator-form/indicator-form.component';
-import { BarChartVizBlockFormComponent } from './components/indicator-viz-blocks-form/bar-chart-viz-block-form/bar-chart-viz-block-form.component';
+import { ChartVizBlockFormComponent } from './components/indicator-viz-blocks-form/chart-viz-block-form/chart-viz-block-form.component';
 import { IndicatorVizBlocksFormComponent } from './components/indicator-viz-blocks-form/indicator-viz-blocks-form.component';
 import { ScalarVizBlockFormComponent } from './components/indicator-viz-blocks-form/scalar-viz-block-form/scalar-viz-block-form.component';
+import { TableVizBlockFormComponent } from './components/indicator-viz-blocks-form/table-viz-block-form/table-viz-block-form.component';
 import { VizBlockFormComponent } from './components/indicator-viz-blocks-form/viz-block-form/viz-block-form.component';
 import { ModuleComponent } from './components/module/module.component';
 import { ReferenceTableFormComponent } from './components/reftable-form/reftable-form.component';
@@ -25,6 +26,7 @@ import { VisualizationChartComponent } from './components/visualization-chart/vi
 import { VisualizationPageComponent } from './components/visualization-page/visualization-page.component';
 import { VisualizationParamsFormComponent } from './components/visualization-params-form/visualization-params-form.component';
 import { VisualizationScalarComponent } from './components/visualization-scalar/visualization-scalar.component';
+import { VisualizationTableComponent } from './components/visualization-table/visualization-table.component';
 import { CruvedPermissionGuard } from './guards/cruved-permission.guard';
 import { DataService } from './services/data.service';
 import { PermissionService } from './services/permission.service';
@@ -108,7 +110,8 @@ const routes: Routes = [
     IndicatorVizBlocksFormComponent,
     VizBlockFormComponent,
     ScalarVizBlockFormComponent,
-    BarChartVizBlockFormComponent,
+    TableVizBlockFormComponent,
+    ChartVizBlockFormComponent,
     ReferenceTablesComponent,
     ReferenceTableFormComponent,
     VisualizationParamsFormComponent,
@@ -116,6 +119,7 @@ const routes: Routes = [
     VisualizationBlockComponent,
     VisualizationChartComponent,
     VisualizationScalarComponent,
+    VisualizationTableComponent,
   ],
   imports: [
     CommonModule,

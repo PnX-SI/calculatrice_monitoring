@@ -3,11 +3,11 @@ import { AbstractControl, FormControl, FormGroup, ValidationErrors } from '@angu
 import { VisualizationBlockConfigParam } from '../../../interfaces';
 
 @Component({
-  selector: 'pnx-calc-bar-chart-viz-block-form',
-  templateUrl: './bar-chart-viz-block-form.component.html',
-  styleUrls: ['./bar-chart-viz-block-form.component.css'],
+  selector: 'pnx-calc-table-viz-block-form',
+  templateUrl: './table-viz-block-form.component.html',
+  styleUrls: ['./table-viz-block-form.component.css'],
 })
-export class BarChartVizBlockFormComponent {
+export class TableVizBlockFormComponent {
   @Input() public form: FormGroup;
   @Input() public variables: string[];
   @Input() public params?: VisualizationBlockConfigParam[];
@@ -28,10 +28,6 @@ export class BarChartVizBlockFormComponent {
         nonNullable: true,
         validators: (control) => this.validateVariable(control, getVariables()),
       }),
-      entity_prop: new FormControl(this.getParamValue(params, 'entity_prop') || '', {
-        nonNullable: true,
-      }),
-      dataset_label: new FormControl(this.getParamValue(params, 'dataset_label') || ''),
     });
   }
 
@@ -57,7 +53,7 @@ export class BarChartVizBlockFormComponent {
   }
 
   variableValueIsValid(value) {
-    return BarChartVizBlockFormComponent.isVariableValid(value, this.variables);
+    return TableVizBlockFormComponent.isVariableValid(value, this.variables);
   }
 
   get variableOptions() {
@@ -65,7 +61,7 @@ export class BarChartVizBlockFormComponent {
       return undefined;
     }
     let variableOpts = this.variables.slice();
-    let variableStoredValue = BarChartVizBlockFormComponent.getParamValue(this.params, 'variable');
+    let variableStoredValue = TableVizBlockFormComponent.getParamValue(this.params, 'variable');
     if (variableStoredValue !== undefined && !this.variableValueIsValid(variableStoredValue)) {
       variableOpts.push(variableStoredValue);
     }
