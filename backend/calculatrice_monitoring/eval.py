@@ -220,8 +220,8 @@ class CampaignVars:
 
 class CampaignResult:
     def __init__(self, start_date, end_date, vars):
-        self.start = start_date
-        self.end = end_date
+        self.start_date = start_date
+        self.end_date = end_date
         self.vars = CampaignVars(vars)
 
 

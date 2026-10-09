@@ -469,7 +469,35 @@ moyenne_viz_data = {
 """
 
 # Copy of CODE_I02_ABONDANCE, intentionally not shared as the overview code is going to diverge
-OVERVIEW_CODE_I02_ABONDANCE = """évolution=campaigns
+OVERVIEW_CODE_I02_ABONDANCE = """labels = []
+data = []
+for campaign in campaigns:
+  labels.append(campaign.start_date)
+  data.append(campaign.vars.médiane.values[0].value)
+datasets = [
+  {
+    "label": "I02 (médiane)",
+    "data": data,
+  }
+]
+évolution = {
+  "datasets": datasets,
+  "labels": labels
+}
+
+labels = ["I02 (médiane)"]
+datasets = []
+for campaign in campaigns:
+	datasets.append(
+		{
+			"label": campaign.start_date,
+			"data": [prop.value for prop in campaign.vars.médiane.values],
+		}
+	)
+tableau_médianes = {
+	"datasets": datasets,
+	"labels": labels,
+}
 """
 
 CODE_I06 = """valeurs_ht = gn_extract(
