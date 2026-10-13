@@ -108,11 +108,7 @@
           >
             <button
               [disabled]="!canConfigureCampaignBlocks()"
-              [routerLink]="
-                canConfigureCampaignBlocks()
-                  ? ['/calculatrice/indicator', indicatorDetails.id, 'viz-blocks']
-                  : null
-              "
+              [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'viz-blocks']"
               mat-stroked-button
               color="primary"
             >
@@ -202,11 +198,7 @@
           >
             <button
               [disabled]="!canConfigureOverviewBlocks()"
-              [routerLink]="
-                canConfigureOverviewBlocks()
-                  ? ['/calculatrice/indicator', indicatorDetails.id, 'overview-viz-blocks']
-                  : null
-              "
+              [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'overview-viz-blocks']"
               mat-stroked-button
               color="primary"
             >
