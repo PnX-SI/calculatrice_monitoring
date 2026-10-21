@@ -295,10 +295,9 @@ def gn_mean(
     are silently discarded.
     """
     if scope == Scope.GLOBAL:
-        sums = 0
-        for prop_value in prop_collection.values:
-            sums += Decimal(prop_value.value)
-        moyenne = Decimal(sums) / len(prop_collection.values)
+        moyenne = statistics.mean(
+            Decimal(prop_value.value) for prop_value in prop_collection.values
+        )
         return PropertyCollection(
             values=[PropertyValue(value=moyenne, entity=ROOT)], scope=Scope.GLOBAL
         )
