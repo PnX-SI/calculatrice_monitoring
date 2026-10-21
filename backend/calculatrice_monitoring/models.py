@@ -58,7 +58,7 @@ class Indicator(db.Model):
     id_protocol = db.Column(db.ForeignKey("gn_monitoring.t_module_complements.id_module"))
     description = db.Column(db.Unicode, default="")
     source_code = db.Column(db.Unicode, nullable=False, default="")
-    overview_code = db.Column(db.Unicode, nullable=False, default="")
+    overview_source_code = db.Column(db.Unicode, nullable=False, default="")
     protocol = db.relationship(TMonitoringModules)
     reference_tables = db.relationship(
         "ReferenceTable",

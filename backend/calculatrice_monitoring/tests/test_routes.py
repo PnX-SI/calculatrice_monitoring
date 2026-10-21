@@ -833,7 +833,7 @@ result = foo()
                 name="dummy indicator testing custom indicator error",
                 id_protocol=flore_protocol.id_module,
                 source_code="foo=42",
-                overview_code="bar = 1 / 0",
+                overview_source_code="bar = 1 / 0",
             )
             db.session.add(indicator)
 
@@ -1150,7 +1150,7 @@ class TestGetIndicatorDetails:
         )
         assert response.status_code == 200
         data = response.json
-        assert data["overviewCode"] == i02_abondance.overview_code
+        assert data["overviewSourceCode"] == i02_abondance.overview_source_code
         assert len(data["visualizationBlockConfigs"]) == 4
         assert len(data["overviewVisualizationBlockConfigs"]) == 2
         campaign_ids = {vb["id"] for vb in data["visualizationBlockConfigs"]}
@@ -1319,7 +1319,7 @@ class TestEditIndicatorOverviewCode:
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.overview_code == new_code
+        assert indicator.overview_source_code == new_code
         assert indicator.source_code == original_code
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
@@ -1385,7 +1385,7 @@ class TestGetIndicatorOverviewCodeVariables:
         indicator = protocol_with_indicators["indicators"][0]
         with db.session.begin_nested():
             indicator.source_code = "campaign_var = 1"
-            indicator.overview_code = "overview_var = 2"
+            indicator.overview_source_code = "overview_var = 2"
         response = client.get(
             url_for(
                 "calculatrice.get_indicator_overview_code_variables",

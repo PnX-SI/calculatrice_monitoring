@@ -11,7 +11,7 @@ export interface IndicatorDetails {
   description: string;
   protocol: Protocol;
   sourceCode: string;
-  overviewCode?: string;
+  overviewSourceCode?: string;
   visualizationBlockConfigs: VisualizationBlockConfigDetails[];
   overviewVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];
   referenceTables: ReferenceTable[];

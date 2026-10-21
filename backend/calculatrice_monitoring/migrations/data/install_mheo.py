@@ -574,7 +574,7 @@ def install_test_indicators(protocols, reference_tables):
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
             "source_code": CODE_I02_ABONDANCE,
-            "overview_code": OVERVIEW_CODE_I02_ABONDANCE,
+            "overview_source_code": OVERVIEW_CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {

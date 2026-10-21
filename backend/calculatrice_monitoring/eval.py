@@ -571,7 +571,7 @@ def visualize_overview(
         )
     context = create_overview_context(campaign_results)
     try:
-        variables = evaluate(indicator.overview_code, context)
+        variables = evaluate(indicator.overview_source_code, context)
     except IndicatorError:
         # Expected error continue
         raise

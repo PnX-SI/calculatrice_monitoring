@@ -70,7 +70,7 @@ export class IndicatorDetailsComponent implements OnInit {
       return true;
     }
     return Boolean(
-      this.indicatorDetails?.overviewCode?.trim() && this.overviewVariables?.length > 0
+      this.indicatorDetails?.overviewSourceCode?.trim() && this.overviewVariables?.length > 0
     );
   }
 
@@ -78,7 +78,7 @@ export class IndicatorDetailsComponent implements OnInit {
     if (this.canConfigureOverviewBlocks()) {
       return '';
     }
-    if (!this.indicatorDetails?.overviewCode?.trim()) {
+    if (!this.indicatorDetails?.overviewSourceCode?.trim()) {
       return "Veuillez d'abord renseigner le code de synthèse pour pouvoir configurer des blocs de visualisation.";
     }
     return 'Le code de synthèse ne définit aucune variable valide (assignation requise, ex: val = ...).';
