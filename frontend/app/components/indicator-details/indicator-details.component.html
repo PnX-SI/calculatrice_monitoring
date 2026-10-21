@@ -90,9 +90,9 @@
           </button>
         </div>
         <pre
-          *ngIf="indicatorDetails.code; else noCampaignCode"
+          *ngIf="indicatorDetails.sourceCode; else noCampaignCode"
           class="indicator-code"
-          >{{ indicatorDetails.code }}</pre
+          >{{ indicatorDetails.sourceCode }}</pre
         >
         <ng-template #noCampaignCode>
           <p class="text-muted">Aucun code configuré pour les campagnes.</p>

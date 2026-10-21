@@ -98,10 +98,10 @@ export class DataService {
     );
   }
 
-  editIndicatorCode(indicatorId: Number, code: String) {
+  editIndicatorCode(indicatorId: Number, sourceCode: String) {
     return this._http.put<HttpResponse<String>>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code`,
-      { code: code },
+      { sourceCode: sourceCode },
       { headers: { 'Content-Type': 'application/json' } }
     );
   }

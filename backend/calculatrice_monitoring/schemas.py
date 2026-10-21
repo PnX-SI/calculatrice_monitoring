@@ -128,7 +128,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indicator
         include_fk = True
-        exclude = ["code", "overview_code"]
+        exclude = ["source_code", "overview_code"]
 
 
 class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
@@ -151,6 +151,7 @@ class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
 class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     id_indicator = ma.Integer(data_key="id")
     protocol = ma.Nested("ProtocolSchema", data_key="protocol")
+    source_code = ma.String(data_key="sourceCode")
     overview_code = ma.String(data_key="overviewCode")
     viz_block_configs = ma.Method(
         serialize="serialize_campaign_viz_block_configs",
