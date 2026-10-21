@@ -16,6 +16,7 @@ export class IndicatorCodeEditorComponent implements OnInit {
   indicator: IndicatorDetails;
   protocolProperties: ProtocolProperties;
   scope: 'campaign' | 'overview' = 'campaign';
+  campaignVariables: string[] = [];
 
   constructor(
     private _data: DataService,
@@ -39,6 +40,11 @@ export class IndicatorCodeEditorComponent implements OnInit {
         this._data.getProtocolProperties(this.indicator.protocol.id).subscribe((data) => {
           this.protocolProperties = data;
         });
+        if (this.scope === 'overview') {
+          this._data.getIndicatorCodeVariables(this.indicator.id).subscribe((variables) => {
+            this.campaignVariables = variables;
+          });
+        }
       });
     });
   }
