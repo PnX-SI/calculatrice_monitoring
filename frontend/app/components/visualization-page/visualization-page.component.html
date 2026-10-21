@@ -1,45 +1,56 @@
-<div class="visualization-page">
-  <div class="visualization-nav">
-    <mat-selection-list
-      role="list"
-      hideSingleSelectionIndicator
-      #selectionsList
-      [multiple]="false"
-      (selectionChange)="onSelectionsChange(selectionsList.selectedOptions.selected)"
-    >
-      <mat-list-option
-        *ngFor="let selection of selections; index as i"
-        [value]="selection"
-        [selected]="selection && i === 0"
-        class="mat-elevation-z2"
+<div class="visualization-container">
+  <a
+    mat-raised-button
+    [routerLink]="['/calculatrice/visualization', indicatorId, 'params']"
+    [queryParams]="queryParams"
+    class="mb-3"
+  >
+    <mat-icon>chevron_left</mat-icon>
+    Retour
+  </a>
+  <div class="visualization-page">
+    <div class="visualization-nav">
+      <mat-selection-list
+        role="list"
+        hideSingleSelectionIndicator
+        #selectionsList
+        [multiple]="false"
+        (selectionChange)="onSelectionsChange(selectionsList.selectedOptions.selected)"
       >
-        {{ selection.label }}
-      </mat-list-option>
-    </mat-selection-list>
-  </div>
-  <div class="blocks-container">
-    <div
-      *ngIf="visualizationError"
-      class="visualization-error alert alert-warning"
-    >
-      <div *ngIf="showGenericError(); else actualError">
-        Une erreur inattendue s'est produite durant l'évaluation de l'indicateur. Veuillez contacter
-        le responsable de l'indicateur.
-      </div>
-      <ng-template #actualError>
-        <div>{{ visualizationError.message }}</div>
-      </ng-template>
+        <mat-list-option
+          *ngFor="let selection of selections; index as i"
+          [value]="selection"
+          [selected]="selection && i === 0"
+          class="mat-elevation-z2"
+        >
+          {{ selection.label }}
+        </mat-list-option>
+      </mat-selection-list>
     </div>
-    <pnx-calc-visualization-block
-      *ngFor="let block of vizBlocks"
-      [blockDef]="block"
-    ></pnx-calc-visualization-block>
-  </div>
-  <div class="visualization-toc">
-    <ul>
-      <li *ngFor="let block of vizBlocks">
-        <a href="#{{ block.title }}">{{ block.title }}</a>
-      </li>
-    </ul>
+    <div class="blocks-container">
+      <div
+        *ngIf="visualizationError"
+        class="visualization-error alert alert-warning"
+      >
+        <div *ngIf="showGenericError(); else actualError">
+          Une erreur inattendue s'est produite durant l'évaluation de l'indicateur. Veuillez
+          contacter le responsable de l'indicateur.
+        </div>
+        <ng-template #actualError>
+          <div>{{ visualizationError.message }}</div>
+        </ng-template>
+      </div>
+      <pnx-calc-visualization-block
+        *ngFor="let block of vizBlocks"
+        [blockDef]="block"
+      ></pnx-calc-visualization-block>
+    </div>
+    <div class="visualization-toc">
+      <ul>
+        <li *ngFor="let block of vizBlocks">
+          <a href="#{{ block.title }}">{{ block.title }}</a>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
