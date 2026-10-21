@@ -38,7 +38,10 @@
             <!-- Données Section -->
             <div class="category-section">
               <h3 class="category-title">Données</h3>
-              <div class="object-list">
+              <div
+                *ngIf="scope === 'campaign'; else overviewDataObjects"
+                class="object-list"
+              >
                 <mat-expansion-panel>
                   <mat-expansion-panel-header>
                     <mat-panel-title
@@ -151,6 +154,75 @@
                   </ul>
                 </mat-expansion-panel>
               </div>
+              <ng-template #overviewDataObjects>
+                <div class="object-list">
+                  <mat-expansion-panel>
+                    <mat-expansion-panel-header>
+                      <mat-panel-title
+                        class="object-name"
+                        (click)="insertCode('campaigns'); $event.stopPropagation()"
+                      >
+                        campaigns
+                      </mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <p>
+                      L'object
+                      <code>campaigns</code>
+                      contient les résultats des campagnes paramétrées. Chaque campagne est
+                      accessible en donnant sa position dans l'ordre chronologique. Par exemple
+                      <code>campaigns[0]</code>
+                      permet de manipuler les résultats de la première campagne. Chaque campagne a
+                      les propriétés suivantes.
+                    </p>
+                    <p>Propriétés</p>
+                    <ul>
+                      <li
+                        (click)="insertCode('campaigns[0].start_date'); $event.stopPropagation()"
+                        class="object-name"
+                      >
+                        start_date
+                      </li>
+                      <li
+                        (click)="insertCode('campaigns[0].end_date'); $event.stopPropagation()"
+                        class="object-name"
+                      >
+                        end_date
+                      </li>
+                      <li
+                        (click)="insertCode('campaigns[0].vars'); $event.stopPropagation()"
+                        class="object-name"
+                      >
+                        vars
+                      </li>
+                    </ul>
+                    <p>
+                      L'attribut
+                      <code>vars</code>
+                      permet d'accéder aux variables calculées pour cette campagne. En faisant par
+                      exemple :
+                      <code>campaigns[0].vars.moyenne</code>
+                      où
+                      <code>moyenne</code>
+                      est une variable calculée pour les campagnes. Les variables actuellement
+                      définies sont :
+                    </p>
+                    <ul *ngIf="campaignVariables.length > 0; else noCampaignVariables">
+                      <li
+                        *ngFor="let variable of campaignVariables"
+                        (click)="
+                          insertCode('campaigns[0].vars.' + variable); $event.stopPropagation()
+                        "
+                        class="object-name"
+                      >
+                        {{ variable }}
+                      </li>
+                    </ul>
+                    <ng-template #noCampaignVariables>
+                      <p class="empty-message">Aucune variable définie</p>
+                    </ng-template>
+                  </mat-expansion-panel>
+                </div>
+              </ng-template>
             </div>
 
             <!-- Fonctions Section -->
@@ -349,7 +421,10 @@
             </div>
 
             <!-- Tableaux Section -->
-            <div class="category-section">
+            <div
+              *ngIf="scope === 'campaign'"
+              class="category-section"
+            >
               <h3 class="category-title">Tableaux</h3>
               <div class="object-list">
                 <ng-container
