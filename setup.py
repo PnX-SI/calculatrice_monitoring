@@ -22,7 +22,9 @@ setuptools.setup(
     url="https://github.com/PnX-SI/calculatrice_monitoring",
     packages=setuptools.find_packages("backend"),
     package_dir={"": "backend"},
-    package_data={},
+    package_data={
+        "calculatrice_monitoring.migrations": ["data/*"],
+    },
     install_requires=requirements,
     zip_safe=False,
     entry_points={
