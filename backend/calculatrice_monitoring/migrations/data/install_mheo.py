@@ -499,6 +499,11 @@ tableau_médianes = {
 }
 """
 
+STATISTICAL_TESTS_CODE_I02_ABONDANCE = """médiane0 = campaigns[0].vars.médiane.values[0].value
+médiane1 = campaigns[1].vars.médiane.values[0].value
+écart = abs(médiane1 - médiane0)
+"""
+
 CODE_I06 = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
@@ -575,6 +580,7 @@ def install_test_indicators(protocols, reference_tables):
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
             "source_code": CODE_I02_ABONDANCE,
             "overview_source_code": OVERVIEW_CODE_I02_ABONDANCE,
+            "statistical_tests_source_code": STATISTICAL_TESTS_CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {
@@ -689,6 +695,30 @@ def install_i02_abondance_overview_visualization_config(indicators):
     return scalar_block, line_chart_block
 
 
+def install_i02_abondance_statistical_tests_visualization_config(indicators):
+    i02_abondance = indicators["i02_abondance"]
+    with db.session.begin_nested():
+        description = (
+            "Si l’écart est inférieur à 0,3 alors le test n’est pas validé. "
+            "Si deux des trois tests statistiques ne sont pas validés alors "
+            "il n’y a pas d’évolution significative entre les deux dates. "
+            "L’indicateur est stable."
+        )
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Écart des médianes",
+            info="???",
+            description=description,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "écart",
+            },
+        )
+        db.session.add(scalar_block)
+    return scalar_block
+
+
 def install_i02_visualization_config(indicators):
     i02 = indicators["i02"]
     with db.session.begin_nested():
@@ -792,6 +822,7 @@ def install_all_test_sample_objects():
     indicators = install_test_indicators(protocols, reference_tables)
     install_i02_abondance_visualization_config(indicators)
     install_i02_abondance_overview_visualization_config(indicators)
+    install_i02_abondance_statistical_tests_visualization_config(indicators)
     install_i02_visualization_config(indicators)
     install_i06_visualization_config(indicators)
     install_i06_abondance_visualization_config(indicators)

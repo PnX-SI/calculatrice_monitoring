@@ -300,6 +300,30 @@ def update_indicator_overview_viz_blocks(indicator_id: int):
     return "", 204
 
 
+@blueprint.route("/indicator/<int:indicator_id>/statistical-tests-code", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def edit_indicator_statistical_tests_code(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    indicator.statistical_tests_source_code = request.json["sourceCode"]
+    db.session.add(indicator)
+    db.session.commit()
+    return "", 204
+
+
+@blueprint.route("/indicator/<int:indicator_id>/statistical-tests-viz-blocks", methods=["PUT"])
+@check_cruved_scope(action="U", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def update_indicator_statistical_tests_viz_blocks(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    try:
+        vizblock_configs = VizBlockConfigSchema(many=True).load(request.json)
+    except ValidationError as error:
+        return error.messages, 400
+    _replace_indicator_viz_blocks(indicator, VizBlockScope.statistical_tests, vizblock_configs)
+    return "", 204
+
+
 @blueprint.route("/indicator/<int:indicator_id>", methods=["GET"])
 @check_cruved_scope(action="R", module_code=MODULE_CODE)
 def get_indicator(indicator_id: int):
@@ -331,6 +355,15 @@ def get_indicator_overview_code_variables(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
     variables = extract_variable_names(indicator.overview_source_code)
+    return variables, 200
+
+
+@blueprint.route("/indicator/<int:indicator_id>/statistical-tests-code-variables", methods=["GET"])
+@check_cruved_scope(action="R", module_code=MODULE_CODE, object_code="CALC_ADMIN_INDICATOR")
+def get_indicator_statistical_tests_code_variables(indicator_id: int):
+    error_msg = f"Indicator {indicator_id} not found"
+    indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
+    variables = extract_variable_names(indicator.statistical_tests_source_code)
     return variables, 200
 
 
@@ -397,7 +430,7 @@ def get_indicator_visualization(
     monitoring_sites = db.session.scalars(
         select(TMonitoringSites).filter(TMonitoringSites.id_base_site.in_(sites_ids))
     ).all()
-    if viz_type in ["campaign", "overview"]:
+    if viz_type in ["campaign", "overview", "statisticalTests"]:
         return visualize(
             indicator,
             monitoring_sites,

@@ -16,6 +16,7 @@ class VizBlockType(enum.Enum):
 class VizBlockScope(enum.Enum):
     campaign = "campaign"
     overview = "overview"
+    statistical_tests = "statistical_tests"
 
 
 VIZ_BLOCK_CONFIG_PARAMS = {
@@ -59,6 +60,7 @@ class Indicator(db.Model):
     description = db.Column(db.Unicode, default="")
     source_code = db.Column(db.Unicode, nullable=False, default="")
     overview_source_code = db.Column(db.Unicode, nullable=False, default="")
+    statistical_tests_source_code = db.Column(db.Unicode, nullable=False, default="")
     protocol = db.relationship(TMonitoringModules)
     reference_tables = db.relationship(
         "ReferenceTable",
