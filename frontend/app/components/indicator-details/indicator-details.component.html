@@ -184,9 +184,9 @@
           </button>
         </div>
         <pre
-          *ngIf="indicatorDetails.overviewCode; else noOverviewCode"
+          *ngIf="indicatorDetails.overviewSourceCode; else noOverviewCode"
           class="indicator-code"
-          >{{ indicatorDetails.overviewCode }}</pre
+          >{{ indicatorDetails.overviewSourceCode }}</pre
         >
         <ng-template #noOverviewCode>
           <p class="text-muted">Aucun code de synthèse configuré.</p>
