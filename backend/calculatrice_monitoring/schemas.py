@@ -128,7 +128,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indicator
         include_fk = True
-        exclude = ["source_code", "overview_source_code"]
+        exclude = ["source_code", "overview_source_code", "statistical_tests_source_code"]
 
 
 class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
@@ -153,6 +153,7 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     protocol = ma.Nested("ProtocolSchema", data_key="protocol")
     source_code = ma.String(data_key="sourceCode")
     overview_source_code = ma.String(data_key="overviewSourceCode")
+    statistical_tests_source_code = ma.String(data_key="statisticalTestsSourceCode")
     viz_block_configs = ma.Method(
         serialize="serialize_campaign_viz_block_configs",
         data_key="visualizationBlockConfigs",
@@ -160,6 +161,10 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     overview_viz_block_configs = ma.Method(
         serialize="serialize_overview_viz_block_configs",
         data_key="overviewVisualizationBlockConfigs",
+    )
+    statistical_tests_viz_block_configs = ma.Method(
+        serialize="serialize_statistical_tests_viz_block_configs",
+        data_key="statisticalTestsVisualizationBlockConfigs",
     )
     reference_tables = ma.Nested(
         "ReferenceTableSchema",
@@ -178,6 +183,9 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
 
     def serialize_overview_viz_block_configs(self, obj):
         return self._serialize_viz_block_configs(obj, VizBlockScope.overview)
+
+    def serialize_statistical_tests_viz_block_configs(self, obj):
+        return self._serialize_viz_block_configs(obj, VizBlockScope.statistical_tests)
 
     class Meta:
         model = Indicator

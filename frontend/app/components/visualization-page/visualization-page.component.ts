@@ -17,7 +17,7 @@ import { PermissionService } from '../../services/permission.service';
 
 interface Selection {
   label: string;
-  type: 'overview' | 'campaign' | 'evolution';
+  type: 'overview' | 'campaign' | 'statisticalTests';
   campaigns: Campaign[];
 }
 
@@ -136,8 +136,8 @@ export class VisualizationPageComponent implements OnInit {
     campaigns.forEach((campaign) => {
       if (previousCampaign !== undefined) {
         selections.push({
-          label: `Évolution`,
-          type: 'evolution',
+          label: `Tests statistiques`,
+          type: 'statisticalTests',
           campaigns: [previousCampaign, campaign],
         });
       }

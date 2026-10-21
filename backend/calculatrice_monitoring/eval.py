@@ -375,6 +375,7 @@ class IndicatorError(Exception):
 class UnexpectedIndicatorErrorScope(enum.Enum):
     campaign = "campaign"
     overview = "overview"
+    statistical_tests = "statistical_tests"
 
 
 class UnexpectedIndicatorError(Exception):
@@ -411,6 +412,17 @@ def create_context(
 
 
 def create_overview_context(campaign_results):
+    context = {}
+    context["campaigns"] = campaign_results
+    context["gn_mean"] = gn_mean
+    context["gn_median"] = gn_median
+    context["Scope"] = Scope
+    context["gn_extract"] = gn_extract
+    context["IndicatorError"] = IndicatorError
+    return context
+
+
+def create_statistical_tests_context(campaign_results):
     context = {}
     context["campaigns"] = campaign_results
     context["gn_mean"] = gn_mean
@@ -469,7 +481,10 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
             if vizblock_type == VizBlockType.scalar:
                 varname = viz_conf_item.params["variable"]
                 value = get_vizblock_variable_value(viz_conf_item, varname)
-                data = {"figure": value.values[0].value}
+                try:
+                    data = {"figure": value.values[0].value}
+                except AttributeError:
+                    data = {"figure": float(value)}
             elif vizblock_type == VizBlockType.bar_chart:
                 varname = viz_conf_item.params["variable"]
                 raw_data = get_vizblock_variable_value(viz_conf_item, varname)
@@ -580,6 +595,31 @@ def visualize_overview(
     return build_viz_blocks(variables, indicator, scope=VizBlockScope.overview)
 
 
+def visualize_statistical_tests(
+    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns: list[Campaign]
+):
+    campaign_results = []
+    for campaign in campaigns:
+        campaign_results.append(
+            CampaignResult(
+                start_date=campaign.start_date,
+                end_date=campaign.end_date,
+                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+            )
+        )
+    context = create_statistical_tests_context(campaign_results)
+    try:
+        variables = evaluate(indicator.statistical_tests_source_code, context)
+    except IndicatorError:
+        # Expected error continue
+        raise
+    except Exception as error:
+        raise UnexpectedIndicatorError(
+            scope=UnexpectedIndicatorErrorScope.statistical_tests
+        ) from error
+    return build_viz_blocks(variables, indicator, scope=VizBlockScope.statistical_tests)
+
+
 def visualize(
     indicator: Indicator,
     monitoring_sites: list[TMonitoringSites],
@@ -591,6 +631,8 @@ def visualize(
             viz_blocks = visualize_campaign(indicator, monitoring_sites, campaigns[0])
         elif viz_type == "overview":
             viz_blocks = visualize_overview(indicator, monitoring_sites, campaigns)
+        elif viz_type == "statisticalTests":
+            viz_blocks = visualize_statistical_tests(indicator, monitoring_sites, campaigns)
     except IndicatorError as error:
         return {
             "error": {"type": VisualizationErrorType.public.value, "message": str(error)},
