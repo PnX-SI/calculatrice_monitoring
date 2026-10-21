@@ -10,7 +10,7 @@ export interface IndicatorDetails {
   name: string;
   description: string;
   protocol: Protocol;
-  code: string;
+  sourceCode: string;
   overviewCode?: string;
   visualizationBlockConfigs: VisualizationBlockConfigDetails[];
   overviewVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];

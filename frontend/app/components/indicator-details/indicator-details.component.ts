@@ -52,14 +52,14 @@ export class IndicatorDetailsComponent implements OnInit {
     if ((this.indicatorDetails?.visualizationBlockConfigs?.length ?? 0) > 0) {
       return true;
     }
-    return Boolean(this.indicatorDetails?.code?.trim() && this.campaignVariables?.length > 0);
+    return Boolean(this.indicatorDetails?.sourceCode?.trim() && this.campaignVariables?.length > 0);
   }
 
   getCampaignBlocksTooltip(): string {
     if (this.canConfigureCampaignBlocks()) {
       return '';
     }
-    if (!this.indicatorDetails?.code?.trim()) {
+    if (!this.indicatorDetails?.sourceCode?.trim()) {
       return "Veuillez d'abord renseigner le code pour pouvoir configurer des blocs de visualisation.";
     }
     return 'Le code actuel ne définit aucune variable valide (assignation requise, ex: val = ...).';

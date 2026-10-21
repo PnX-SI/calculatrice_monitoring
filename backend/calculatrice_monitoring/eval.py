@@ -515,7 +515,7 @@ def _get_error_line_number(error: Exception) -> int:
 def evaluate_campaign(
     indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
 ):
-    code = indicator.code
+    code = indicator.source_code
 
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
     sites_ids = [site.id_base_site for site in sites]
