@@ -5,7 +5,13 @@ from decimal import Decimal
 
 import pytest
 
-from calculatrice_monitoring.eval import Scope, evaluate
+from calculatrice_monitoring.eval import (
+    Scope,
+    VisualizationConfigError,
+    evaluate,
+    prepare_table_vizblock_data,
+)
+from calculatrice_monitoring.models import VizBlockConfig
 
 
 class TestEvalIndicator:
@@ -216,3 +222,51 @@ moyenne_durée = gn_mean(visites.durée_secondes)
         assert len(moyenne_durée.values) == 1
         moyenne_durée = moyenne_durée.values[0]
         assert moyenne_durée.value == 576
+
+
+class TestCreateTableVizBlock:
+    def test_with_headers_and_rows_format(self):
+        params = {"variable": "foo"}
+        variables = {
+            "foo": {
+                "headers": ["", "1st column", "2nd column"],
+                "rows": [["Item 1", 1, 11], ["Item 2", 2, 22]],
+            }
+        }
+        vizblock_config = VizBlockConfig(params=params)
+        data = prepare_table_vizblock_data(vizblock_config, variables)
+
+        assert data == {
+            "headers": ["", "1st column", "2nd column"],
+            "rows": [["Item 1", 1, 11], ["Item 2", 2, 22]],
+        }
+
+    def test_with_datasets_and_labels_format(self):
+        params = {"variable": "foo"}
+        variables = {
+            "foo": {
+                "labels": ["Item 1", "Item 2"],
+                "datasets": [
+                    {"label": "1st column", "data": [1, 2]},
+                    {"label": "2nd column", "data": [11, 22]},
+                ],
+            }
+        }
+        vizblock_config = VizBlockConfig(params=params)
+        data = prepare_table_vizblock_data(vizblock_config, variables)
+
+        assert data == {
+            "headers": ["", "1st column", "2nd column"],
+            "rows": [
+                ["Item 1", Decimal("1"), Decimal("11")],
+                ["Item 2", Decimal("2"), Decimal("22")],
+            ],
+        }
+
+    def test_format_error(self):
+        params = {"variable": "foo"}
+        variables = {"foo": {"bad": "format"}}
+        vizblock_config = VizBlockConfig(params=params)
+
+        with pytest.raises(VisualizationConfigError):
+            prepare_table_vizblock_data(vizblock_config, variables)
