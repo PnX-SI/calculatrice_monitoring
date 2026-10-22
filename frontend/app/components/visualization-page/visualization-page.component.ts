@@ -39,6 +39,7 @@ export class VisualizationPageComponent implements OnInit {
   protected secondSelectedCampaign?: Campaign;
   protected firstCampaignControl = new FormControl('');
   protected secondCampaignControl = new FormControl('');
+  protected activeBlockIndex?: number;
   protected indicatorId: number;
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
@@ -153,6 +154,7 @@ export class VisualizationPageComponent implements OnInit {
     if (selection.disabled) {
       return;
     }
+    this.activeBlockIndex = undefined;
     this.currentSelection = selection;
     if (selection.type === 'statisticalTests') {
       this._updateStatisticalTestsVisualization();
@@ -216,6 +218,7 @@ export class VisualizationPageComponent implements OnInit {
   }
 
   onCampaignChange() {
+    this.activeBlockIndex = undefined;
     this.firstSelectedCampaign = this.availableCampaigns.find(
       (campaign) => this.getCampaignKey(campaign) === this.firstCampaignControl.value
     );
@@ -223,6 +226,14 @@ export class VisualizationPageComponent implements OnInit {
       (campaign) => this.getCampaignKey(campaign) === this.secondCampaignControl.value
     );
     this._updateStatisticalTestsVisualization();
+  }
+
+  scrollToBlock(blockIndex: number) {
+    this.activeBlockIndex = blockIndex;
+    const blockElement = document.getElementById(`viz-block-${blockIndex}`);
+    if (blockElement) {
+      blockElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   private _updateStatisticalTestsVisualization() {
