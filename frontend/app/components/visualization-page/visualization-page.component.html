@@ -18,9 +18,11 @@
         (selectionChange)="onSelectionsChange(selectionsList.selectedOptions.selected)"
       >
         <mat-list-option
-          *ngFor="let selection of selections; index as i"
+          *ngFor="let selection of selections"
           [value]="selection"
-          [selected]="selection && i === 0"
+          [disabled]="selection.disabled"
+          [selected]="selection === currentSelection"
+          [matTooltip]="selection.disabled ? selection.tooltip || '' : ''"
           class="mat-elevation-z2"
         >
           {{ selection.label }}
@@ -28,6 +30,57 @@
       </mat-selection-list>
     </div>
     <div class="blocks-container">
+      <mat-card
+        *ngIf="currentSelection?.type === 'statisticalTests'"
+        class="statistical-tests-campaign-selector"
+      >
+        <mat-card-title>
+          <h2>Sélection des campagnes à comparer</h2>
+        </mat-card-title>
+        <mat-card-content>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group mb-0">
+                <label for="firstCampaignSelect">Première campagne</label>
+                <select
+                  id="firstCampaignSelect"
+                  class="custom-select"
+                  [value]="getCampaignKey(firstSelectedCampaign)"
+                  (change)="onFirstCampaignChange($event)"
+                >
+                  <option
+                    *ngFor="let campaign of availableCampaigns"
+                    [value]="getCampaignKey(campaign)"
+                    [disabled]="isSameCampaign(campaign, secondSelectedCampaign)"
+                  >
+                    Campagne {{ campaign.startDate }} - {{ campaign.endDate }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group mb-0">
+                <label for="secondCampaignSelect">Deuxième campagne</label>
+                <select
+                  id="secondCampaignSelect"
+                  class="custom-select"
+                  [value]="getCampaignKey(secondSelectedCampaign)"
+                  (change)="onSecondCampaignChange($event)"
+                >
+                  <option
+                    *ngFor="let campaign of availableCampaigns"
+                    [value]="getCampaignKey(campaign)"
+                    [disabled]="isSameCampaign(campaign, firstSelectedCampaign)"
+                  >
+                    Campagne {{ campaign.startDate }} - {{ campaign.endDate }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
       <div
         *ngIf="visualizationError"
         class="visualization-error alert alert-warning"
