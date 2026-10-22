@@ -45,13 +45,13 @@
                 <select
                   id="firstCampaignSelect"
                   class="custom-select"
-                  [value]="getCampaignKey(firstSelectedCampaign)"
-                  (change)="onFirstCampaignChange($event)"
+                  [formControl]="firstCampaignControl"
+                  (change)="onCampaignChange()"
                 >
                   <option
                     *ngFor="let campaign of availableCampaigns"
                     [value]="getCampaignKey(campaign)"
-                    [disabled]="isSameCampaign(campaign, secondSelectedCampaign)"
+                    [disabled]="getCampaignKey(campaign) === secondCampaignControl.value"
                   >
                     Campagne {{ campaign.startDate }} - {{ campaign.endDate }}
                   </option>
@@ -64,13 +64,13 @@
                 <select
                   id="secondCampaignSelect"
                   class="custom-select"
-                  [value]="getCampaignKey(secondSelectedCampaign)"
-                  (change)="onSecondCampaignChange($event)"
+                  [formControl]="secondCampaignControl"
+                  (change)="onCampaignChange()"
                 >
                   <option
                     *ngFor="let campaign of availableCampaigns"
                     [value]="getCampaignKey(campaign)"
-                    [disabled]="isSameCampaign(campaign, firstSelectedCampaign)"
+                    [disabled]="getCampaignKey(campaign) === firstCampaignControl.value"
                   >
                     Campagne {{ campaign.startDate }} - {{ campaign.endDate }}
                   </option>
