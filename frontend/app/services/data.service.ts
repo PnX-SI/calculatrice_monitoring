@@ -142,6 +142,28 @@ export class DataService {
     );
   }
 
+  editIndicatorStatisticalTestsCode(indicatorId: number, sourceCode: string) {
+    return this._http.put<HttpResponse<string>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-code`,
+      { sourceCode: sourceCode },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  updateIndicatorStatisticalTestsVizBlocks(
+    indicatorId: number,
+    vizBlocksConfig: VisualizationBlockConfigPayload[]
+  ) {
+    return this._http.put<HttpResponse<string>>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-viz-blocks`,
+      vizBlocksConfig,
+      {
+        headers: { 'Content-Type': 'application/json' },
+        responseType: 'json',
+      }
+    );
+  }
+
   getIndicator(indicatorId: number) {
     return this._http.get<Indicator>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`
@@ -163,6 +185,12 @@ export class DataService {
   getIndicatorOverviewCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-code-variables`
+    );
+  }
+
+  getIndicatorStatisticalTestsCodeVariables(indicatorId: number) {
+    return this._http.get<string[]>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-code-variables`
     );
   }
 

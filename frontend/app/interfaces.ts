@@ -14,6 +14,8 @@ export interface IndicatorDetails {
   overviewSourceCode?: string;
   visualizationBlockConfigs: VisualizationBlockConfigDetails[];
   overviewVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];
+  statisticalTestsSourceCode?: string;
+  statisticalTestsVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];
   referenceTables: ReferenceTable[];
 }
 
