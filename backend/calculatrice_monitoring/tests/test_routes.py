@@ -824,6 +824,49 @@ result = foo()
         "calculatrice_permissions",
         "more_monitoring_objects",
     )
+    def test_get_visualization_of_indicator_deep_external_error(
+        self, client, users, monitoring_objects, protocols
+    ):
+        flore_protocol = protocols["mheo_flore_test"]
+        with db.session.begin_nested():
+            indicator = Indicator(
+                name="dummy indicator testing custom indicator error",
+                id_protocol=flore_protocol.id_module,
+                source_code="""# This comment adds a line to check proper
+# detection of traceback line numbers
+def foo():
+    return gn_median([])
+result = foo()
+""",
+            )
+            db.session.add(indicator)
+
+        set_logged_user(client, users["admin"])
+        sites_ids = [site.id_base_site for site in monitoring_objects["sites"]]
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=indicator.id_indicator
+            ),
+            data={
+                "sites_ids": sites_ids,
+                "campaigns": [{"start_date": "2098-01-01", "end_date": "2099-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        error = response.json["error"]
+        assert error["type"] == VisualizationErrorType.internal.value
+        assert (
+            error["message"]
+            == "AttributeError: 'list' object has no attribute 'values' at line 4 of campaign"
+        )
+        viz_blocks = response.json["vizBlocks"]
+        assert len(viz_blocks) == 0
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "more_monitoring_objects",
+    )
     def test_get_visualization_of_indicator_overview_internal_error(
         self, client, users, monitoring_objects, protocols
     ):

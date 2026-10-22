@@ -4,6 +4,7 @@
 import csv
 import enum
 import statistics
+import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -518,12 +519,14 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
 
 
 def _get_error_line_number(error: Exception) -> int:
-    """Return the line number of the last frame of the given exception's traceback."""
+    """Return the line number of the last frame of indicator code
+    in the given exception's traceback."""
     tb = error.__traceback__
     lineno = tb.tb_lineno
-    while tb.tb_next:
-        tb = tb.tb_next
-        lineno = tb.tb_lineno
+    stack_summary = traceback.extract_tb(tb)
+    for frame_summary in stack_summary:
+        if frame_summary.filename == "<string>":
+            lineno = frame_summary.lineno
     return lineno
 
 
