@@ -30,7 +30,7 @@ from calculatrice_monitoring.models import (
     VizBlockScope,
     VizBlockType,
 )
-from calculatrice_monitoring.schemas import VizDataSchema
+from calculatrice_monitoring.schemas import HeadersAndRowsSchema, VizDataSchema
 
 
 class Scope(Enum):
@@ -450,24 +450,49 @@ def convert_datasets_to_table_data(viz_data: VizData):
     columns = []
     for ds in viz_data["datasets"]:
         headers.append(ds["label"])
-        columns.append(map(_truncate, ds["data"]))
-    rows = list(zip(viz_data["labels"], *columns))
+        # columns.append(map(_truncate, ds["data"]))
+        columns.append(ds["data"])
+    rows = [list(row) for row in zip(viz_data["labels"], *columns)]
     return {
         "headers": headers,
         "rows": rows,
     }
 
 
-def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
-    def get_vizblock_variable_value(viz_conf_item, variable_name):
-        try:
-            return variables[variable_name]
-        except KeyError as error:
-            raise VisualizationConfigError(
-                f"Configured variable '{variable_name}' "
-                f"for visualization block '{viz_conf_item.title}' does not exist."
-            ) from error
+def get_vizblock_variable_value(
+    vizblock_config: VizBlockConfig, variables: dict, variable_name: str
+):
+    try:
+        return variables[variable_name]
+    except KeyError as error:
+        raise VisualizationConfigError(
+            f"Configured variable '{variable_name}' "
+            f"for visualization block '{vizblock_config.title}' does not exist."
+        ) from error
 
+
+def prepare_table_vizblock_data(vizblock_config: VizBlockConfig, variables: dict):
+    varname = vizblock_config.params["variable"]
+    raw_data = get_vizblock_variable_value(vizblock_config, variables, varname)
+    clean_data = None
+    try:
+        clean_data = VizDataSchema().load(raw_data)
+    except ValidationError:
+        pass
+    if clean_data:
+        return convert_datasets_to_table_data(clean_data)
+    try:
+        clean_data = HeadersAndRowsSchema().load(raw_data)
+    except ValidationError as error:
+        raise VisualizationConfigError(
+            f"The visualization block '{vizblock_config.title} of type table "
+            "received a value which is neither to the format datasets+labels "
+            "nor to the format datasets+rows."
+        ) from error
+    return clean_data
+
+
+def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
     viz_config = db.session.scalars(
         db.select(VizBlockConfig).filter(
             VizBlockConfig.id_indicator == indicator.id_indicator,
@@ -481,24 +506,21 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
         try:
             if vizblock_type == VizBlockType.scalar:
                 varname = viz_conf_item.params["variable"]
-                value = get_vizblock_variable_value(viz_conf_item, varname)
+                value = get_vizblock_variable_value(viz_conf_item, variables, varname)
                 try:
                     data = {"figure": value.values[0].value}
                 except AttributeError:
                     data = {"figure": float(value)}
             elif vizblock_type == VizBlockType.bar_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
+                raw_data = get_vizblock_variable_value(viz_conf_item, variables, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.line_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
+                raw_data = get_vizblock_variable_value(viz_conf_item, variables, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.table:
-                varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
-                clean_data = VizDataSchema().load(raw_data)
-                data = convert_datasets_to_table_data(clean_data)
+                data = prepare_table_vizblock_data(viz_conf_item, variables)
             else:
                 raise Exception(f"not implemented viz block type {vizblock_type}")
         except ValidationError as err:

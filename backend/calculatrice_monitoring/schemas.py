@@ -79,6 +79,20 @@ class VizDataSchema(ma.Schema):
                 )
 
 
+class HeadersAndRowsSchema(ma.Schema):
+    headers = ma.List(ma.Field())
+    rows = ma.List(ma.List(ma.Field()))
+
+    @validates_schema
+    def validate_lengths(self, data, **kwargs):  # noqa: ARG002 Unused method argument: `kwargs`
+        len_headers = len(data["headers"])
+        for row in data["rows"]:
+            if len(row) != len_headers:
+                raise ValidationError(
+                    "Les listes des headers et chaque row doivent avoir le même nombre d'éléments."
+                )
+
+
 class ReferenceTableSchema(ma.SQLAlchemyAutoSchema):
     id_reference_table = ma.Integer(data_key="id")
 
