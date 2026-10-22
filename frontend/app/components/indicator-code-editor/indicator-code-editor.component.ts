@@ -15,7 +15,7 @@ export class IndicatorCodeEditorComponent implements OnInit {
   indicatorForm: FormGroup;
   indicator: IndicatorDetails;
   protocolProperties: ProtocolProperties;
-  scope: 'campaign' | 'overview' = 'campaign';
+  scope: 'campaign' | 'overview' | 'statistical-tests' = 'campaign';
   campaignVariables: string[] = [];
 
   constructor(
@@ -32,32 +32,55 @@ export class IndicatorCodeEditorComponent implements OnInit {
 
   ngOnInit() {
     this.scope = this._route.snapshot.data['scope'] || 'campaign';
-    this._route.params.subscribe((params) => {
-      this._data.getIndicatorDetails(params.indicatorId).subscribe((data: IndicatorDetails) => {
-        this.indicator = data;
-        const codeValue =
-          this.scope === 'overview' ? data.overviewSourceCode || '' : data.sourceCode;
-        this.indicatorForm.controls.code.setValue(codeValue);
-        this._data.getProtocolProperties(this.indicator.protocol.id).subscribe((data) => {
-          this.protocolProperties = data;
+    this._route.params.subscribe((routeParameters) => {
+      this._data
+        .getIndicatorDetails(routeParameters.indicatorId)
+        .subscribe((indicatorDetails: IndicatorDetails) => {
+          this.indicator = indicatorDetails;
+          let codeValue = '';
+          if (this.scope === 'overview') {
+            codeValue = indicatorDetails.overviewSourceCode || '';
+          } else if (this.scope === 'statistical-tests') {
+            codeValue = indicatorDetails.statisticalTestsSourceCode || '';
+          } else {
+            codeValue = indicatorDetails.sourceCode || '';
+          }
+          this.indicatorForm.controls.code.setValue(codeValue);
+          this._data
+            .getProtocolProperties(this.indicator.protocol.id)
+            .subscribe((protocolProperties) => {
+              this.protocolProperties = protocolProperties;
+            });
+          if (this.scope === 'overview' || this.scope === 'statistical-tests') {
+            this._data.getIndicatorCodeVariables(this.indicator.id).subscribe((variables) => {
+              this.campaignVariables = variables;
+            });
+          }
         });
-        if (this.scope === 'overview') {
-          this._data.getIndicatorCodeVariables(this.indicator.id).subscribe((variables) => {
-            this.campaignVariables = variables;
-          });
-        }
-      });
     });
   }
 
   onSubmit() {
     if (this.indicatorForm.valid) {
-      const save$ =
-        this.scope === 'overview'
-          ? this._data.editIndicatorOverviewCode(this.indicator.id, this.indicatorForm.value.code)
-          : this._data.editIndicatorCode(this.indicator.id, this.indicatorForm.value.code);
+      let saveObservable$;
+      if (this.scope === 'overview') {
+        saveObservable$ = this._data.editIndicatorOverviewCode(
+          this.indicator.id,
+          this.indicatorForm.value.code
+        );
+      } else if (this.scope === 'statistical-tests') {
+        saveObservable$ = this._data.editIndicatorStatisticalTestsCode(
+          this.indicator.id,
+          this.indicatorForm.value.code
+        );
+      } else {
+        saveObservable$ = this._data.editIndicatorCode(
+          this.indicator.id,
+          this.indicatorForm.value.code
+        );
+      }
 
-      save$.pipe(catchError(this._utils.handleError)).subscribe(() => {
+      saveObservable$.pipe(catchError(this._utils.handleError)).subscribe(() => {
         this._router.navigate(['/calculatrice/indicator', this.indicator.id, 'details']);
       });
     }

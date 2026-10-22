@@ -13,6 +13,7 @@ export class IndicatorDetailsComponent implements OnInit {
   protected indicatorDetails: IndicatorDetails | undefined;
   protected campaignVariables: string[] = [];
   protected overviewVariables: string[] = [];
+  protected statisticalTestsVariables: string[] = [];
   protected isLoading = true;
 
   constructor(
@@ -41,6 +42,11 @@ export class IndicatorDetailsComponent implements OnInit {
       this._data.getIndicatorOverviewCodeVariables(indicatorId).subscribe((variables: string[]) => {
         this.overviewVariables = variables;
       });
+      this._data
+        .getIndicatorStatisticalTestsCodeVariables(indicatorId)
+        .subscribe((variables: string[]) => {
+          this.statisticalTestsVariables = variables;
+        });
     });
   }
 
@@ -82,5 +88,25 @@ export class IndicatorDetailsComponent implements OnInit {
       return "Veuillez d'abord renseigner le code de synthèse pour pouvoir configurer des blocs de visualisation.";
     }
     return 'Le code de synthèse ne définit aucune variable valide (assignation requise, ex: val = ...).';
+  }
+
+  canConfigureStatisticalTestsBlocks(): boolean {
+    if ((this.indicatorDetails?.statisticalTestsVisualizationBlockConfigs?.length ?? 0) > 0) {
+      return true;
+    }
+    return Boolean(
+      this.indicatorDetails?.statisticalTestsSourceCode?.trim() &&
+        this.statisticalTestsVariables?.length > 0
+    );
+  }
+
+  getStatisticalTestsBlocksTooltip(): string {
+    if (this.canConfigureStatisticalTestsBlocks()) {
+      return '';
+    }
+    if (!this.indicatorDetails?.statisticalTestsSourceCode?.trim()) {
+      return "Veuillez d'abord renseigner le code des tests statistiques pour pouvoir configurer des blocs de visualisation.";
+    }
+    return 'Le code des tests statistiques ne définit aucune variable valide (assignation requise, ex: val = ...).';
   }
 }
