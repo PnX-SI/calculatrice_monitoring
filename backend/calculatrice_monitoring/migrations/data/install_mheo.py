@@ -567,26 +567,26 @@ def install_test_indicators(protocols, reference_tables):
         {
             "name": "I02 - indice floristique d'engorgement",
             "reference_table_codes": ["indices_he"],
-            "code": CODE_I02,
+            "source_code": CODE_I02,
             "ref": "i02",
         },
         {
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
-            "code": CODE_I02_ABONDANCE,
-            "overview_code": OVERVIEW_CODE_I02_ABONDANCE,
+            "source_code": CODE_I02_ABONDANCE,
+            "overview_source_code": OVERVIEW_CODE_I02_ABONDANCE,
             "ref": "i02_abondance",
         },
         {
             "name": "I06 - indice floristique de fertilité du sol",
             "reference_table_codes": ["indices_ht"],
-            "code": CODE_I06,
+            "source_code": CODE_I06,
             "ref": "i06",
         },
         {
             "name": "I06 - indice floristique de fertilité du sol (avec abondance)",
             "reference_table_codes": ["indices_ht", "valeurs_abondance"],
-            "code": CODE_I06_ABONDANCE,
+            "source_code": CODE_I06_ABONDANCE,
             "ref": "i06_abondance",
         },
     ]

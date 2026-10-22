@@ -10,8 +10,8 @@ export interface IndicatorDetails {
   name: string;
   description: string;
   protocol: Protocol;
-  code: string;
-  overviewCode?: string;
+  sourceCode: string;
+  overviewSourceCode?: string;
   visualizationBlockConfigs: VisualizationBlockConfigDetails[];
   overviewVisualizationBlockConfigs?: VisualizationBlockConfigDetails[];
   referenceTables: ReferenceTable[];

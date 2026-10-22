@@ -331,11 +331,11 @@ class TestCreateIndicator:
         payload = {
             "name": "With Code",
             "protocolId": protocol.id_module,
-            "code": "some_code = 1",
+            "sourceCode": "some_code = 1",
         }
         response = client.post(url_for("calculatrice.create_indicator"), json=payload)
         assert response.status_code == 400
-        assert "code" in response.json
+        assert "sourceCode" in response.json
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_create_indicator_rejects_inactive_reference_table(
@@ -478,14 +478,14 @@ class TestEditIndicator:
         payload = {
             "name": "With Code",
             "protocolId": protocol_id,
-            "code": "some_code = 1",
+            "sourceCode": "some_code = 1",
         }
         response = client.put(
             url_for("calculatrice.edit_indicator", indicator_id=indicator.id_indicator),
             json=payload,
         )
         assert response.status_code == 400
-        assert "code" in response.json
+        assert "sourceCode" in response.json
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_indicator_rejects_newly_attached_inactive_reference_table(
@@ -620,7 +620,7 @@ class TestGetIndicatorVisualization:
             indicator = Indicator(
                 name="dummy indicator testing the context",
                 id_protocol=flore_protocol.id_module,
-                code="""
+                source_code="""
 moy_durée = gn_mean(visites.durée_secondes)
                 """,
             )
@@ -666,7 +666,7 @@ moy_durée = gn_mean(visites.durée_secondes)
             indicator = Indicator(
                 name="dummy indicator testing sites in the context",
                 id_protocol=flore_protocol.id_module,
-                code="moy_superficies = gn_mean(sites.superficie_mètres_carrés)",
+                source_code="moy_superficies = gn_mean(sites.superficie_mètres_carrés)",
             )
             db.session.add(indicator)
 
@@ -710,7 +710,7 @@ moy_durée = gn_mean(visites.durée_secondes)
             indicator = Indicator(
                 name="dummy indicator testing custom indicator error",
                 id_protocol=flore_protocol.id_module,
-                code="""
+                source_code="""
 nb_sites=len(sites)
 if nb_sites < 20:
     raise IndicatorError(
@@ -754,7 +754,7 @@ if nb_sites < 20:
             indicator = Indicator(
                 name="dummy indicator testing custom indicator error",
                 id_protocol=flore_protocol.id_module,
-                code="""
+                source_code="""
 # This comment adds a line to check proper detection of traceback line numbers
 result = 1 / 0
 """,
@@ -792,7 +792,7 @@ result = 1 / 0
             indicator = Indicator(
                 name="dummy indicator testing custom indicator error",
                 id_protocol=flore_protocol.id_module,
-                code="""
+                source_code="""
 # This comment adds a line to check proper detection of traceback line numbers
 def foo():
   return 1 / 0
@@ -832,8 +832,8 @@ result = foo()
             indicator = Indicator(
                 name="dummy indicator testing custom indicator error",
                 id_protocol=flore_protocol.id_module,
-                code="foo=42",
-                overview_code="bar = 1 / 0",
+                source_code="foo=42",
+                overview_source_code="bar = 1 / 0",
             )
             db.session.add(indicator)
 
@@ -868,7 +868,7 @@ result = foo()
             indicator = Indicator(
                 name="dummy indicator testing barChart misconfiguration",
                 id_protocol=flore_protocol.id_module,
-                code="foo=42",
+                source_code="foo=42",
             )
             db.session.add(indicator)
 
@@ -941,7 +941,7 @@ result = foo()
             indicator = Indicator(
                 name="dummy indicator testing barChart misconfiguration",
                 id_protocol=flore_protocol.id_module,
-                code=code,
+                source_code=code,
             )
             db.session.add(indicator)
 
@@ -1014,12 +1014,12 @@ class TestEditIndicatorCode:
         new_code = "moyenne = gn_mean(visites.duree_secondes)"
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
-            json={"code": new_code},
+            json={"sourceCode": new_code},
         )
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.code == new_code
+        assert indicator.source_code == new_code
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_indicator_code_handles_accented_characters(
@@ -1030,12 +1030,12 @@ class TestEditIndicatorCode:
         new_code = "température_fraîche = True"
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
-            json={"code": new_code},
+            json={"sourceCode": new_code},
         )
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.code == new_code
+        assert indicator.source_code == new_code
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_indicator_code_handles_single_quotes(
@@ -1046,12 +1046,12 @@ class TestEditIndicatorCode:
         new_code = "var = 'foo'"
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
-            json={"code": new_code},
+            json={"sourceCode": new_code},
         )
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.code == new_code
+        assert indicator.source_code == new_code
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_indicator_code_handles_double_quotes(
@@ -1062,12 +1062,12 @@ class TestEditIndicatorCode:
         new_code = 'var = "bar"'
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
-            json={"code": new_code},
+            json={"sourceCode": new_code},
         )
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.code == new_code
+        assert indicator.source_code == new_code
 
     @pytest.mark.usefixtures("calculatrice_permissions")
     def test_edit_indicator_code_overwrites_existing_code(
@@ -1075,16 +1075,16 @@ class TestEditIndicatorCode:
     ):
         indicator = protocol_with_indicators["indicators"][0]
         with db.session.begin_nested():
-            indicator.code = "old = 1"
+            indicator.source_code = "old = 1"
         set_logged_user(client, users["admin"])
         response = client.put(
             url_for("calculatrice.edit_indicator_code", indicator_id=indicator.id_indicator),
-            json={"code": "new = 2"},
+            json={"sourceCode": "new = 2"},
         )
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.code == "new = 2"
+        assert indicator.source_code == "new = 2"
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_edit_indicator_code_login_required_error(self, client, protocol_with_indicators):
@@ -1150,7 +1150,7 @@ class TestGetIndicatorDetails:
         )
         assert response.status_code == 200
         data = response.json
-        assert data["overviewCode"] == i02_abondance.overview_code
+        assert data["overviewSourceCode"] == i02_abondance.overview_source_code
         assert len(data["visualizationBlockConfigs"]) == 4
         assert len(data["overviewVisualizationBlockConfigs"]) == 2
         campaign_ids = {vb["id"] for vb in data["visualizationBlockConfigs"]}
@@ -1193,7 +1193,7 @@ class TestEditIndicatorVizBlocks:
                 name="TestIndicator",
                 id_protocol=protocol.id_module,
                 description="This is the test indicator description.",
-                code=code,
+                source_code=code,
             )
             db.session.add(indicator)
         return indicator
@@ -1308,7 +1308,7 @@ class TestEditIndicatorOverviewCode:
     def test_edit_indicator_overview_code(self, client, users, protocol_with_indicators):
         set_logged_user(client, users["admin"])
         indicator = protocol_with_indicators["indicators"][0]
-        original_code = indicator.code
+        original_code = indicator.source_code
         new_code = "température_fraîche = True"
         response = client.put(
             url_for(
@@ -1319,8 +1319,8 @@ class TestEditIndicatorOverviewCode:
         assert response.status_code == 204
 
         db.session.refresh(indicator)
-        assert indicator.overview_code == new_code
-        assert indicator.code == original_code
+        assert indicator.overview_source_code == new_code
+        assert indicator.source_code == original_code
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_edit_indicator_overview_code_login_required_error(self, client):
@@ -1384,8 +1384,8 @@ class TestGetIndicatorOverviewCodeVariables:
         set_logged_user(client, users["admin"])
         indicator = protocol_with_indicators["indicators"][0]
         with db.session.begin_nested():
-            indicator.code = "campaign_var = 1"
-            indicator.overview_code = "overview_var = 2"
+            indicator.source_code = "campaign_var = 1"
+            indicator.overview_source_code = "overview_var = 2"
         response = client.get(
             url_for(
                 "calculatrice.get_indicator_overview_code_variables",
@@ -1434,7 +1434,7 @@ class TestEditIndicatorOverviewVizBlocks:
                 name="TestIndicator",
                 id_protocol=protocol.id_module,
                 description="This is the test indicator description.",
-                code=code,
+                source_code=code,
             )
             db.session.add(indicator)
         return indicator

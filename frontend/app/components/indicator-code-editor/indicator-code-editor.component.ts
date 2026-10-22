@@ -35,7 +35,8 @@ export class IndicatorCodeEditorComponent implements OnInit {
     this._route.params.subscribe((params) => {
       this._data.getIndicatorDetails(params.indicatorId).subscribe((data: IndicatorDetails) => {
         this.indicator = data;
-        const codeValue = this.scope === 'overview' ? data.overviewCode || '' : data.code;
+        const codeValue =
+          this.scope === 'overview' ? data.overviewSourceCode || '' : data.sourceCode;
         this.indicatorForm.controls.code.setValue(codeValue);
         this._data.getProtocolProperties(this.indicator.protocol.id).subscribe((data) => {
           this.protocolProperties = data;

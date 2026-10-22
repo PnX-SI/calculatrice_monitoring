@@ -241,7 +241,7 @@ def edit_indicator(indicator_id: int):
 def edit_indicator_code(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    indicator.code = request.json["code"]
+    indicator.source_code = request.json["sourceCode"]
     db.session.add(indicator)
     db.session.commit()
     return "", 204
@@ -281,7 +281,7 @@ def update_indicator_viz_blocks(indicator_id: int):
 def edit_indicator_overview_code(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    indicator.overview_code = request.json["code"]
+    indicator.overview_source_code = request.json["code"]
     db.session.add(indicator)
     db.session.commit()
     return "", 204
@@ -321,7 +321,7 @@ def get_indicator_details(indicator_id: int):
 def get_indicator_code_variables(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    variables = extract_variable_names(indicator.code)
+    variables = extract_variable_names(indicator.source_code)
     return variables, 200
 
 
@@ -330,7 +330,7 @@ def get_indicator_code_variables(indicator_id: int):
 def get_indicator_overview_code_variables(indicator_id: int):
     error_msg = f"Indicator {indicator_id} not found"
     indicator = db.get_or_404(Indicator, indicator_id, description=error_msg)
-    variables = extract_variable_names(indicator.overview_code)
+    variables = extract_variable_names(indicator.overview_source_code)
     return variables, 200
 
 

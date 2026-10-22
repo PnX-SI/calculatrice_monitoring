@@ -90,9 +90,9 @@
           </button>
         </div>
         <pre
-          *ngIf="indicatorDetails.code; else noCampaignCode"
+          *ngIf="indicatorDetails.sourceCode; else noCampaignCode"
           class="indicator-code"
-          >{{ indicatorDetails.code }}</pre
+          >{{ indicatorDetails.sourceCode }}</pre
         >
         <ng-template #noCampaignCode>
           <p class="text-muted">Aucun code configuré pour les campagnes.</p>
@@ -184,9 +184,9 @@
           </button>
         </div>
         <pre
-          *ngIf="indicatorDetails.overviewCode; else noOverviewCode"
+          *ngIf="indicatorDetails.overviewSourceCode; else noOverviewCode"
           class="indicator-code"
-          >{{ indicatorDetails.overviewCode }}</pre
+          >{{ indicatorDetails.overviewSourceCode }}</pre
         >
         <ng-template #noOverviewCode>
           <p class="text-muted">Aucun code de synthèse configuré.</p>

@@ -295,10 +295,9 @@ def gn_mean(
     are silently discarded.
     """
     if scope == Scope.GLOBAL:
-        sums = 0
-        for prop_value in prop_collection.values:
-            sums += Decimal(prop_value.value)
-        moyenne = Decimal(sums) / len(prop_collection.values)
+        moyenne = statistics.mean(
+            Decimal(prop_value.value) for prop_value in prop_collection.values
+        )
         return PropertyCollection(
             values=[PropertyValue(value=moyenne, entity=ROOT)], scope=Scope.GLOBAL
         )
@@ -516,7 +515,7 @@ def _get_error_line_number(error: Exception) -> int:
 def evaluate_campaign(
     indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
 ):
-    code = indicator.code
+    code = indicator.source_code
 
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
     sites_ids = [site.id_base_site for site in sites]
@@ -572,7 +571,7 @@ def visualize_overview(
         )
     context = create_overview_context(campaign_results)
     try:
-        variables = evaluate(indicator.overview_code, context)
+        variables = evaluate(indicator.overview_source_code, context)
     except IndicatorError:
         # Expected error continue
         raise
