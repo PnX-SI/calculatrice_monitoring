@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -36,6 +37,8 @@ export class VisualizationPageComponent implements OnInit {
   protected availableCampaigns: Campaign[] = [];
   protected firstSelectedCampaign?: Campaign;
   protected secondSelectedCampaign?: Campaign;
+  protected firstCampaignControl = new FormControl('');
+  protected secondCampaignControl = new FormControl('');
   protected indicatorId: number;
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
@@ -121,6 +124,12 @@ export class VisualizationPageComponent implements OnInit {
     if (this.availableCampaigns.length >= 2) {
       this.firstSelectedCampaign = this.availableCampaigns[0];
       this.secondSelectedCampaign = this.availableCampaigns[1];
+      this.firstCampaignControl.setValue(this.getCampaignKey(this.firstSelectedCampaign), {
+        emitEvent: false,
+      });
+      this.secondCampaignControl.setValue(this.getCampaignKey(this.secondSelectedCampaign), {
+        emitEvent: false,
+      });
     }
     this.selections = this._buildSelections(this.availableCampaigns);
     const firstSelectableSelection = this.selections.find((selection) => !selection.disabled);
@@ -206,33 +215,14 @@ export class VisualizationPageComponent implements OnInit {
     return campaign ? `${campaign.startDate}_${campaign.endDate}` : '';
   }
 
-  isSameCampaign(campaign1?: Campaign, campaign2?: Campaign): boolean {
-    if (!campaign1 || !campaign2) {
-      return false;
-    }
-    return campaign1.startDate === campaign2.startDate && campaign1.endDate === campaign2.endDate;
-  }
-
-  onFirstCampaignChange(changeEvent: Event) {
-    const selectedKey = (changeEvent.target as HTMLSelectElement).value;
-    const matchingCampaign = this.availableCampaigns.find(
-      (campaign) => this.getCampaignKey(campaign) === selectedKey
+  onCampaignChange() {
+    this.firstSelectedCampaign = this.availableCampaigns.find(
+      (campaign) => this.getCampaignKey(campaign) === this.firstCampaignControl.value
     );
-    if (matchingCampaign && !this.isSameCampaign(matchingCampaign, this.secondSelectedCampaign)) {
-      this.firstSelectedCampaign = matchingCampaign;
-      this._updateStatisticalTestsVisualization();
-    }
-  }
-
-  onSecondCampaignChange(changeEvent: Event) {
-    const selectedKey = (changeEvent.target as HTMLSelectElement).value;
-    const matchingCampaign = this.availableCampaigns.find(
-      (campaign) => this.getCampaignKey(campaign) === selectedKey
+    this.secondSelectedCampaign = this.availableCampaigns.find(
+      (campaign) => this.getCampaignKey(campaign) === this.secondCampaignControl.value
     );
-    if (matchingCampaign && !this.isSameCampaign(matchingCampaign, this.firstSelectedCampaign)) {
-      this.secondSelectedCampaign = matchingCampaign;
-      this._updateStatisticalTestsVisualization();
-    }
+    this._updateStatisticalTestsVisualization();
   }
 
   private _updateStatisticalTestsVisualization() {
