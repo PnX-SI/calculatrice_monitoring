@@ -1,15 +1,15 @@
 <div class="visualization-container">
-  <a
-    mat-raised-button
-    [routerLink]="['/calculatrice/visualization', indicatorId, 'params']"
-    [queryParams]="queryParams"
-    class="mb-3"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </a>
   <div class="visualization-page">
     <div class="visualization-nav">
+      <a
+        mat-raised-button
+        [routerLink]="['/calculatrice/visualization', indicatorId, 'params']"
+        [queryParams]="queryParams"
+        class="return-button"
+      >
+        <mat-icon>chevron_left</mat-icon>
+        Retour
+      </a>
       <mat-selection-list
         role="list"
         hideSingleSelectionIndicator
@@ -94,14 +94,26 @@
         </ng-template>
       </div>
       <pnx-calc-visualization-block
-        *ngFor="let block of vizBlocks"
+        *ngFor="let block of vizBlocks; let blockIndex = index"
+        [id]="'viz-block-' + blockIndex"
         [blockDef]="block"
       ></pnx-calc-visualization-block>
     </div>
-    <div class="visualization-toc">
+    <div
+      *ngIf="vizBlocks?.length > 0"
+      class="visualization-toc"
+    >
       <ul>
-        <li *ngFor="let block of vizBlocks">
-          <a href="#{{ block.title }}">{{ block.title }}</a>
+        <li
+          *ngFor="let block of vizBlocks; let blockIndex = index"
+          [class.active]="blockIndex === activeBlockIndex"
+        >
+          <a
+            role="button"
+            (click)="scrollToBlock(blockIndex)"
+          >
+            {{ block.title }}
+          </a>
         </li>
       </ul>
     </div>
