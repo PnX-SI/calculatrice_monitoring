@@ -586,22 +586,22 @@ class TestGetIndicatorVisualization:
         viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 4
         scalar_viz_block = viz_blocks[0]
-        assert scalar_viz_block["data"]["figure"] == "6.5"
+        assert scalar_viz_block["data"]["figure"] == "6.50"
         barchart_viz_block = viz_blocks[1]
         assert barchart_viz_block["data"]["datasets"][0]["data"] == [
-            "8.785714285714285714285714286",
-            "7.181818181818181818181818182",
-            "5.684782608695652173913043478",
-            "6.5",
-            "5.4",
+            "8.79",
+            "7.18",
+            "5.68",
+            "6.50",
+            "5.40",
         ]
         linechart_viz_block = viz_blocks[2]
         assert linechart_viz_block["data"]["datasets"][0]["data"] == [
-            "8.785714285714285714285714286",
-            "7.181818181818181818181818182",
-            "5.684782608695652173913043478",
-            "6.5",
-            "5.4",
+            "8.79",
+            "7.18",
+            "5.68",
+            "6.50",
+            "5.40",
         ]
         table_viz_block = viz_blocks[3]
         table_data = table_viz_block["data"]
@@ -652,7 +652,7 @@ moy_durée = gn_mean(visites.durée_secondes)
         viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 1
         scalar_viz_block = viz_blocks[0]
-        assert scalar_viz_block["data"]["figure"] == "576"
+        assert scalar_viz_block["data"]["figure"] == "576.00"
 
     @pytest.mark.usefixtures(
         "calculatrice_permissions",
@@ -696,7 +696,7 @@ moy_durée = gn_mean(visites.durée_secondes)
         viz_blocks = response.json["vizBlocks"]
         assert len(viz_blocks) == 1
         scalar_viz_block = viz_blocks[0]
-        assert scalar_viz_block["data"]["figure"] == "2"
+        assert scalar_viz_block["data"]["figure"] == "2.00"
 
     @pytest.mark.usefixtures(
         "calculatrice_permissions",

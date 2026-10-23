@@ -8,7 +8,7 @@ import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from io import StringIO
 from typing import Any
@@ -442,7 +442,27 @@ def evaluate(code, context):
 
 
 def _truncate(value):
-    return value.quantize(Decimal(".00"))
+    return value.quantize(Decimal(".00"), rounding=ROUND_HALF_UP)
+
+
+def format_numbers(data):
+    """Recursively round decimal numbers (Decimal and float) to 2 decimal places.
+
+    Dicts, lists and tuples are traversed; integers, strings and any other value are
+    returned untouched. The input is never mutated.
+    """
+    if isinstance(data, dict):
+        return {key: format_numbers(value) for key, value in data.items()}
+    if isinstance(data, list):
+        return [format_numbers(item) for item in data]
+    if isinstance(data, tuple):
+        return tuple(format_numbers(item) for item in data)
+    if isinstance(data, float):
+        decimal = Decimal(str(data))
+        return _truncate(decimal) if decimal.is_finite() else data
+    if isinstance(data, Decimal) and data.is_finite():
+        return _truncate(data)
+    return data
 
 
 def convert_datasets_to_table_data(viz_data: VizData):
@@ -534,7 +554,7 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
                 "title": viz_conf_item.title,
                 "info": viz_conf_item.info,
                 "description": viz_conf_item.description,
-                "data": data,
+                "data": format_numbers(data),
             }
         )
     return viz_blocks
