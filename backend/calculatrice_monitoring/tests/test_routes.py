@@ -241,8 +241,8 @@ def test_monitoring_objects_fixture(monitoring_objects):
 def test_more_monitoring_objects_fixture(more_monitoring_objects):
     assert len(more_monitoring_objects["sites_groups"]) == 2
     assert len(more_monitoring_objects["sites"]) == 8
-    assert len(more_monitoring_objects["visits"]) == 8
-    assert len(more_monitoring_objects["observations"]) == 21
+    assert len(more_monitoring_objects["visits"]) == 13
+    assert len(more_monitoring_objects["observations"]) == 56
 
 
 def test_indicators_fixture(indicators):
