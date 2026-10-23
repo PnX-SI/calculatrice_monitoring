@@ -4,10 +4,11 @@
 import csv
 import enum
 import statistics
+import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from io import StringIO
 from typing import Any
@@ -29,7 +30,7 @@ from calculatrice_monitoring.models import (
     VizBlockScope,
     VizBlockType,
 )
-from calculatrice_monitoring.schemas import VizDataSchema
+from calculatrice_monitoring.schemas import HeadersAndRowsSchema, VizDataSchema
 
 
 class Scope(Enum):
@@ -375,6 +376,7 @@ class IndicatorError(Exception):
 class UnexpectedIndicatorErrorScope(enum.Enum):
     campaign = "campaign"
     overview = "overview"
+    statistical_tests = "statistical_tests"
 
 
 class UnexpectedIndicatorError(Exception):
@@ -421,6 +423,17 @@ def create_overview_context(campaign_results):
     return context
 
 
+def create_statistical_tests_context(campaign_results):
+    context = {}
+    context["campaigns"] = campaign_results
+    context["gn_mean"] = gn_mean
+    context["gn_median"] = gn_median
+    context["Scope"] = Scope
+    context["gn_extract"] = gn_extract
+    context["IndicatorError"] = IndicatorError
+    return context
+
+
 def evaluate(code, context):
     global_context = context
     local_context = {}
@@ -429,7 +442,27 @@ def evaluate(code, context):
 
 
 def _truncate(value):
-    return value.quantize(Decimal(".00"))
+    return value.quantize(Decimal(".00"), rounding=ROUND_HALF_UP)
+
+
+def format_numbers(data):
+    """Recursively round decimal numbers (Decimal and float) to 2 decimal places.
+
+    Dicts, lists and tuples are traversed; integers, strings and any other value are
+    returned untouched. The input is never mutated.
+    """
+    if isinstance(data, dict):
+        return {key: format_numbers(value) for key, value in data.items()}
+    if isinstance(data, list):
+        return [format_numbers(item) for item in data]
+    if isinstance(data, tuple):
+        return tuple(format_numbers(item) for item in data)
+    if isinstance(data, float):
+        decimal = Decimal(str(data))
+        return _truncate(decimal) if decimal.is_finite() else data
+    if isinstance(data, Decimal) and data.is_finite():
+        return _truncate(data)
+    return data
 
 
 def convert_datasets_to_table_data(viz_data: VizData):
@@ -437,24 +470,49 @@ def convert_datasets_to_table_data(viz_data: VizData):
     columns = []
     for ds in viz_data["datasets"]:
         headers.append(ds["label"])
-        columns.append(map(_truncate, ds["data"]))
-    rows = list(zip(viz_data["labels"], *columns))
+        # columns.append(map(_truncate, ds["data"]))
+        columns.append(ds["data"])
+    rows = [list(row) for row in zip(viz_data["labels"], *columns)]
     return {
         "headers": headers,
         "rows": rows,
     }
 
 
-def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
-    def get_vizblock_variable_value(viz_conf_item, variable_name):
-        try:
-            return variables[variable_name]
-        except KeyError as error:
-            raise VisualizationConfigError(
-                f"Configured variable '{variable_name}' "
-                f"for visualization block '{viz_conf_item.title}' does not exist."
-            ) from error
+def get_vizblock_variable_value(
+    vizblock_config: VizBlockConfig, variables: dict, variable_name: str
+):
+    try:
+        return variables[variable_name]
+    except KeyError as error:
+        raise VisualizationConfigError(
+            f"Configured variable '{variable_name}' "
+            f"for visualization block '{vizblock_config.title}' does not exist."
+        ) from error
 
+
+def prepare_table_vizblock_data(vizblock_config: VizBlockConfig, variables: dict):
+    varname = vizblock_config.params["variable"]
+    raw_data = get_vizblock_variable_value(vizblock_config, variables, varname)
+    clean_data = None
+    try:
+        clean_data = VizDataSchema().load(raw_data)
+    except ValidationError:
+        pass
+    if clean_data:
+        return convert_datasets_to_table_data(clean_data)
+    try:
+        clean_data = HeadersAndRowsSchema().load(raw_data)
+    except ValidationError as error:
+        raise VisualizationConfigError(
+            f"The visualization block '{vizblock_config.title} of type table "
+            "received a value which is neither to the format datasets+labels "
+            "nor to the format datasets+rows."
+        ) from error
+    return clean_data
+
+
+def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
     viz_config = db.session.scalars(
         db.select(VizBlockConfig).filter(
             VizBlockConfig.id_indicator == indicator.id_indicator,
@@ -468,21 +526,21 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
         try:
             if vizblock_type == VizBlockType.scalar:
                 varname = viz_conf_item.params["variable"]
-                value = get_vizblock_variable_value(viz_conf_item, varname)
-                data = {"figure": value.values[0].value}
+                value = get_vizblock_variable_value(viz_conf_item, variables, varname)
+                try:
+                    data = {"figure": value.values[0].value}
+                except AttributeError:
+                    data = {"figure": float(value)}
             elif vizblock_type == VizBlockType.bar_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
+                raw_data = get_vizblock_variable_value(viz_conf_item, variables, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.line_chart:
                 varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
+                raw_data = get_vizblock_variable_value(viz_conf_item, variables, varname)
                 data = VizDataSchema().load(raw_data)
             elif vizblock_type == VizBlockType.table:
-                varname = viz_conf_item.params["variable"]
-                raw_data = get_vizblock_variable_value(viz_conf_item, varname)
-                clean_data = VizDataSchema().load(raw_data)
-                data = convert_datasets_to_table_data(clean_data)
+                data = prepare_table_vizblock_data(viz_conf_item, variables)
             else:
                 raise Exception(f"not implemented viz block type {vizblock_type}")
         except ValidationError as err:
@@ -496,19 +554,21 @@ def build_viz_blocks(variables, indicator, scope=VizBlockScope.campaign):
                 "title": viz_conf_item.title,
                 "info": viz_conf_item.info,
                 "description": viz_conf_item.description,
-                "data": data,
+                "data": format_numbers(data),
             }
         )
     return viz_blocks
 
 
 def _get_error_line_number(error: Exception) -> int:
-    """Return the line number of the last frame of the given exception's traceback."""
+    """Return the line number of the last frame of indicator code
+    in the given exception's traceback."""
     tb = error.__traceback__
     lineno = tb.tb_lineno
-    while tb.tb_next:
-        tb = tb.tb_next
-        lineno = tb.tb_lineno
+    stack_summary = traceback.extract_tb(tb)
+    for frame_summary in stack_summary:
+        if frame_summary.filename == "<string>":
+            lineno = frame_summary.lineno
     return lineno
 
 
@@ -580,6 +640,31 @@ def visualize_overview(
     return build_viz_blocks(variables, indicator, scope=VizBlockScope.overview)
 
 
+def visualize_statistical_tests(
+    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns: list[Campaign]
+):
+    campaign_results = []
+    for campaign in campaigns:
+        campaign_results.append(
+            CampaignResult(
+                start_date=campaign.start_date,
+                end_date=campaign.end_date,
+                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+            )
+        )
+    context = create_statistical_tests_context(campaign_results)
+    try:
+        variables = evaluate(indicator.statistical_tests_source_code, context)
+    except IndicatorError:
+        # Expected error continue
+        raise
+    except Exception as error:
+        raise UnexpectedIndicatorError(
+            scope=UnexpectedIndicatorErrorScope.statistical_tests
+        ) from error
+    return build_viz_blocks(variables, indicator, scope=VizBlockScope.statistical_tests)
+
+
 def visualize(
     indicator: Indicator,
     monitoring_sites: list[TMonitoringSites],
@@ -591,6 +676,8 @@ def visualize(
             viz_blocks = visualize_campaign(indicator, monitoring_sites, campaigns[0])
         elif viz_type == "overview":
             viz_blocks = visualize_overview(indicator, monitoring_sites, campaigns)
+        elif viz_type == "statisticalTests":
+            viz_blocks = visualize_statistical_tests(indicator, monitoring_sites, campaigns)
     except IndicatorError as error:
         return {
             "error": {"type": VisualizationErrorType.public.value, "message": str(error)},

@@ -52,6 +52,10 @@
   gap: 1rem;
 }
 
+.card-header h2 {
+  margin: 0;
+}
+
 .param-type {
   color: grey;
   font-size: 80%;

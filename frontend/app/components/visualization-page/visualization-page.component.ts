@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -17,8 +18,10 @@ import { PermissionService } from '../../services/permission.service';
 
 interface Selection {
   label: string;
-  type: 'overview' | 'campaign' | 'evolution';
+  type: 'overview' | 'campaign' | 'statisticalTests';
   campaigns: Campaign[];
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 @Component({
@@ -30,6 +33,13 @@ export class VisualizationPageComponent implements OnInit {
   protected vizBlocks: VisualizationBlockDefinition[];
   protected visualizationError?: VisualizationError;
   protected selections: Selection[];
+  protected currentSelection?: Selection;
+  protected availableCampaigns: Campaign[] = [];
+  protected firstSelectedCampaign?: Campaign;
+  protected secondSelectedCampaign?: Campaign;
+  protected firstCampaignControl = new FormControl('');
+  protected secondCampaignControl = new FormControl('');
+  protected activeBlockIndex?: number;
   protected indicatorId: number;
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
@@ -111,44 +121,129 @@ export class VisualizationPageComponent implements OnInit {
   }
 
   private _renderVisualization() {
-    this.selections = this._buildSelections(this._campaigns);
-    if (this.selections.length > 0) {
-      this._updateVisualization(this.selections[0]);
+    this.availableCampaigns = this._campaigns || [];
+    if (this.availableCampaigns.length >= 2) {
+      this.firstSelectedCampaign = this.availableCampaigns[0];
+      this.secondSelectedCampaign = this.availableCampaigns[1];
+      this.firstCampaignControl.setValue(this.getCampaignKey(this.firstSelectedCampaign), {
+        emitEvent: false,
+      });
+      this.secondCampaignControl.setValue(this.getCampaignKey(this.secondSelectedCampaign), {
+        emitEvent: false,
+      });
+    }
+    this.selections = this._buildSelections(this.availableCampaigns);
+    const firstSelectableSelection = this.selections.find((selection) => !selection.disabled);
+    if (firstSelectableSelection) {
+      this.currentSelection = firstSelectableSelection;
+      if (firstSelectableSelection.type === 'statisticalTests') {
+        this._updateStatisticalTestsVisualization();
+      } else {
+        this._updateVisualization(firstSelectableSelection);
+      }
     }
   }
 
-  onSelectionsChange(items: MatListOption[]) {
+  onSelectionsChange(selectedOptions: MatListOption[]) {
     // The selection list is configured to allow single item selection only.
-    let selection: Selection = items[0].value;
-    this._updateVisualization(selection);
+    const selectedOption = selectedOptions[0];
+    if (!selectedOption) {
+      return;
+    }
+    const selection: Selection = selectedOption.value;
+    if (selection.disabled) {
+      return;
+    }
+    this.activeBlockIndex = undefined;
+    this.currentSelection = selection;
+    if (selection.type === 'statisticalTests') {
+      this._updateStatisticalTestsVisualization();
+    } else {
+      this._updateVisualization(selection);
+    }
   }
 
   private _buildSelections(campaigns: Campaign[]): Selection[] {
-    let selections: Selection[] = [];
+    const selections: Selection[] = [];
     if (campaigns.length > 1) {
       selections.push({
         label: 'Synthèse',
         type: 'overview',
         campaigns: campaigns,
       });
+    } else {
+      selections.push({
+        label: 'Synthèse',
+        type: 'overview',
+        campaigns: campaigns,
+        disabled: true,
+        tooltip: "La synthèse n'est disponible que si plusieurs campagnes sont paramétrées",
+      });
     }
-    let previousCampaign = undefined;
+
     campaigns.forEach((campaign) => {
-      if (previousCampaign !== undefined) {
-        selections.push({
-          label: `Évolution`,
-          type: 'evolution',
-          campaigns: [previousCampaign, campaign],
-        });
-      }
       selections.push({
         label: `Campagne ${campaign.startDate}-${campaign.endDate}`,
         type: 'campaign',
         campaigns: [campaign],
       });
-      previousCampaign = campaign;
     });
+
+    if (campaigns.length > 1) {
+      const statisticalCampaigns: Campaign[] = [];
+      if (this.firstSelectedCampaign && this.secondSelectedCampaign) {
+        statisticalCampaigns.push(this.firstSelectedCampaign, this.secondSelectedCampaign);
+      }
+      selections.push({
+        label: 'Tests statistiques',
+        type: 'statisticalTests',
+        campaigns: statisticalCampaigns,
+      });
+    } else {
+      selections.push({
+        label: 'Tests statistiques',
+        type: 'statisticalTests',
+        campaigns: [],
+        disabled: true,
+        tooltip:
+          'Les tests statistiques ne sont disponibles que si plusieurs campagnes sont paramétrées',
+      });
+    }
+
     return selections;
+  }
+
+  getCampaignKey(campaign?: Campaign): string {
+    return campaign ? `${campaign.startDate}_${campaign.endDate}` : '';
+  }
+
+  onCampaignChange() {
+    this.activeBlockIndex = undefined;
+    this.firstSelectedCampaign = this.availableCampaigns.find(
+      (campaign) => this.getCampaignKey(campaign) === this.firstCampaignControl.value
+    );
+    this.secondSelectedCampaign = this.availableCampaigns.find(
+      (campaign) => this.getCampaignKey(campaign) === this.secondCampaignControl.value
+    );
+    this._updateStatisticalTestsVisualization();
+  }
+
+  scrollToBlock(blockIndex: number) {
+    this.activeBlockIndex = blockIndex;
+    const blockElement = document.getElementById(`viz-block-${blockIndex}`);
+    if (blockElement) {
+      blockElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  private _updateStatisticalTestsVisualization() {
+    if (this.firstSelectedCampaign && this.secondSelectedCampaign) {
+      this._updateVisualization({
+        label: 'Tests statistiques',
+        type: 'statisticalTests',
+        campaigns: [this.firstSelectedCampaign, this.secondSelectedCampaign],
+      });
+    }
   }
 
   private _updateVisualization(vizSelection: Selection) {
@@ -159,9 +254,9 @@ export class VisualizationPageComponent implements OnInit {
         vizSelection.campaigns,
         vizSelection.type
       )
-      .subscribe((data) => {
-        this.vizBlocks = data.vizBlocks;
-        this.visualizationError = data.error;
+      .subscribe((visualizationData) => {
+        this.vizBlocks = visualizationData.vizBlocks;
+        this.visualizationError = visualizationData.error;
       });
   }
 

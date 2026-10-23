@@ -5,7 +5,14 @@ from decimal import Decimal
 
 import pytest
 
-from calculatrice_monitoring.eval import Scope, evaluate
+from calculatrice_monitoring.eval import (
+    Scope,
+    VisualizationConfigError,
+    evaluate,
+    format_numbers,
+    prepare_table_vizblock_data,
+)
+from calculatrice_monitoring.models import VizBlockConfig
 
 
 class TestEvalIndicator:
@@ -216,3 +223,147 @@ moyenne_durée = gn_mean(visites.durée_secondes)
         assert len(moyenne_durée.values) == 1
         moyenne_durée = moyenne_durée.values[0]
         assert moyenne_durée.value == 576
+
+
+class TestCreateTableVizBlock:
+    def test_with_headers_and_rows_format(self):
+        params = {"variable": "foo"}
+        variables = {
+            "foo": {
+                "headers": ["", "1st column", "2nd column"],
+                "rows": [["Item 1", 1, 11], ["Item 2", 2, 22]],
+            }
+        }
+        vizblock_config = VizBlockConfig(params=params)
+        data = prepare_table_vizblock_data(vizblock_config, variables)
+
+        assert data == {
+            "headers": ["", "1st column", "2nd column"],
+            "rows": [["Item 1", 1, 11], ["Item 2", 2, 22]],
+        }
+
+    def test_with_datasets_and_labels_format(self):
+        params = {"variable": "foo"}
+        variables = {
+            "foo": {
+                "labels": ["Item 1", "Item 2"],
+                "datasets": [
+                    {"label": "1st column", "data": [1, 2]},
+                    {"label": "2nd column", "data": [11, 22]},
+                ],
+            }
+        }
+        vizblock_config = VizBlockConfig(params=params)
+        data = prepare_table_vizblock_data(vizblock_config, variables)
+
+        assert data == {
+            "headers": ["", "1st column", "2nd column"],
+            "rows": [
+                ["Item 1", Decimal("1"), Decimal("11")],
+                ["Item 2", Decimal("2"), Decimal("22")],
+            ],
+        }
+
+    def test_format_error(self):
+        params = {"variable": "foo"}
+        variables = {"foo": {"bad": "format"}}
+        vizblock_config = VizBlockConfig(params=params)
+
+        with pytest.raises(VisualizationConfigError):
+            prepare_table_vizblock_data(vizblock_config, variables)
+
+
+class TestFormatNumbers:
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (Decimal("3.14159"), Decimal("3.14")),
+            (Decimal("2.5"), Decimal("2.50")),
+            (Decimal("0.005"), Decimal("0.01")),
+            (Decimal("1.999"), Decimal("2.00")),
+            (Decimal("-1.235"), Decimal("-1.24")),
+            (Decimal("0"), Decimal("0.00")),
+            (0.5, Decimal("0.50")),
+            (0.1 + 0.2, Decimal("0.30")),
+            (1234.5678, Decimal("1234.57")),
+        ],
+    )
+    def test_rounds_to_two_decimal_places(self, value, expected):
+        result = format_numbers(value)
+
+        assert isinstance(result, Decimal)
+        assert result == expected
+        assert result.as_tuple().exponent == -2
+
+    @pytest.mark.parametrize(
+        "value",
+        [42, 0, True, "abc", "3.14159", "", None, datetime.date(2024, 1, 1)],
+    )
+    def test_leaves_other_types_untouched(self, value):
+        result = format_numbers(value)
+
+        assert result == value
+        assert type(result) is type(value)
+
+    @pytest.mark.parametrize(
+        "value", [Decimal("NaN"), Decimal("Infinity"), float("inf"), float("-inf")]
+    )
+    def test_leaves_non_finite_numbers_untouched(self, value):
+        assert format_numbers(value) is value
+
+    def test_float_nan_untouched(self):
+        result = format_numbers(float("nan"))
+
+        assert isinstance(result, float)
+        assert result != result
+
+    def test_list(self):
+        assert format_numbers([Decimal("1.234"), 2, "x", 0.456]) == [
+            Decimal("1.23"),
+            2,
+            "x",
+            Decimal("0.46"),
+        ]
+
+    def test_tuple(self):
+        result = format_numbers((Decimal("1.234"), 2))
+
+        assert isinstance(result, tuple)
+        assert result == (Decimal("1.23"), 2)
+
+    def test_dict_keeps_keys(self):
+        assert format_numbers({"a": Decimal("1.234"), "b": 2, "c": "x"}) == {
+            "a": Decimal("1.23"),
+            "b": 2,
+            "c": "x",
+        }
+
+    def test_empty_containers(self):
+        assert format_numbers({}) == {}
+        assert format_numbers([]) == []
+
+    def test_nested_dicts_and_lists(self):
+        data = {
+            "labels": ["A", "B"],
+            "datasets": [
+                {"label": "x", "data": [Decimal("12.345"), 0.5, 7]},
+                {"label": "y", "data": [[Decimal("1.999")], {"deep": [Decimal("0.001")]}]},
+            ],
+            "rows": [["A", Decimal("1.999"), None]],
+        }
+
+        assert format_numbers(data) == {
+            "labels": ["A", "B"],
+            "datasets": [
+                {"label": "x", "data": [Decimal("12.35"), Decimal("0.50"), 7]},
+                {"label": "y", "data": [[Decimal("2.00")], {"deep": [Decimal("0.00")]}]},
+            ],
+            "rows": [["A", Decimal("2.00"), None]],
+        }
+
+    def test_does_not_mutate_input(self):
+        data = {"a": [Decimal("1.234"), {"b": 0.456}]}
+
+        format_numbers(data)
+
+        assert data == {"a": [Decimal("1.234"), {"b": 0.456}]}

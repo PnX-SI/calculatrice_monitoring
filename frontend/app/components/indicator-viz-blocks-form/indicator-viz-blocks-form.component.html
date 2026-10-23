@@ -10,7 +10,12 @@
   <div class="card">
     <div class="card-header">
       <h2>
-        Éditer les blocs de visualisation {{ scope === 'overview' ? 'de synthèse' : '(campagnes)' }}
+        Éditer les blocs de visualisation
+        <ng-container [ngSwitch]="scope">
+          <span *ngSwitchCase="'overview'">de synthèse</span>
+          <span *ngSwitchCase="'statistical-tests'">des tests statistiques</span>
+          <span *ngSwitchDefault>(campagnes)</span>
+        </ng-container>
       </h2>
     </div>
     <div class="card-body">
@@ -28,7 +33,9 @@
           [routerLink]="
             scope === 'overview'
               ? ['/calculatrice/indicator', indicatorDetails.id, 'edit-overview-code']
-              : ['/calculatrice/indicator', indicatorDetails.id, 'edit-code']
+              : scope === 'statistical-tests'
+                ? ['/calculatrice/indicator', indicatorDetails.id, 'edit-statistical-tests-code']
+                : ['/calculatrice/indicator', indicatorDetails.id, 'edit-code']
           "
           class="alert-link ms-2"
         >
