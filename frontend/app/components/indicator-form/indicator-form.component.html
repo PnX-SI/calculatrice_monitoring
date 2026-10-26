@@ -2,15 +2,26 @@
   *ngIf="mode"
   class="container"
 >
-  <button
-    type="button"
-    mat-raised-button
-    (click)="onBack()"
-    class="mb-2"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </button>
+  <div class="actions-header">
+    <button
+      type="button"
+      mat-raised-button
+      (click)="onBack()"
+    >
+      <mat-icon>chevron_left</mat-icon>
+      Retour
+    </button>
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      [disabled]="!indicatorForm.valid"
+      (click)="onSubmit()"
+    >
+      <mat-icon>{{ mode === 'create' ? 'add' : 'save' }}</mat-icon>
+      {{ mode === 'create' ? 'Créer' : 'Enregistrer' }}
+    </button>
+  </div>
   <div class="card">
     <div class="card-header">
       <h2>{{ mode === 'create' ? 'Créer un indicateur' : "Éditer l'indicateur" }}</h2>
@@ -66,14 +77,6 @@
             ></ng-select>
           </div>
         </div>
-        <hr />
-        <button
-          type="submit"
-          class="btn btn-success"
-          [disabled]="!indicatorForm.valid"
-        >
-          {{ mode === 'create' ? 'Créer' : 'Enregistrer' }}
-        </button>
       </form>
     </div>
   </div>

@@ -1,12 +1,23 @@
 <div class="container">
-  <a
-    mat-raised-button
-    [routerLink]="['/calculatrice/indicator', indicatorDetails?.id, 'details']"
-    class="mb-2"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </a>
+  <div class="actions-header">
+    <a
+      mat-raised-button
+      [routerLink]="['/calculatrice/indicator', indicatorDetails?.id, 'details']"
+    >
+      <mat-icon>chevron_left</mat-icon>
+      Retour
+    </a>
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      [disabled]="!form.valid"
+      (click)="onSubmit()"
+    >
+      <mat-icon>save</mat-icon>
+      Enregistrer
+    </button>
+  </div>
   <div class="card">
     <div class="card-header">
       <h2>
@@ -104,14 +115,6 @@
               [vizBlock]="blockConfigs[index]"
             ></pnx-calc-viz-block-form>
           </div>
-          <hr />
-          <button
-            type="submit"
-            [disabled]="!form.valid"
-            class="btn btn-success"
-          >
-            Enregistrer
-          </button>
         </div>
       </form>
     </div>

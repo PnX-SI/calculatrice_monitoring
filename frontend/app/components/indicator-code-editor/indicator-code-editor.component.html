@@ -2,14 +2,25 @@
   *ngIf="indicator"
   class="container"
 >
-  <a
-    mat-raised-button
-    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
-    class="mb-2"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </a>
+  <div class="actions-header">
+    <a
+      mat-raised-button
+      [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
+    >
+      <mat-icon>chevron_left</mat-icon>
+      Retour
+    </a>
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      [disabled]="!indicatorForm.valid"
+      (click)="onSubmit()"
+    >
+      <mat-icon>save</mat-icon>
+      Enregistrer
+    </button>
+  </div>
   <div class="card">
     <div class="card-header">
       <h2>
@@ -463,14 +474,6 @@
             </div>
           </div>
         </div>
-        <hr />
-        <button
-          type="submit"
-          class="btn btn-success"
-          [disabled]="!indicatorForm.valid"
-        >
-          Enregistrer
-        </button>
       </form>
     </div>
   </div>

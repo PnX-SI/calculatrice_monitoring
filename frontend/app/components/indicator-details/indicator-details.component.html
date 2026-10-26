@@ -1,13 +1,14 @@
 <div class="container">
-  <a
-    mat-raised-button
-    routerLink="/calculatrice"
-    [queryParams]="indicatorDetails ? { protocol: indicatorDetails.protocol.id } : null"
-    class="mb-2"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </a>
+  <div class="actions-header">
+    <a
+      mat-raised-button
+      routerLink="/calculatrice"
+      [queryParams]="indicatorDetails ? { protocol: indicatorDetails.protocol.id } : null"
+    >
+      <mat-icon>chevron_left</mat-icon>
+      Retour
+    </a>
+  </div>
   <div
     *ngIf="isLoading"
     class="loading-container"

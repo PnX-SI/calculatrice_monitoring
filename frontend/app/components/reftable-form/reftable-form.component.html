@@ -1,12 +1,24 @@
 <div class="container">
-  <a
-    mat-raised-button
-    routerLink="/calculatrice/reference-tables"
-    class="mb-2"
-  >
-    <mat-icon>chevron_left</mat-icon>
-    Retour
-  </a>
+  <div class="actions-header">
+    <a
+      mat-raised-button
+      routerLink="/calculatrice/reference-tables"
+    >
+      <mat-icon>chevron_left</mat-icon>
+      Retour
+    </a>
+    <button
+      type="button"
+      mat-raised-button
+      color="primary"
+      id="validate"
+      [disabled]="!form.valid"
+      (click)="onSubmit()"
+    >
+      <mat-icon>check</mat-icon>
+      Valider
+    </button>
+  </div>
   <div class="card">
     <div class="card-header">
       <h2>{{ mode === 'edit' ? 'Éditer' : 'Créer' }} un tableau de référence</h2>
@@ -86,16 +98,6 @@
             </select>
           </div>
         </div>
-        <hr />
-        <button
-          type="submit"
-          mat-raised-button
-          color="primary"
-          id="validate"
-          [disabled]="!form.valid"
-        >
-          Valider
-        </button>
       </form>
       <div
         class="csv-preview"
