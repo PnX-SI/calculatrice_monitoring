@@ -108,10 +108,6 @@ export class ModuleComponent implements OnInit {
     return this._permissionService.getAdminPermission('U') > 0;
   }
 
-  canReadIndicator(): boolean {
-    return this._permissionService.getAdminPermission('R') > 0;
-  }
-
   canReadReferenceTables(): boolean {
     return this._permissionService.getAdminPermission('R') > 0;
   }

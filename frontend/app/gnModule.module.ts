@@ -70,6 +70,12 @@ const routes: Routes = [
     data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'overview' },
   },
   {
+    path: 'indicator/:indicatorId/edit-statistical-tests-code',
+    component: IndicatorCodeEditorComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'statistical-tests' },
+  },
+  {
     path: 'indicator/:indicatorId/viz-blocks',
     component: IndicatorVizBlocksFormComponent,
     canActivate: [CruvedPermissionGuard],
@@ -80,6 +86,12 @@ const routes: Routes = [
     component: IndicatorVizBlocksFormComponent,
     canActivate: [CruvedPermissionGuard],
     data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'overview' },
+  },
+  {
+    path: 'indicator/:indicatorId/statistical-tests-viz-blocks',
+    component: IndicatorVizBlocksFormComponent,
+    canActivate: [CruvedPermissionGuard],
+    data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'statistical-tests' },
   },
   {
     path: 'reference-tables',

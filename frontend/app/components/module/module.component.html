@@ -98,17 +98,9 @@
                   </button>
                   <button
                     mat-icon-button
-                    *ngIf="canReadIndicator()"
-                    matTooltip="Fiche détail de l'indicateur"
-                    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
-                  >
-                    <mat-icon>visibility</mat-icon>
-                  </button>
-                  <button
-                    mat-icon-button
                     *ngIf="canEditIndicator()"
                     matTooltip="Éditer l'indicateur"
-                    [routerLink]="['/calculatrice/indicator', indicator.id, 'edit']"
+                    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>

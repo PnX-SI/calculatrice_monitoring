@@ -79,6 +79,20 @@ class VizDataSchema(ma.Schema):
                 )
 
 
+class HeadersAndRowsSchema(ma.Schema):
+    headers = ma.List(ma.Field())
+    rows = ma.List(ma.List(ma.Field()))
+
+    @validates_schema
+    def validate_lengths(self, data, **kwargs):  # noqa: ARG002 Unused method argument: `kwargs`
+        len_headers = len(data["headers"])
+        for row in data["rows"]:
+            if len(row) != len_headers:
+                raise ValidationError(
+                    "Les listes des headers et chaque row doivent avoir le même nombre d'éléments."
+                )
+
+
 class ReferenceTableSchema(ma.SQLAlchemyAutoSchema):
     id_reference_table = ma.Integer(data_key="id")
 
@@ -128,7 +142,7 @@ class IndicatorSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Indicator
         include_fk = True
-        exclude = ["source_code", "overview_source_code"]
+        exclude = ["source_code", "overview_source_code", "statistical_tests_source_code"]
 
 
 class IndicatorAttributesSchema(ma.SQLAlchemyAutoSchema):
@@ -153,6 +167,7 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     protocol = ma.Nested("ProtocolSchema", data_key="protocol")
     source_code = ma.String(data_key="sourceCode")
     overview_source_code = ma.String(data_key="overviewSourceCode")
+    statistical_tests_source_code = ma.String(data_key="statisticalTestsSourceCode")
     viz_block_configs = ma.Method(
         serialize="serialize_campaign_viz_block_configs",
         data_key="visualizationBlockConfigs",
@@ -160,6 +175,10 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
     overview_viz_block_configs = ma.Method(
         serialize="serialize_overview_viz_block_configs",
         data_key="overviewVisualizationBlockConfigs",
+    )
+    statistical_tests_viz_block_configs = ma.Method(
+        serialize="serialize_statistical_tests_viz_block_configs",
+        data_key="statisticalTestsVisualizationBlockConfigs",
     )
     reference_tables = ma.Nested(
         "ReferenceTableSchema",
@@ -178,6 +197,9 @@ class IndicatorDetailsSchema(ma.SQLAlchemyAutoSchema):
 
     def serialize_overview_viz_block_configs(self, obj):
         return self._serialize_viz_block_configs(obj, VizBlockScope.overview)
+
+    def serialize_statistical_tests_viz_block_configs(self, obj):
+        return self._serialize_viz_block_configs(obj, VizBlockScope.statistical_tests)
 
     class Meta:
         model = Indicator
