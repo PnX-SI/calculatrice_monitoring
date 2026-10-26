@@ -52,8 +52,17 @@
   gap: 1rem;
 }
 
-.card-header h2 {
+.flex-row h2,
+.flex-row h3 {
   margin: 0;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.flex-row button,
+.flex-row > span {
+  flex-shrink: 0;
+  display: inline-flex;
 }
 
 .param-type {
