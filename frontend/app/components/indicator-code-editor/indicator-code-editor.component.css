@@ -36,15 +36,23 @@ form .code-editor-container {
   gap: 0.5rem;
 }
 
-.textarea-wrapper textarea {
+.codemirror-editor {
   width: 100%;
-  min-height: 450px;
-  font-family: monospace;
-  font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 8px;
-  resize: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+:host ::ng-deep .cm-editor {
+  min-height: 450px;
+  max-height: 700px;
+}
+
+:host ::ng-deep .cm-scroller {
+  overflow: auto;
+  font-family: monospace;
 }
 
 .objects-panel {

@@ -8,6 +8,7 @@ import {
   Indicator,
   IndicatorAttributes,
   IndicatorDetails,
+  IndicatorExecutionContext,
   Protocol,
   ProtocolProperties,
   ReferenceTable,
@@ -191,6 +192,19 @@ export class DataService {
   getIndicatorStatisticalTestsCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-code-variables`
+    );
+  }
+
+  /**
+   * Retrieves the execution context (root objects, protocol properties, functions)
+   * for the code editor autocomplete engine.
+   */
+  getExecutionContext(indicatorId: number, scope: string = 'campaign') {
+    return this._http.get<IndicatorExecutionContext>(
+      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/execution-context`,
+      {
+        params: { scope },
+      }
     );
   }
 

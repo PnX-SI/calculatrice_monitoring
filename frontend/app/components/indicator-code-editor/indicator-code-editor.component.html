@@ -39,20 +39,17 @@
       >
         <div class="code-editor-container">
           <div class="textarea-wrapper">
-            <label for="code">
+            <label>
               <ng-container [ngSwitch]="scope">
                 <span *ngSwitchCase="'overview'">Code de synthèse</span>
                 <span *ngSwitchCase="'statistical-tests'">Code des tests statistiques</span>
                 <span *ngSwitchDefault>Code de l'indicateur (campagnes)</span>
               </ng-container>
             </label>
-            <textarea
-              id="code"
-              formControlName="code"
-              spellcheck="false"
-              rows="10"
-              cols="80"
-            ></textarea>
+            <div
+              #editorContainer
+              class="codemirror-editor"
+            ></div>
           </div>
           <div class="objects-panel">
             <!-- Données Section -->

@@ -149,9 +149,37 @@ export function parseCampaigns(serializedCampaigns: string): Campaign[] {
   if (!serializedCampaigns) return [];
   return serializedCampaigns
     .split(',')
-    .map((item) => {
-      const [startDate, endDate] = item.split('_');
+    .map((serializedCampaign) => {
+      const [startDate, endDate] = serializedCampaign.split('_');
       return { startDate, endDate };
     })
     .filter((campaign) => Boolean(campaign.startDate && campaign.endDate));
+}
+
+export interface ExecutionContextAttribute {
+  name: string;
+  type: string;
+  description?: string;
+}
+
+export interface ExecutionContextObject {
+  name: string;
+  type: string;
+  description?: string;
+  attributes?: ExecutionContextAttribute[];
+  itemType?: string;
+  itemAttributes?: ExecutionContextAttribute[];
+  nestedObjects?: Record<string, ExecutionContextObject>;
+}
+
+export interface ExecutionContextFunction {
+  name: string;
+  signature: string;
+  description?: string;
+  returnType?: string;
+}
+
+export interface IndicatorExecutionContext {
+  objects: Record<string, ExecutionContextObject>;
+  functions: ExecutionContextFunction[];
 }

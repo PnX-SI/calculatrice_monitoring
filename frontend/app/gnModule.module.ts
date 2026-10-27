@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
@@ -27,6 +28,7 @@ import { VisualizationPageComponent } from './components/visualization-page/visu
 import { VisualizationParamsFormComponent } from './components/visualization-params-form/visualization-params-form.component';
 import { VisualizationScalarComponent } from './components/visualization-scalar/visualization-scalar.component';
 import { VisualizationTableComponent } from './components/visualization-table/visualization-table.component';
+import { CanDeactivateGuard } from './guards/can-deactivate.guard';
 import { CruvedPermissionGuard } from './guards/cruved-permission.guard';
 import { DataService } from './services/data.service';
 import { PermissionService } from './services/permission.service';
@@ -61,18 +63,21 @@ const routes: Routes = [
     path: 'indicator/:indicatorId/edit-code',
     component: IndicatorCodeEditorComponent,
     canActivate: [CruvedPermissionGuard],
+    canDeactivate: [CanDeactivateGuard],
     data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'campaign' },
   },
   {
     path: 'indicator/:indicatorId/edit-overview-code',
     component: IndicatorCodeEditorComponent,
     canActivate: [CruvedPermissionGuard],
+    canDeactivate: [CanDeactivateGuard],
     data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'overview' },
   },
   {
     path: 'indicator/:indicatorId/edit-statistical-tests-code',
     component: IndicatorCodeEditorComponent,
     canActivate: [CruvedPermissionGuard],
+    canDeactivate: [CanDeactivateGuard],
     data: { permission: 'U', permissionObject: 'CALC_ADMIN_INDICATOR', scope: 'statistical-tests' },
   },
   {
@@ -152,6 +157,7 @@ const routes: Routes = [
     MatIconModule,
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatExpansionModule,
     MatTooltipModule,
     ReactiveFormsModule,
