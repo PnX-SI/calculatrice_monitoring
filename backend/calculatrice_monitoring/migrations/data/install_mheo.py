@@ -502,6 +502,62 @@ tableau_médianes = {
 STATISTICAL_TESTS_CODE_I02_ABONDANCE = """médiane0 = campaigns[0].vars.médiane.values[0].value
 médiane1 = campaigns[1].vars.médiane.values[0].value
 écart = abs(médiane1 - médiane0)
+
+#########################
+# Calculer le V de Cramer
+#########################
+
+# Valeurs HE de chaque campagne
+he_0 = [pv.value for pv in campaigns[0].vars.valeurs_he.values if pv.value is not None]
+he_1 = [pv.value for pv in campaigns[1].vars.valeurs_he.values if pv.value is not None]
+
+# Décomptes des occurences par classe et par campagne
+he_counts_0 = collections.Counter(he_0)
+he_counts_1 = collections.Counter(he_1)
+
+def get_variables_for_cramer_v(counts0, counts1):
+    # Nombre de classes pour les valeurs HE
+    nb_classes = 9
+
+    # Apparie les nombres d'occurences par classe de chaque campagne
+    variables = []
+    for i in range(1, nb_classes - 1):
+        value0 = counts0.get(str(i), 0)
+        value1 = counts1.get(str(i), 0)
+        if value0 != 0 or value1 != 0:
+            variables.append([value0, value1])
+
+    # Fusionne les classes avec moins de 5 occurences au total
+    # avec la classe adjacente.
+    i = 0
+    while i < len(variables):
+        if len(variables) == 1:
+            break
+        value0, value1 = variables[i]
+        if value0 + value1 < 5:
+            is_last = i == len(variables) - 1
+            if not is_last:
+                # merge forward
+                next0, next1 = variables[i + 1]
+                variables[i + 1] = [next0 + value0, next1 + value1]
+                variables.pop(i)
+            else:
+                # merge backward
+                prev0, prev1 = variables[i - 1]
+                variables[i - 1] = [prev0 + value0, prev1 + value1]
+                variables.pop(i)
+        else:
+            i += 1
+
+    if len(variables) == 1:
+        value0, value1 = variables[0]
+        if value0 + value1 < 5:
+            raise IndicatorError("Il n'y a pas assez de données pour réaliser le test V de Cramer")
+
+    return variables
+
+cramer_v_variables = get_variables_for_cramer_v(he_counts_0, he_counts_1)
+cramer_v = scipy.stats.contingency.association(cramer_v_variables, method="cramer")
 """
 
 CODE_I06 = """valeurs_ht = gn_extract(
@@ -713,6 +769,26 @@ def install_i02_abondance_statistical_tests_visualization_config(indicators):
             scope=VizBlockScope.statistical_tests,
             params={
                 "variable": "écart",
+            },
+        )
+        description_v_cramer = """Le coefficient V de Cramer (entre 0 et 1) mesure si les
+distributions diffèrent.<br>
+• Association forte si V > 0.5<br>
+• Association modérée si V compris entre 0.3 et 0.5<br>
+• Association faible si V compris entre 0.1 et 0.3<br>
+• Pas d’association si V < 0.1<br>
+Si le V de Cramer est inférieur à 0,1 alors le test n’est pas validé.
+"""
+        db.session.add(scalar_block)
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Test V de Cramer",
+            info="???",
+            description=description_v_cramer,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "cramer_v",
             },
         )
         db.session.add(scalar_block)
