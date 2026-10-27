@@ -38,3 +38,12 @@ def foo():
         assert len(names) == 2
         assert "foo" in names
         assert "bar" in names
+
+    def test_variable_is_returned_once(self):
+        code = """
+foo = 1
+foo = 2
+"""
+        names = extract_variable_names(code)
+        assert len(names) == 1
+        assert names[0] == "foo"
