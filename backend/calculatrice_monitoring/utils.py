@@ -1,5 +1,7 @@
 import ast
 
+from weasyprint.css import targets
+
 
 def extract_variable_names(code: str) -> list[str]:
     try:
@@ -10,5 +12,11 @@ def extract_variable_names(code: str) -> list[str]:
     names = []
     for node in ast.walk(tree):
         if type(node) is ast.Assign:
-            names.append(node.targets[0].id)
+            try:
+                try:
+                    names.append(node.targets[0].id)
+                except AttributeError:
+                    names.extend(d.id for d in node.targets[0].dims)
+            except Exception:
+                pass
     return names
