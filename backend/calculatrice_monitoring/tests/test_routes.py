@@ -1430,8 +1430,6 @@ class TestGetIndicatorOverviewCodeVariables:
         assert response.json == [
             "data",
             "datasets",
-            "datasets",
-            "labels",
             "labels",
             "tableau_médianes",
             "évolution",
