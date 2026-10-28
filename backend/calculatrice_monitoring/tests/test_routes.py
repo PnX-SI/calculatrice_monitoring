@@ -1428,13 +1428,13 @@ class TestGetIndicatorOverviewCodeVariables:
         )
         assert response.status_code == 200
         assert response.json == [
-            "labels",
             "data",
             "datasets",
-            "évolution",
-            "labels",
             "datasets",
+            "labels",
+            "labels",
             "tableau_médianes",
+            "évolution",
         ]
 
     @pytest.mark.usefixtures("calculatrice_permissions")
