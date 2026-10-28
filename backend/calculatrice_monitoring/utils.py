@@ -1,7 +1,5 @@
 import ast
 
-from weasyprint.css import targets
-
 
 def extract_variable_names(code: str) -> list[str]:
     try:
@@ -19,4 +17,4 @@ def extract_variable_names(code: str) -> list[str]:
                     names.extend(d.id for d in node.targets[0].dims)
             except Exception:
                 pass
-    return names
+    return sorted(names)
