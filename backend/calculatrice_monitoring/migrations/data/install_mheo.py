@@ -426,7 +426,12 @@ def install_reference_tables():
     }
 
 
-CODE_I02 = """valeurs_he = gn_extract(
+I02_DESCRIPTION = """Cet indicateur permet de suivre le niveau d’engorgement d’une zone humide à
+partir de la végétation présente. Il s’appuie sur les préférences écologiques des espèces vis-à-vis
+de l’humidité, sans tenir compte de leur abondance ou de leur recouvrement : chaque espèce présente
+contribue de manière identique au calcul."""
+
+I02_CODE = """valeurs_he = gn_extract(
     ref_table=indices_he,
     origin_field="cdnom",
     target_field="indice_he",
@@ -444,31 +449,7 @@ moyenne_viz_data = {
 }
 """
 
-CODE_I02_ABONDANCE = """valeurs_he = gn_extract(
-    ref_table=indices_he,
-    origin_field="cdnom",
-    target_field="indice_he",
-    properties=observations.cd_nom)
-abondance_perc = gn_extract(
-    ref_table=valeurs_abondance,
-    origin_field="libellé_abondance",
-    target_field="valeur_abondance",
-    properties=observations.abondance,
-)
-moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
-médiane = gn_median(moyenne)
-moyenne_viz_data = {
-    "datasets": [
-        {
-            "label": "Moyenne HE par quadrat",
-            "data": [prop.value for prop in moyenne.values]
-        }
-    ],
-    "labels": [prop.entity.base_site_name for prop in moyenne.values]
-}
-"""
-
-OVERVIEW_CODE_I02_ABONDANCE = """labels = []
+I02_OVERVIEW_CODE = """labels = []
 data = []
 for campaign in campaigns:
   labels.append(campaign.start_date)
@@ -499,7 +480,66 @@ tableau_médianes = {
 }
 """
 
-STATISTICAL_TESTS_CODE_I02_ABONDANCE = """médiane0 = campaigns[0].vars.médiane.values[0].value
+I02_ABONDANCE_DESCRIPTION = """Cet indicateur permet de suivre le niveau d’engorgement d’une zone
+humide à partir de la végétation présente. Il s’appuie sur les préférences écologiques des espèces
+vis-à-vis de l’humidité et tient compte de leur abondance ou de leur recouvrement."""
+
+I02_ABONDANCE_CODE = """valeurs_he = gn_extract(
+    ref_table=indices_he,
+    origin_field="cdnom",
+    target_field="indice_he",
+    properties=observations.cd_nom)
+abondance_perc = gn_extract(
+    ref_table=valeurs_abondance,
+    origin_field="libellé_abondance",
+    target_field="valeur_abondance",
+    properties=observations.abondance,
+)
+moyenne = gn_mean(valeurs_he, scope=Scope.SITE, weights=abondance_perc)
+médiane = gn_median(moyenne)
+moyenne_viz_data = {
+    "datasets": [
+        {
+            "label": "Moyenne HE par quadrat",
+            "data": [prop.value for prop in moyenne.values]
+        }
+    ],
+    "labels": [prop.entity.base_site_name for prop in moyenne.values]
+}
+"""
+
+I02_ABONDANCE_OVERVIEW_CODE = """labels = []
+data = []
+for campaign in campaigns:
+  labels.append(campaign.start_date)
+  data.append(campaign.vars.médiane.values[0].value)
+datasets = [
+  {
+    "label": "I02 (médiane)",
+    "data": data,
+  }
+]
+évolution = {
+  "datasets": datasets,
+  "labels": labels
+}
+
+labels = ["I02 (médiane)"]
+datasets = []
+for campaign in campaigns:
+	datasets.append(
+		{
+			"label": campaign.start_date,
+			"data": [prop.value for prop in campaign.vars.médiane.values],
+		}
+	)
+tableau_médianes = {
+	"datasets": datasets,
+	"labels": labels,
+}
+"""
+
+I02_ABONDANCE_STATISTICAL_TESTS_CODE = """médiane0 = campaigns[0].vars.médiane.values[0].value
 médiane1 = campaigns[1].vars.médiane.values[0].value
 écart = abs(médiane1 - médiane0)
 
@@ -568,7 +608,12 @@ he1 = [float(v.value) for v in campaigns[1].vars.moyenne.values]
 wilcoxon = scipy.stats.wilcoxon(he0, he1, zero_method="zsplit").statistic
 """
 
-CODE_I06 = """valeurs_ht = gn_extract(
+I06_DESCRIPTION = """Cet indicateur permet de suivre le niveau de fertilité du sol d’une zone humide
+à partir de la végétation présente. Il renseigne indirectement sur la disponibilité en nutriments,
+principalement l’azote et le phosphore, sans tenir compte de l’abondance ou du recouvrement des
+espèces : chaque espèce présente contribue de manière identique au calcul."""
+
+I06_CODE = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
     target_field="indice_ht",
@@ -586,7 +631,43 @@ moyenne_viz_data = {
 }
 """
 
-CODE_I06_ABONDANCE = """valeurs_ht = gn_extract(
+I06_OVERVIEW_CODE = """labels = []
+data = []
+for campaign in campaigns:
+  labels.append(campaign.start_date)
+  data.append(campaign.vars.médiane.values[0].value)
+datasets = [
+  {
+    "label": "I06 (médiane)",
+    "data": data,
+  }
+]
+évolution = {
+  "datasets": datasets,
+  "labels": labels
+}
+
+labels = ["I06 (médiane)"]
+datasets = []
+for campaign in campaigns:
+	datasets.append(
+		{
+			"label": campaign.start_date,
+			"data": [prop.value for prop in campaign.vars.médiane.values],
+		}
+	)
+tableau_médianes = {
+	"datasets": datasets,
+	"labels": labels,
+}
+"""
+
+I06_ABONDANCE_DESCRIPTION = """Cet indicateur permet de suivre le niveau de fertilité du sol d’une
+zone humide à partir de la végétation présente. Il renseigne indirectement sur la disponibilité en
+nutriments, principalement l’azote et le phosphore, en tenant compte de l’abondance ou du
+recouvrement des espèces."""
+
+I06_ABONDANCE_CODE = """valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
     target_field="indice_ht",
@@ -610,6 +691,37 @@ moyenne_viz_data = {
 }
 """
 
+I06_ABONDANCE_OVERVIEW_CODE = """labels = []
+data = []
+for campaign in campaigns:
+  labels.append(campaign.start_date)
+  data.append(campaign.vars.médiane.values[0].value)
+datasets = [
+  {
+    "label": "I06 (médiane)",
+    "data": data,
+  }
+]
+évolution = {
+  "datasets": datasets,
+  "labels": labels
+}
+
+labels = ["I06 (médiane)"]
+datasets = []
+for campaign in campaigns:
+	datasets.append(
+		{
+			"label": campaign.start_date,
+			"data": [prop.value for prop in campaign.vars.médiane.values],
+		}
+	)
+tableau_médianes = {
+	"datasets": datasets,
+	"labels": labels,
+}
+"""
+
 
 def install_test_indicators(protocols, reference_tables):
     indicators = {}
@@ -625,7 +737,8 @@ def install_test_indicators(protocols, reference_tables):
                     del data["reference_table_codes"]
                 ref = data.pop("ref")
                 data["protocol"] = protocol
-                data["description"] = f"This is the {data['name']} indicator description."
+                if "description" not in data:
+                    data["description"] = f"This is the {data['name']} indicator description."
                 indicator = Indicator(**data)
                 for rt in ref_tables:
                     indicator.reference_tables.append(rt)
@@ -636,28 +749,35 @@ def install_test_indicators(protocols, reference_tables):
         {
             "name": "I02 - indice floristique d'engorgement",
             "reference_table_codes": ["indices_he"],
-            "source_code": CODE_I02,
+            "source_code": I02_CODE,
+            "overview_source_code": I02_OVERVIEW_CODE,
             "ref": "i02",
+            "description": I02_DESCRIPTION,
         },
         {
             "name": "I02 - indice floristique d'engorgement (avec abondance)",
             "reference_table_codes": ["indices_he", "valeurs_abondance"],
-            "source_code": CODE_I02_ABONDANCE,
-            "overview_source_code": OVERVIEW_CODE_I02_ABONDANCE,
-            "statistical_tests_source_code": STATISTICAL_TESTS_CODE_I02_ABONDANCE,
+            "source_code": I02_ABONDANCE_CODE,
+            "overview_source_code": I02_ABONDANCE_OVERVIEW_CODE,
+            "statistical_tests_source_code": I02_ABONDANCE_STATISTICAL_TESTS_CODE,
             "ref": "i02_abondance",
+            "description": I02_ABONDANCE_DESCRIPTION,
         },
         {
             "name": "I06 - indice floristique de fertilité du sol",
             "reference_table_codes": ["indices_ht"],
-            "source_code": CODE_I06,
+            "source_code": I06_CODE,
+            "overview_source_code": I06_OVERVIEW_CODE,
             "ref": "i06",
+            "description": I06_DESCRIPTION,
         },
         {
             "name": "I06 - indice floristique de fertilité du sol (avec abondance)",
             "reference_table_codes": ["indices_ht", "valeurs_abondance"],
-            "source_code": CODE_I06_ABONDANCE,
+            "source_code": I06_ABONDANCE_CODE,
+            "overview_source_code": I06_ABONDANCE_OVERVIEW_CODE,
             "ref": "i06_abondance",
+            "description": I06_ABONDANCE_DESCRIPTION,
         },
     ]
     flore_protocol = protocols["mheo_flore_test"]
@@ -677,14 +797,59 @@ def install_test_indicators(protocols, reference_tables):
     return indicators
 
 
+I02_ABONDANCE_MEDIANE_INFO = """La médiane des valeurs HE calculées pour l’ensemble des quadrats
+correspond à la note de l’indicateur à l’échelle du site en tenant compte de l’abondance des
+espèces.<br>
+Elle correspond à la valeur qui partage les quadrats en deux groupes de même effectif : 50 %
+présentent une valeur HE inférieure ou égale à la médiane et 50 % une valeur supérieure ou
+égale.<br>
+Elle permet de caractériser la tendance globale du niveau d’engorgement du site.
+Son évolution entre plusieurs campagnes de suivi permet d’apprécier l’évolution des conditions
+d’engorgement."""
+
+I02_ABONDANCE_MEDIANE_DESCRIPTION = """Note de l’indicateur à l’échelle du site, calculée à partir
+de la médiane des valeurs HE des quadrats."""
+
+I02_ABONDANCE_BARCHART_INFO = """Pour chaque quadrat, une valeur HE est calculée à partir des
+valeurs indicatrices d’humidité des espèces végétales présentes, pondérées par leur abondance ou
+leur recouvrement.<br><br>
+
+He= Σ (rij * xi) / Σ (rij)<br>
+<em><strong>rij</strong> est l’abondance (ou recouvrement) de l’espèce i dans le relevé j </em><br>
+<em><strong>xi</strong> est la valeur indicatrice de l’espèce i </em><br><br>
+
+Les espèces les plus abondantes contribuent ainsi davantage au calcul que les espèces peu
+représentées. Il varie pour les habitats de zones humides, de 2,5 (habitats mésophiles) à 9
+(habitats subaquatiques). <br><br>
+
+L’histogramme représente la valeur HE obtenue pour chaque quadrat. Il permet de comparer les
+quadrats entre eux et de visualiser la variabilité des conditions d’engorgement au sein du site."""
+
+I02_ABONDANCE_BARCHART_DESCRIPTION = """Valeur d’engorgement floristique calculée pour chaque
+quadrat en tenant compte de l’abondance des espèces."""
+
+I02_ABONDANCE_LINECHART_INFO = """Cette représentation reprend les valeurs HE calculées pour chaque
+quadrat et présentées dans l’histogramme ci-dessus. La courbe offre une autre visualisation de la
+variabilité des valeurs entre les différents quadrats du site."""
+
+I02_ABONDANCE_LINECHART_DESCRIPTION = """Courbe permettant la visualisation des valeurs HE par
+quadrats pour 1 année."""
+
+I02_ABONDANCE_TABLE_INFO = """Ce tableau reprend les valeurs HE calculées pour chaque quadrat et
+permet de consulter précisément la valeur obtenue pour chacun d’entre eux."""
+
+I02_ABONDANCE_TABLE_DESCRIPTION = """Tableau permettant la visualisation des valeurs HE par quadrats
+pour 1 année."""
+
+
 def install_i02_abondance_visualization_config(indicators):
     i02_abondance = indicators["i02_abondance"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Médiane HE",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_MEDIANE_INFO,
+            description=I02_ABONDANCE_MEDIANE_DESCRIPTION,
             type=VizBlockType.scalar,
             params={
                 "variable": "médiane",
@@ -694,8 +859,8 @@ def install_i02_abondance_visualization_config(indicators):
         barchart_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Moyenne HE (pondérée par abondance)",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_BARCHART_INFO,
+            description=I02_ABONDANCE_BARCHART_DESCRIPTION,
             type=VizBlockType.bar_chart,
             params={
                 "variable": "moyenne_viz_data",
@@ -705,8 +870,8 @@ def install_i02_abondance_visualization_config(indicators):
         linechart_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Moyenne HE par quadrat (pondérée par abondance)",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_LINECHART_INFO,
+            description=I02_ABONDANCE_LINECHART_DESCRIPTION,
             type=VizBlockType.line_chart,
             params={
                 "variable": "moyenne_viz_data",
@@ -716,8 +881,8 @@ def install_i02_abondance_visualization_config(indicators):
         table_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Moyenne HE par quadrat (pondérée par abondance)",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_TABLE_INFO,
+            description=I02_ABONDANCE_TABLE_DESCRIPTION,
             type=VizBlockType.table,
             params={
                 "variable": "moyenne_viz_data",
@@ -728,14 +893,50 @@ def install_i02_abondance_visualization_config(indicators):
     return scalar_block, barchart_block, table_block, linechart_block
 
 
+I02_ABONDANCE_OVERVIEW_TABLE_INFO = """Pour analyser une tendance, il faut
+disposer d’au moins trois campagnes de suivi. L’évolution observée peut alors indiquer une tendance
+à la hausse, à la baisse ou une relative stabilité de l’indicateur.<br><br>
+
+Une différence entre deux campagnes ne traduit cependant pas nécessairement un changement
+significatif du fonctionnement de la zone humide. Les résultats des tests statistiques présentés
+plus bas dans la calculatrice doivent être consultés afin d’évaluer la significativité des
+différences observées.<br><br>
+
+L’indicateur I02 de MhéO constitue un outil de suivi et d’alerte : il permet de mettre en évidence
+une évolution, mais ne permet pas, à lui seul, d’en déterminer la cause. En cas de changement,
+l’interprétation doit être complétée par une analyse du contexte de la zone humide et de son
+évolution.<br>
+De nombreux facteurs peuvent être à l’origine des changements observés : modifications de
+l’occupation du sol ou du tissu urbain, drainage agricole, prélèvements ou pompages d’eau,
+travaux de gestion, évolution climatique, conditions particulières lors des différentes campagnes
+de terrain, etc. Cette liste n’est pas exhaustive : d’autres facteurs, propres au contexte local
+et au fonctionnement de chaque zone humide, peuvent également expliquer l’évolution de
+l’indicateur.<br>
+Ces éléments permettent de rechercher les facteurs susceptibles d’expliquer l’évolution observée
+et d’orienter, si nécessaire, des analyses complémentaires ou la potentielle nécessité de
+réaliser des travaux."""
+
+I02_ABONDANCE_OVERVIEW_TABLE_DESCRIPTION = """Tableau synthèse de l’évolution de l’indicateur au
+cours du temps.<br>
+Ce bloc présente la note de l’indicateur obtenue à chaque campagne de suivi, correspondant à la
+médiane des valeurs calculées pour l’ensemble des quadrats (en tenant compte de l’abondance des
+espèces)."""
+
+I02_ABONDANCE_OVERVIEW_EVOLUTION_INFO = """Le graphique permet de visualiser l’évolution de
+l’indicateur au cours du temps."""
+
+I02_ABONDANCE_OVERVIEW_EVOLUTION_DESCRIPTION = """Courbe d’évolution de l’indicateur au cours du
+temps."""
+
+
 def install_i02_abondance_overview_visualization_config(indicators):
     i02_abondance = indicators["i02_abondance"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Médiane des valeurs HE des quadrats par année",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_OVERVIEW_TABLE_INFO,
+            description=I02_ABONDANCE_OVERVIEW_TABLE_DESCRIPTION,
             type=VizBlockType.table,
             scope=VizBlockScope.overview,
             params={
@@ -746,8 +947,8 @@ def install_i02_abondance_overview_visualization_config(indicators):
         line_chart_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Évolution de la valeur de l'indicateur",
-            info="???",
-            description="???",
+            info=I02_ABONDANCE_OVERVIEW_EVOLUTION_INFO,
+            description=I02_ABONDANCE_OVERVIEW_EVOLUTION_DESCRIPTION,
             type=VizBlockType.line_chart,
             scope=VizBlockScope.overview,
             params={
@@ -967,14 +1168,56 @@ différence entre les deux années est significative. L’indicateur montre une 
     return scalar_block, cramer_v_scalar_block, wilcoxon_scalar_block
 
 
+I02_MEDIANE_INFO = """La médiane des valeurs HE calculées pour l’ensemble des quadrats correspond à
+la note de l’indicateur à l’échelle du site, sans tenir compte de l’abondance des espèces.
+Elle correspond à la valeur qui partage les quadrats en deux groupes de même effectif : 50 %
+présentent une valeur HE inférieure ou égale à la médiane et 50 % une valeur supérieure ou
+égale.<br>
+Elle permet de caractériser la tendance globale du niveau d’engorgement du site. Son évolution entre
+plusieurs campagnes de suivi permet d’apprécier l’évolution des conditions d’engorgement."""
+
+I02_MEDIANE_DESCRIPTION = """Note de l’indicateur à l’échelle du site, calculée à partir de la
+médiane des valeurs HE des quadrats."""
+
+I02_BARCHART_INFO = """Pour chaque quadrat, une valeur HE est calculée à partir des valeurs
+indicatrices d’humidité des espèces végétales présentes, sans tenir compte de leur abondance ou de
+leur recouvrement.<br><br>
+
+He = Σ(xi) / n<br>
+<em><strong>xi</strong> est la valeur indicatrice de l’espèce i</em><br>
+<em><strong>n</strong> est le nombre total d’espèces prises en compte dans le quadrat</em><br><br>
+
+Chaque espèce contribue ainsi de manière identique au calcul. Il varie pour les habitats de zones
+humides, de 2,5 (habitats mésophiles) à 9 (habitats subaquatiques).<br><br>
+
+L’histogramme représente la valeur HE obtenue pour chaque quadrat. Il permet de comparer les
+quadrats entre eux et de visualiser la variabilité des conditions d’engorgement au sein du site."""
+
+I02_BARCHART_DESCRIPTION = """Valeur d’engorgement floristique calculée pour chaque quadrat sans
+tenir compte de l’abondance des espèces."""
+
+I02_LINECHART_INFO = """Cette représentation reprend les valeurs HE calculées pour chaque
+quadrat et présentées dans l’histogramme ci-dessus. La courbe offre une autre visualisation de la
+variabilité des valeurs entre les différents quadrats du site."""
+
+I02_LINECHART_DESCRIPTION = """Courbe permettant la visualisation des valeurs HE par
+quadrats pour 1 année."""
+
+I02_TABLE_INFO = """Ce tableau reprend les valeurs HE calculées pour chaque quadrat et
+permet de consulter précisément la valeur obtenue pour chacun d’entre eux."""
+
+I02_TABLE_DESCRIPTION = """Tableau permettant la visualisation des valeurs HE par quadrats
+pour 1 année."""
+
+
 def install_i02_visualization_config(indicators):
     i02 = indicators["i02"]
     with db.session.begin_nested():
         scalar_block = VizBlockConfig(
             id_indicator=i02.id_indicator,
             title="Médiane HE",
-            info="???",
-            description="???",
+            info=I02_MEDIANE_INFO,
+            description=I02_MEDIANE_DESCRIPTION,
             type=VizBlockType.scalar,
             params={
                 "variable": "médiane",
@@ -983,17 +1226,156 @@ def install_i02_visualization_config(indicators):
         db.session.add(scalar_block)
         barchart_block = VizBlockConfig(
             id_indicator=i02.id_indicator,
-            title="Moyenne HE",
-            info="???",
-            description="???",
+            title="Moyenne HE par quadrat (non pondérée par abondance)",
+            info=I02_MEDIANE_INFO,
+            description=I02_MEDIANE_DESCRIPTION,
             type=VizBlockType.bar_chart,
             params={
                 "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Moyenne HE par quadrat (non pondérée par abondance)",
+            info=I02_LINECHART_INFO,
+            description=I02_LINECHART_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(linechart_block)
+        table_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Moyenne HE par quadrat (non pondérée par abondance)",
+            info=I02_TABLE_INFO,
+            description=I02_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(table_block)
 
-    return scalar_block, barchart_block
+    return scalar_block, barchart_block, table_block, linechart_block
+
+
+I02_OVERVIEW_TABLE_INFO = """Pour analyser une tendance, il faut
+disposer d’au moins trois campagnes de suivi. L’évolution observée peut alors indiquer une tendance
+à la hausse, à la baisse ou une relative stabilité de l’indicateur.<br><br>
+
+Une différence entre deux campagnes ne traduit cependant pas nécessairement un changement
+significatif du fonctionnement de la zone humide. Les résultats des tests statistiques présentés
+plus bas dans la calculatrice doivent être consultés afin d’évaluer la significativité des
+différences observées.<br><br>
+
+L’indicateur I02 de MhéO constitue un outil de suivi et d’alerte : il permet de mettre en évidence
+une évolution, mais ne permet pas, à lui seul, d’en déterminer la cause. En cas de changement,
+l’interprétation doit être complétée par une analyse du contexte de la zone humide et de son
+évolution.<br>
+De nombreux facteurs peuvent être à l’origine des changements observés : modifications de
+l’occupation du sol ou du tissu urbain, drainage agricole, prélèvements ou pompages d’eau,
+travaux de gestion, évolution climatique, conditions particulières lors des différentes campagnes
+de terrain, etc. Cette liste n’est pas exhaustive : d’autres facteurs, propres au contexte local
+et au fonctionnement de chaque zone humide, peuvent également expliquer l’évolution de
+l’indicateur.<br>
+Ces éléments permettent de rechercher les facteurs susceptibles d’expliquer l’évolution observée
+et d’orienter, si nécessaire, des analyses complémentaires ou la potentielle nécessité de
+réaliser des travaux."""
+
+I02_OVERVIEW_TABLE_DESCRIPTION = """Tableau synthèse de l’évolution de l’indicateur au
+cours du temps.<br>
+Ce bloc présente la note de l’indicateur obtenue à chaque campagne de suivi, correspondant à la
+médiane des valeurs calculées pour l’ensemble des quadrats (en tenant compte de l’abondance des
+espèces)."""
+
+I02_OVERVIEW_EVOLUTION_INFO = """Le graphique permet de visualiser l’évolution de
+l’indicateur au cours du temps."""
+
+I02_OVERVIEW_EVOLUTION_DESCRIPTION = """Courbe d’évolution de l’indicateur au cours du temps."""
+
+
+def install_i02_overview_visualization_config(indicators):
+    i02 = indicators["i02"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Médiane des valeurs HE des quadrats par année",
+            info=I02_OVERVIEW_TABLE_INFO,
+            description=I02_OVERVIEW_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "tableau_médianes",
+            },
+        )
+        db.session.add(scalar_block)
+        line_chart_block = VizBlockConfig(
+            id_indicator=i02.id_indicator,
+            title="Évolution de la valeur de l'indicateur",
+            info=I02_OVERVIEW_EVOLUTION_INFO,
+            description=I02_OVERVIEW_EVOLUTION_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "évolution",
+            },
+        )
+        db.session.add(line_chart_block)
+
+    return scalar_block, line_chart_block
+
+
+I06_MEDIANE_INFO = """La médiane des valeurs de fertilité HT calculées pour l’ensemble des quadrats
+correspond à la note de l’indicateur à l’échelle du site, sans tenir compte de l’abondance des
+espèces.<br><br>
+
+Elle correspond à la valeur qui partage les quadrats en deux groupes de même effectif : 50 %
+présentent une valeur de fertilité inférieure ou égale à la médiane et 50 % une valeur supérieure ou
+égale.<br><br>
+
+Elle permet de caractériser la tendance globale du niveau de fertilité du sol. Son évolution entre
+plusieurs campagnes de suivi permet d’apprécier l’évolution de la disponibilité en nutriments du
+site."""
+
+I06_MEDIANE_DESCRIPTION = """Note de l’indicateur à l’échelle du site, calculée à partir de la
+médiane des valeurs de fertilité HT des quadrats."""
+
+I06_BARCHART_INFO = """La disponibilité des nutriments dans le sol, principalement l’azote et le
+phosphore, influence la composition de la végétation. Les espèces végétales étant plus ou moins
+adaptées à des sols riches en nutriments, leur présence permet d’estimer indirectement le niveau de
+fertilité du sol à partir de leur valeur indicatrice.<br><br>
+
+Pour chaque quadrat, une valeur de fertilité HT est calculée à partir des valeurs indicatrices de
+fertilité des espèces végétales présentes, sans tenir compte de leur abondance ou de leur
+recouvrement.<br><br>
+
+HT = Σ(xi) / n<br>
+<em><strong>xi</strong> est la valeur indicatrice de fertilité de l’espèce i. </em><br>
+<em><strong>n</strong> est le nombre total d’espèces prises en compte dans le quadrat.</em><br><br>
+
+Chaque espèce contribue ainsi de manière identique au calcul. L’indice varie de 1 pour les sites
+très pauvres en nutriments à 9 pour les sites très riches en nutriments.<br><br>
+
+L’histogramme représente la valeur HT obtenue pour chaque quadrat. Il permet de comparer les
+quadrats entre eux et de visualiser la variabilité de la fertilité du sol au sein du site."""
+
+I06_BARCHART_DESCRIPTION = """Valeur de fertilité du sol calculée pour chaque quadrat sans tenir
+compte de l’abondance des espèces."""
+
+I06_LINECHART_INFO = """Cette représentation reprend les valeurs de fertilité HT calculées pour
+chaque quadrat et présentées dans l’histogramme ci-dessus. La courbe offre une autre visualisation
+de la variabilité des valeurs entre les différents quadrats du site."""
+
+I06_LINECHART_DESCRIPTION = """Courbe permettant la visualisation des valeurs de fertilité HT par
+quadrats pour 1 année."""
+
+I06_TABLE_INFO = """Ce tableau reprend les valeurs de fertilité HT calculées pour chaque quadrat et
+permet de consulter précisément la valeur obtenue pour chacun d’entre eux."""
+
+I06_TABLE_DESCRIPTION = """Tableau permettant la visualisation des valeurs de fertilité HT par
+quadrats pour 1 année."""
 
 
 def install_i06_visualization_config(indicators):
@@ -1002,8 +1384,8 @@ def install_i06_visualization_config(indicators):
         scalar_block = VizBlockConfig(
             id_indicator=i06.id_indicator,
             title="Médiane HT",
-            info="???",
-            description="???",
+            info=I06_MEDIANE_INFO,
+            description=I06_MEDIANE_DESCRIPTION,
             type=VizBlockType.scalar,
             params={
                 "variable": "médiane",
@@ -1013,16 +1395,158 @@ def install_i06_visualization_config(indicators):
         barchart_block = VizBlockConfig(
             id_indicator=i06.id_indicator,
             title="Moyenne HT",
-            info="???",
-            description="???",
+            info=I06_BARCHART_INFO,
+            description=I06_BARCHART_DESCRIPTION,
             type=VizBlockType.bar_chart,
             params={
                 "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i06.id_indicator,
+            title="Moyenne HT par quadrat (pondérée par abondance)",
+            info=I06_LINECHART_INFO,
+            description=I06_LINECHART_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(linechart_block)
+        table_block = VizBlockConfig(
+            id_indicator=i06.id_indicator,
+            title="Moyenne HT par quadrat (pondérée par abondance)",
+            info=I06_TABLE_INFO,
+            description=I06_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(table_block)
 
-    return scalar_block, barchart_block
+    return scalar_block, barchart_block, table_block, linechart_block
+
+
+I06_OVERVIEW_TABLE_INFO = """Pour analyser une tendance, il faut disposer d’au moins trois campagnes
+de suivi. L’évolution observée peut alors indiquer une tendance à la hausse, à la baisse ou une
+relative stabilité de l’indicateur.<br><br>
+
+Une différence entre deux campagnes ne traduit cependant pas nécessairement un changement
+significatif du fonctionnement de la zone humide. Les résultats des tests statistiques présentés
+plus bas dans la calculatrice doivent être consultés afin d’évaluer la significativité des
+différences observées.<br><br>
+
+L’indicateur I06 de MhéO constitue un outil de suivi et d’alerte : il permet de mettre en évidence
+une évolution de la fertilité du sol, mais ne permet pas, à lui seul, d’en déterminer la cause. En
+cas de changement, l’interprétation doit être complétée par une analyse du contexte de la zone
+humide et de son évolution.<br><br>
+
+De nombreux facteurs peuvent être à l’origine des changements observés : évolution des pratiques
+agricoles, apports de nutriments, modification des écoulements ou du fonctionnement hydrologique,
+changements d’occupation du sol, travaux de gestion, etc. Cette liste n’est pas exhaustive :
+d’autres facteurs, propres au contexte local et au fonctionnement de chaque zone humide, peuvent
+également expliquer l’évolution de l’indicateur.<br><br>
+
+Ces éléments permettent de rechercher les facteurs susceptibles d’expliquer l’évolution observée et
+d’orienter, si nécessaire, des analyses complémentaires ou la potentielle nécessité de réaliser des
+travaux."""
+
+I06_OVERVIEW_TABLE_DESCRIPTION = """Tableau synthèse de l’évolution de l’indicateur au cours du
+temps.<br>
+Ce bloc présente la note de l’indicateur obtenue à chaque campagne de suivi, correspondant à la
+médiane des valeurs de fertilité du sol calculées pour l’ensemble des quadrats en tenant compte de
+l’abondance des espèces. """
+
+I06_OVERVIEW_EVOLUTION_INFO = """Le graphique permet de visualiser son évolution au cours du
+temps."""
+
+I06_OVERVIEW_EVOLUTION_DESCRIPTION = """Courbe d’évolution de l’indicateur au cours du temps."""
+
+
+def install_i06_overview_visualization_config(indicators):
+    i06 = indicators["i06"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i06.id_indicator,
+            title="Médiane des valeurs HT des quadrats par année",
+            info=I06_OVERVIEW_TABLE_INFO,
+            description=I06_OVERVIEW_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "tableau_médianes",
+            },
+        )
+        db.session.add(scalar_block)
+        line_chart_block = VizBlockConfig(
+            id_indicator=i06.id_indicator,
+            title="Évolution de la valeur de l'indicateur",
+            info=I06_OVERVIEW_EVOLUTION_INFO,
+            description=I06_OVERVIEW_EVOLUTION_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "évolution",
+            },
+        )
+        db.session.add(line_chart_block)
+
+    return scalar_block, line_chart_block
+
+
+I06_ABONDANCE_MEDIANE_INFO = """La médiane des valeurs de fertilité HT calculées pour l’ensemble des
+quadrats correspond à la note de l’indicateur à l’échelle du site en tenant compte de l’abondance
+des espèces.<br><br>
+
+Elle correspond à la valeur qui partage les quadrats en deux groupes de même effectif : 50 %
+présentent une valeur de fertilité inférieure ou égale à la médiane et 50 % une valeur supérieure ou
+égale.<br><br>
+
+Elle permet de caractériser la tendance globale du niveau de fertilité du sol. Son évolution entre
+plusieurs campagnes de suivi permet d’apprécier l’évolution de la disponibilité en nutriments du
+site."""
+
+I06_ABONDANCE_MEDIANE_DESCRIPTION = """Note de l’indicateur à l’échelle du site, calculée à partir
+de la médiane des valeurs HT des quadrats."""
+
+I06_ABONDANCE_BARCHART_INFO = """La disponibilité des nutriments dans le sol, principalement l’azote
+et le phosphore, influence la composition de la végétation. Les espèces végétales étant plus ou
+moins adaptées à des sols riches en nutriments, leur présence permet d’estimer indirectement le
+niveau de fertilité du sol à partir de leur valeur indicatrice.<br><br>
+
+Pour chaque quadrat, une valeur de fertilité HT est calculée à partir des valeurs indicatrices de
+fertilité des espèces végétales présentes, pondérées par leur abondance ou leur
+recouvrement.<br><br>
+
+HT = Σ (rij × xi) / Σ (rij)
+<em><strong>rij</strong> est l’abondance (ou le recouvrement) de l’espèce i dans le relevé j.
+</em><br>
+<em><strong>xi</strong> est la valeur indicatrice de fertilité de l’espèce i.</em><br><br>
+
+Les espèces les plus abondantes contribuent ainsi davantage au calcul que les espèces peu
+représentées. L’indice varie de 1 pour les sites très pauvres en nutriments à 9 pour les sites très
+riches en nutriments.<br><br>
+
+L’histogramme représente la valeur HT obtenue pour chaque quadrat. Il permet de comparer les
+quadrats entre eux et de visualiser la variabilité de la fertilité du sol au sein du site."""
+
+I06_ABONDANCE_BARCHART_DESCRIPTION = """Valeur de fertilité du sol calculée pour chaque quadrat en
+tenant compte de l’abondance des espèces."""
+
+I06_ABONDANCE_LINECHART_INFO = """Cette représentation reprend les valeurs de fertilité HT calculées
+pour chaque quadrat et présentées dans l’histogramme ci-dessus. La courbe offre une autre
+visualisation de la variabilité des valeurs entre les différents quadrats du site."""
+
+I06_ABONDANCE_LINECHART_DESCRIPTION = """Courbe permettant la visualisation des valeurs HT par
+quadrats pour 1 année."""
+
+I06_ABONDANCE_TABLE_INFO = """Ce tableau reprend les valeurs de fertilité HT calculées pour chaque
+quadrat et permet de consulter précisément la valeur obtenue pour chacun d’entre eux."""
+
+I06_ABONDANCE_TABLE_DESCRIPTION = """Tableau permettant la visualisation des valeurs HT par quadrats
+pour 1 année."""
 
 
 def install_i06_abondance_visualization_config(indicators):
@@ -1031,8 +1555,8 @@ def install_i06_abondance_visualization_config(indicators):
         scalar_block = VizBlockConfig(
             id_indicator=i06_abondance.id_indicator,
             title="Médiane HT",
-            info="???",
-            description="???",
+            info=I06_ABONDANCE_MEDIANE_INFO,
+            description=I06_ABONDANCE_MEDIANE_DESCRIPTION,
             type=VizBlockType.scalar,
             params={
                 "variable": "médiane",
@@ -1041,17 +1565,107 @@ def install_i06_abondance_visualization_config(indicators):
         db.session.add(scalar_block)
         barchart_block = VizBlockConfig(
             id_indicator=i06_abondance.id_indicator,
-            title="Moyenne HT (pondérée par abondance)",
-            info="???",
-            description="???",
+            title="Moyenne HT",
+            info=I06_ABONDANCE_BARCHART_INFO,
+            description=I06_ABONDANCE_BARCHART_DESCRIPTION,
             type=VizBlockType.bar_chart,
             params={
                 "variable": "moyenne_viz_data",
             },
         )
         db.session.add(barchart_block)
+        linechart_block = VizBlockConfig(
+            id_indicator=i06_abondance.id_indicator,
+            title="Moyenne HT par quadrat (pondérée par abondance)",
+            info=I06_ABONDANCE_LINECHART_INFO,
+            description=I06_ABONDANCE_LINECHART_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(linechart_block)
+        table_block = VizBlockConfig(
+            id_indicator=i06_abondance.id_indicator,
+            title="Moyenne HT par quadrat (pondérée par abondance)",
+            info=I06_ABONDANCE_TABLE_INFO,
+            description=I06_ABONDANCE_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            params={
+                "variable": "moyenne_viz_data",
+            },
+        )
+        db.session.add(table_block)
 
-    return scalar_block, barchart_block
+    return scalar_block, barchart_block, table_block, linechart_block
+
+
+I06_ABONDANCE_OVERVIEW_TABLE_INFO = """Pour analyser une tendance, il faut disposer d’au moins trois
+campagnes de suivi. L’évolution observée peut alors indiquer une tendance à la hausse, à la baisse
+ou une relative stabilité de l’indicateur.<br><br>
+
+Une différence entre deux campagnes ne traduit cependant pas nécessairement un changement
+significatif du fonctionnement de la zone humide. Les résultats des tests statistiques présentés
+plus bas dans la calculatrice doivent être consultés afin d’évaluer la significativité des
+différences observées.<br><br>
+
+L’indicateur I06 de MhéO constitue un outil de suivi et d’alerte : il permet de mettre en évidence
+une évolution de la fertilité du sol, mais ne permet pas, à lui seul, d’en déterminer la cause. En
+cas de changement, l’interprétation doit être complétée par une analyse du contexte de la zone
+humide et de son évolution.<br><br>
+
+De nombreux facteurs peuvent être à l’origine des changements observés : évolution des pratiques
+agricoles, apports de nutriments, modification des écoulements ou du fonctionnement hydrologique,
+changements d’occupation du sol, travaux de gestion, etc. Cette liste n’est pas exhaustive :
+d’autres facteurs, propres au contexte local et au fonctionnement de chaque zone humide, peuvent
+également expliquer l’évolution de l’indicateur.<br><br>
+
+Ces éléments permettent de rechercher les facteurs susceptibles d’expliquer l’évolution observée et
+d’orienter, si nécessaire, des analyses complémentaires ou la potentielle nécessité de réaliser des
+travaux."""
+
+I06_ABONDANCE_OVERVIEW_TABLE_DESCRIPTION = """Tableau synthèse de l’évolution de l’indicateur au
+cours du temps.<br>
+Ce bloc présente la note de l’indicateur obtenue à chaque campagne de suivi, correspondant à la
+médiane des valeurs de fertilité du sol calculées pour l’ensemble des quadrats sans tenir compte de
+l’abondance des espèces. """
+
+I06_ABONDANCE_OVERVIEW_EVOLUTION_INFO = """Le graphique permet de visualiser son évolution au cours
+du temps."""
+
+I06_ABONDANCE_OVERVIEW_EVOLUTION_DESCRIPTION = """Courbe d’évolution de l’indicateur au cours du
+temps."""
+
+
+def install_i06_abondance_overview_visualization_config(indicators):
+    i06_abondance = indicators["i06_abondance"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i06_abondance.id_indicator,
+            title="Médiane des valeurs HT des quadrats par année",
+            info=I06_ABONDANCE_OVERVIEW_TABLE_INFO,
+            description=I06_ABONDANCE_OVERVIEW_TABLE_DESCRIPTION,
+            type=VizBlockType.table,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "tableau_médianes",
+            },
+        )
+        db.session.add(scalar_block)
+        line_chart_block = VizBlockConfig(
+            id_indicator=i06_abondance.id_indicator,
+            title="Évolution de la valeur de l'indicateur",
+            info=I06_ABONDANCE_OVERVIEW_EVOLUTION_INFO,
+            description=I06_ABONDANCE_OVERVIEW_EVOLUTION_DESCRIPTION,
+            type=VizBlockType.line_chart,
+            scope=VizBlockScope.overview,
+            params={
+                "variable": "évolution",
+            },
+        )
+        db.session.add(line_chart_block)
+
+    return scalar_block, line_chart_block
 
 
 def install_all_test_sample_objects():
@@ -1072,5 +1686,8 @@ def install_all_test_sample_objects():
     install_i02_abondance_overview_visualization_config(indicators)
     install_i02_abondance_statistical_tests_visualization_config(indicators)
     install_i02_visualization_config(indicators)
+    install_i02_overview_visualization_config(indicators)
     install_i06_visualization_config(indicators)
+    install_i06_overview_visualization_config(indicators)
     install_i06_abondance_visualization_config(indicators)
+    install_i06_abondance_overview_visualization_config(indicators)
