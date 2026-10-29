@@ -558,6 +558,14 @@ def get_variables_for_cramer_v(counts0, counts1):
 
 cramer_v_variables = get_variables_for_cramer_v(he_counts_0, he_counts_1)
 cramer_v = scipy.stats.contingency.association(cramer_v_variables, method="cramer")
+
+##################
+# Test de Wilcoxon
+##################
+
+he0 = [float(v.value) for v in campaigns[0].vars.moyenne.values]
+he1 = [float(v.value) for v in campaigns[1].vars.moyenne.values]
+wilcoxon = scipy.stats.wilcoxon(he0, he1, zero_method="zsplit").statistic
 """
 
 CODE_I06 = """valeurs_ht = gn_extract(
@@ -780,7 +788,7 @@ distributions diffèrent.<br>
 Si le V de Cramer est inférieur à 0,1 alors le test n’est pas validé.
 """
         db.session.add(scalar_block)
-        scalar_block = VizBlockConfig(
+        cramer_v_scalar_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Test V de Cramer",
             info="???",
@@ -791,8 +799,172 @@ Si le V de Cramer est inférieur à 0,1 alors le test n’est pas validé.
                 "variable": "cramer_v",
             },
         )
-        db.session.add(scalar_block)
-    return scalar_block
+        db.session.add(cramer_v_scalar_block)
+        description_wilcoxon = """<table border="1" cellpadding="10" cellspacing="0"
+    style="border-collapse: collapse; font-family: Arial, sans-serif;">
+    <thead>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th rowspan="0">N</th>
+        <th colspan="3" style="text-align: center;">Niveau de signification, test unilatéral</th>
+    </tr>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th>0,025</th>
+        <th>0,01</th>
+        <th>0,005</th>
+    </tr>
+    <tr>
+        <th colspan="3" style="text-align: center;">Niveau de signification, test bilatéral</th>
+    </tr>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th>0,05</th>
+        <th>0,02</th>
+        <th>0,01</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr style="background-color: #f5f5f5;">
+        <td>6</td>
+        <td>0</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>2</td>
+        <td>0</td>
+        <td></td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>8</td>
+        <td>4</td>
+        <td>2</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td>9</td>
+        <td>6</td>
+        <td>3</td>
+        <td>2</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>10</td>
+        <td>8</td>
+        <td>5</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>11</td>
+        <td>11</td>
+        <td>7</td>
+        <td>5</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>12</td>
+        <td>14</td>
+        <td>10</td>
+        <td>7</td>
+    </tr>
+    <tr>
+        <td>13</td>
+        <td>17</td>
+        <td>13</td>
+        <td>10</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>14</td>
+        <td>21</td>
+        <td>16</td>
+        <td>13</td>
+    </tr>
+    <tr>
+        <td>15</td>
+        <td>25</td>
+        <td>20</td>
+        <td>16</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>16</td>
+        <td>30</td>
+        <td>24</td>
+        <td>20</td>
+    </tr>
+    <tr>
+        <td>17</td>
+        <td>35</td>
+        <td>28</td>
+        <td>23</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>18</td>
+        <td>40</td>
+        <td>33</td>
+        <td>28</td>
+    </tr>
+    <tr>
+        <td>19</td>
+        <td>46</td>
+        <td>38</td>
+        <td>32</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>20</td>
+        <td>52</td>
+        <td>43</td>
+        <td>38</td>
+    </tr>
+    <tr>
+        <td>21</td>
+        <td>59</td>
+        <td>49</td>
+        <td>43</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>22</td>
+        <td>66</td>
+        <td>56</td>
+        <td>49</td>
+    </tr>
+    <tr>
+        <td>23</td>
+        <td>73</td>
+        <td>62</td>
+        <td>55</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>24</td>
+        <td>81</td>
+        <td>69</td>
+        <td>61</td>
+    </tr>
+    <tr>
+        <td>25</td>
+        <td>89</td>
+        <td>77</td>
+        <td>68</td>
+    </tr>
+    </tbody>
+</table>
+
+N = le nombre de quadrats<br>
+Il faut regarder la ligne correspondant au nombre de quadrats réalisés sur la zone humide.<br>
+Si les deux valeurs (rang positif et rang négatif) sont supérieures à toutes les limites alors
+la différence entre les deux années n’est pas significative, l’indicateur est stable.<br>
+Si une des valeurs (rang positif ou rang négatif) est inférieur à une des limites alors la
+différence entre les deux années est significative. L’indicateur montre une évolution."""
+        wilcoxon_scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Test de Wilcoxon",
+            info="???",
+            description=description_wilcoxon,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "wilcoxon",
+            },
+        )
+        db.session.add(wilcoxon_scalar_block)
+
+    return scalar_block, cramer_v_scalar_block, wilcoxon_scalar_block
 
 
 def install_i02_visualization_config(indicators):
