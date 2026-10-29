@@ -1215,7 +1215,7 @@ class TestGetIndicatorDetails:
         assert response.status_code == 200
         data = response.json
         assert data["statisticalTestsSourceCode"] == i02_abondance.statistical_tests_source_code
-        assert len(data["statisticalTestsVisualizationBlockConfigs"]) == 2
+        assert len(data["statisticalTestsVisualizationBlockConfigs"]) == 3
 
     @pytest.mark.usefixtures("calculatrice_permissions", "users")
     def test_get_indicator_details_login_required_error(self, client, indicators):
@@ -1761,6 +1761,8 @@ class TestGetIndicatorStatisticalTestsCodeVariables:
             "he_counts_1",
             "i",
             "is_last",
+            "moyenne_he0",
+            "moyenne_he1",
             "médiane0",
             "médiane1",
             "nb_classes",
@@ -1771,6 +1773,7 @@ class TestGetIndicatorStatisticalTestsCodeVariables:
             "value0",
             "value1",
             "variables",
+            "wilcoxon",
             "écart",
         ]
 
