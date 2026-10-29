@@ -960,49 +960,22 @@ def install_i02_abondance_overview_visualization_config(indicators):
     return scalar_block, line_chart_block
 
 
-def install_i02_abondance_statistical_tests_visualization_config(indicators):
-    i02_abondance = indicators["i02_abondance"]
-    with db.session.begin_nested():
-        description = (
-            "Si l’écart est inférieur à 0,3 alors le test n’est pas validé. "
-            "Si deux des trois tests statistiques ne sont pas validés alors "
-            "il n’y a pas d’évolution significative entre les deux dates. "
-            "L’indicateur est stable."
-        )
-        scalar_block = VizBlockConfig(
-            id_indicator=i02_abondance.id_indicator,
-            title="Écart des médianes",
-            info="???",
-            description=description,
-            type=VizBlockType.scalar,
-            scope=VizBlockScope.statistical_tests,
-            params={
-                "variable": "écart",
-            },
-        )
-        description_v_cramer = """Le coefficient V de Cramer (entre 0 et 1) mesure si les
-distributions diffèrent.<br>
+I02_ABONDANCE_STAT_TESTS_ECART_DESCRIPTION = """Si l’écart est inférieur à 0,3 alors le test n’est
+pas validé.<br>
+Si deux des trois tests statistiques ne sont pas validés alors il n’y a pas d’évolution
+significative entre les deux dates. L’indicateur est stable."""
+
+I02_ABONDANCE_STAT_TESTS_CRAMER_DESCRIPTION = """Le coefficient V de Cramer (entre 0 et 1) mesure
+si les distributions diffèrent.<br>
 • Association forte si V > 0.5<br>
 • Association modérée si V compris entre 0.3 et 0.5<br>
 • Association faible si V compris entre 0.1 et 0.3<br>
 • Pas d’association si V < 0.1<br>
 Si le V de Cramer est inférieur à 0,1 alors le test n’est pas validé.
 """
-        db.session.add(scalar_block)
-        cramer_v_scalar_block = VizBlockConfig(
-            id_indicator=i02_abondance.id_indicator,
-            title="Test V de Cramer",
-            info="???",
-            description=description_v_cramer,
-            type=VizBlockType.scalar,
-            scope=VizBlockScope.statistical_tests,
-            params={
-                "variable": "cramer_v",
-            },
-        )
-        db.session.add(cramer_v_scalar_block)
-        description_wilcoxon = """<table border="1" cellpadding="10" cellspacing="0"
-    style="border-collapse: collapse; font-family: Arial, sans-serif;">
+
+I02_ABONDANCE_STAT_TESTS_WILCOXON_DESCRIPTION = """<table border="1" cellpadding="10"
+    cellspacing="0" style="border-collapse: collapse; font-family: Arial, sans-serif;">
     <thead>
     <tr style="background-color: #4a9b8e; color: white;">
         <th rowspan="0">N</th>
@@ -1152,11 +1125,40 @@ Si les deux valeurs (rang positif et rang négatif) sont supérieures à toutes 
 la différence entre les deux années n’est pas significative, l’indicateur est stable.<br>
 Si une des valeurs (rang positif ou rang négatif) est inférieur à une des limites alors la
 différence entre les deux années est significative. L’indicateur montre une évolution."""
+
+
+def install_i02_abondance_statistical_tests_visualization_config(indicators):
+    i02_abondance = indicators["i02_abondance"]
+    with db.session.begin_nested():
+        scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Écart des médianes",
+            info="???",
+            description=I02_ABONDANCE_STAT_TESTS_ECART_DESCRIPTION,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "écart",
+            },
+        )
+        db.session.add(scalar_block)
+        cramer_v_scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Test V de Cramer",
+            info="???",
+            description=I02_ABONDANCE_STAT_TESTS_CRAMER_DESCRIPTION,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "cramer_v",
+            },
+        )
+        db.session.add(cramer_v_scalar_block)
         wilcoxon_scalar_block = VizBlockConfig(
             id_indicator=i02_abondance.id_indicator,
             title="Test de Wilcoxon",
             info="???",
-            description=description_wilcoxon,
+            description=I02_ABONDANCE_STAT_TESTS_WILCOXON_DESCRIPTION,
             type=VizBlockType.scalar,
             scope=VizBlockScope.statistical_tests,
             params={
