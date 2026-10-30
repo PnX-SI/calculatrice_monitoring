@@ -502,6 +502,70 @@ tableau_médianes = {
 STATISTICAL_TESTS_CODE_I02_ABONDANCE = """médiane0 = campaigns[0].vars.médiane.values[0].value
 médiane1 = campaigns[1].vars.médiane.values[0].value
 écart = abs(médiane1 - médiane0)
+
+#########################
+# Calculer le V de Cramer
+#########################
+
+# Valeurs HE de chaque campagne
+he_0 = [pv.value for pv in campaigns[0].vars.valeurs_he.values if pv.value is not None]
+he_1 = [pv.value for pv in campaigns[1].vars.valeurs_he.values if pv.value is not None]
+
+# Décomptes des occurences par classe et par campagne
+he_counts_0 = collections.Counter(he_0)
+he_counts_1 = collections.Counter(he_1)
+
+def get_variables_for_cramer_v(counts0, counts1):
+    # Nombre de classes pour les valeurs HE
+    nb_classes = 9
+
+    # Apparie les nombres d'occurences par classe de chaque campagne
+    variables = []
+    for i in range(1, nb_classes - 1):
+        value0 = counts0.get(str(i), 0)
+        value1 = counts1.get(str(i), 0)
+        if value0 != 0 or value1 != 0:
+            variables.append([value0, value1])
+
+    # Fusionne les classes avec moins de 5 occurences au total
+    # avec la classe adjacente.
+    i = 0
+    while i < len(variables):
+        if len(variables) == 1:
+            break
+        value0, value1 = variables[i]
+        if value0 + value1 < 5:
+            is_last = i == len(variables) - 1
+            if not is_last:
+                # merge forward
+                next0, next1 = variables[i + 1]
+                variables[i + 1] = [next0 + value0, next1 + value1]
+                variables.pop(i)
+            else:
+                # merge backward
+                prev0, prev1 = variables[i - 1]
+                variables[i - 1] = [prev0 + value0, prev1 + value1]
+                variables.pop(i)
+        else:
+            i += 1
+
+    if len(variables) == 1:
+        value0, value1 = variables[0]
+        if value0 + value1 < 5:
+            raise IndicatorError("Il n'y a pas assez de données pour réaliser le test V de Cramer")
+
+    return variables
+
+cramer_v_variables = get_variables_for_cramer_v(he_counts_0, he_counts_1)
+cramer_v = scipy.stats.contingency.association(cramer_v_variables, method="cramer")
+
+##################
+# Test de Wilcoxon
+##################
+
+he0 = [float(v.value) for v in campaigns[0].vars.moyenne.values]
+he1 = [float(v.value) for v in campaigns[1].vars.moyenne.values]
+wilcoxon = scipy.stats.wilcoxon(he0, he1, zero_method="zsplit").statistic
 """
 
 CODE_I06 = """valeurs_ht = gn_extract(
@@ -715,8 +779,192 @@ def install_i02_abondance_statistical_tests_visualization_config(indicators):
                 "variable": "écart",
             },
         )
+        description_v_cramer = """Le coefficient V de Cramer (entre 0 et 1) mesure si les
+distributions diffèrent.<br>
+• Association forte si V > 0.5<br>
+• Association modérée si V compris entre 0.3 et 0.5<br>
+• Association faible si V compris entre 0.1 et 0.3<br>
+• Pas d’association si V < 0.1<br>
+Si le V de Cramer est inférieur à 0,1 alors le test n’est pas validé.
+"""
         db.session.add(scalar_block)
-    return scalar_block
+        cramer_v_scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Test V de Cramer",
+            info="???",
+            description=description_v_cramer,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "cramer_v",
+            },
+        )
+        db.session.add(cramer_v_scalar_block)
+        description_wilcoxon = """<table border="1" cellpadding="10" cellspacing="0"
+    style="border-collapse: collapse; font-family: Arial, sans-serif;">
+    <thead>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th rowspan="0">N</th>
+        <th colspan="3" style="text-align: center;">Niveau de signification, test unilatéral</th>
+    </tr>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th>0,025</th>
+        <th>0,01</th>
+        <th>0,005</th>
+    </tr>
+    <tr>
+        <th colspan="3" style="text-align: center;">Niveau de signification, test bilatéral</th>
+    </tr>
+    <tr style="background-color: #4a9b8e; color: white;">
+        <th>0,05</th>
+        <th>0,02</th>
+        <th>0,01</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr style="background-color: #f5f5f5;">
+        <td>6</td>
+        <td>0</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>2</td>
+        <td>0</td>
+        <td></td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>8</td>
+        <td>4</td>
+        <td>2</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td>9</td>
+        <td>6</td>
+        <td>3</td>
+        <td>2</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>10</td>
+        <td>8</td>
+        <td>5</td>
+        <td>3</td>
+    </tr>
+    <tr>
+        <td>11</td>
+        <td>11</td>
+        <td>7</td>
+        <td>5</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>12</td>
+        <td>14</td>
+        <td>10</td>
+        <td>7</td>
+    </tr>
+    <tr>
+        <td>13</td>
+        <td>17</td>
+        <td>13</td>
+        <td>10</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>14</td>
+        <td>21</td>
+        <td>16</td>
+        <td>13</td>
+    </tr>
+    <tr>
+        <td>15</td>
+        <td>25</td>
+        <td>20</td>
+        <td>16</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>16</td>
+        <td>30</td>
+        <td>24</td>
+        <td>20</td>
+    </tr>
+    <tr>
+        <td>17</td>
+        <td>35</td>
+        <td>28</td>
+        <td>23</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>18</td>
+        <td>40</td>
+        <td>33</td>
+        <td>28</td>
+    </tr>
+    <tr>
+        <td>19</td>
+        <td>46</td>
+        <td>38</td>
+        <td>32</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>20</td>
+        <td>52</td>
+        <td>43</td>
+        <td>38</td>
+    </tr>
+    <tr>
+        <td>21</td>
+        <td>59</td>
+        <td>49</td>
+        <td>43</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>22</td>
+        <td>66</td>
+        <td>56</td>
+        <td>49</td>
+    </tr>
+    <tr>
+        <td>23</td>
+        <td>73</td>
+        <td>62</td>
+        <td>55</td>
+    </tr>
+    <tr style="background-color: #f5f5f5;">
+        <td>24</td>
+        <td>81</td>
+        <td>69</td>
+        <td>61</td>
+    </tr>
+    <tr>
+        <td>25</td>
+        <td>89</td>
+        <td>77</td>
+        <td>68</td>
+    </tr>
+    </tbody>
+</table>
+
+N = le nombre de quadrats<br>
+Il faut regarder la ligne correspondant au nombre de quadrats réalisés sur la zone humide.<br>
+Si les deux valeurs (rang positif et rang négatif) sont supérieures à toutes les limites alors
+la différence entre les deux années n’est pas significative, l’indicateur est stable.<br>
+Si une des valeurs (rang positif ou rang négatif) est inférieur à une des limites alors la
+différence entre les deux années est significative. L’indicateur montre une évolution."""
+        wilcoxon_scalar_block = VizBlockConfig(
+            id_indicator=i02_abondance.id_indicator,
+            title="Test de Wilcoxon",
+            info="???",
+            description=description_wilcoxon,
+            type=VizBlockType.scalar,
+            scope=VizBlockScope.statistical_tests,
+            params={
+                "variable": "wilcoxon",
+            },
+        )
+        db.session.add(wilcoxon_scalar_block)
+
+    return scalar_block, cramer_v_scalar_block, wilcoxon_scalar_block
 
 
 def install_i02_visualization_config(indicators):

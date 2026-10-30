@@ -1,6 +1,6 @@
 # ruff: noqa: N802  # (N802=Function name should be lowercase)
 # ruff: noqa: PLC2401  # (PLC2401=Function name contains a non-ASCII character)
-
+import collections
 import csv
 import enum
 import statistics
@@ -13,6 +13,7 @@ from enum import Enum
 from io import StringIO
 from typing import Any
 
+import scipy
 from geonature.utils.env import db
 from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import (
@@ -431,6 +432,8 @@ def create_statistical_tests_context(campaign_results):
     context["Scope"] = Scope
     context["gn_extract"] = gn_extract
     context["IndicatorError"] = IndicatorError
+    context["collections"] = collections
+    context["scipy"] = scipy
     return context
 
 

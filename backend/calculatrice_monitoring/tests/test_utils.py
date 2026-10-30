@@ -31,3 +31,19 @@ def foo():
         code = "foo bar"
         names = extract_variable_names(code)
         assert len(names) == 0
+
+    def test_it_with_dereference_assignment(self):
+        code = "foo, bar = [0, 1]"
+        names = extract_variable_names(code)
+        assert len(names) == 2
+        assert "foo" in names
+        assert "bar" in names
+
+    def test_variable_is_returned_once(self):
+        code = """
+foo = 1
+foo = 2
+"""
+        names = extract_variable_names(code)
+        assert len(names) == 1
+        assert names[0] == "foo"
