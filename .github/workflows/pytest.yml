@@ -20,6 +20,11 @@ on:
       - 'backend/**'
       - '.github/workflows/pytest.yml'
 
+# Cancel superseded runs, including the duplicate push/pull_request run on a PR branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
