@@ -138,15 +138,28 @@ def install_test_permissions(protocols, users):
                 users["gestionnaire"], gestionnaire_protocol, "R", "MONITORINGS_SITES", scope=2
             )
         for admin_protocol in protocols.values():
-            add_permission(
-                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_MODULES", scope=None
-            )
-            add_permission(
-                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_GRP_SITES", scope=None
-            )
-            add_permission(
-                users["admin"], admin_protocol.module_code, "R", "MONITORINGS_SITES", scope=None
-            )
+            for admin_action in ["C", "R", "U", "D"]:
+                add_permission(
+                    users["admin"],
+                    admin_protocol.module_code,
+                    admin_action,
+                    "MONITORINGS_MODULES",
+                    scope=None,
+                )
+                add_permission(
+                    users["admin"],
+                    admin_protocol.module_code,
+                    admin_action,
+                    "MONITORINGS_GRP_SITES",
+                    scope=None,
+                )
+                add_permission(
+                    users["admin"],
+                    admin_protocol.module_code,
+                    admin_action,
+                    "MONITORINGS_SITES",
+                    scope=None,
+                )
 
 
 def import_data_from_csv(csv_filename):
