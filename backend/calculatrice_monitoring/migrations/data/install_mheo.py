@@ -122,6 +122,7 @@ def install_test_permissions(protocols, users):
         add_permission(users["admin"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(users["admin"], "CALCULATRICE", "U", "CALC_ADMIN_INDICATOR", scope=None)
         add_permission(users["admin"], "CALCULATRICE", "D", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["gestionnaire"], "MONITORINGS", "R", "ALL", scope=1)
         for gestionnaire_protocol in [
             "mheo_amphibiens_test",
             "mheo_flore_test",
