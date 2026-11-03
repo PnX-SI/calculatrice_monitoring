@@ -271,6 +271,7 @@ def configure_mheo_flore_test_protocol(flore_protocol, dataset, flore_site_type)
 
 
 def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore_site_type, users):
+    digitiser = users["gestionnaire"]
     objects_data = import_data_from_csv(csv_filename)
 
     with db.session.begin_nested():
@@ -282,6 +283,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                 group = TMonitoringSitesGroups(
                     sites_group_name=group_data["name"],
                     sites_group_code=group_data["name"].replace(" ", "-").lower(),
+                    digitiser=digitiser,
                 )
                 group.modules = [flore_protocol]
                 db.session.add(group)
@@ -308,6 +310,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                     data={
                         "superficie_mètres_carrés": site_data["superficie_mètres_carrés"],
                     },
+                    digitiser=digitiser,
                 )
                 db.session.add(site)
             else:
@@ -346,6 +349,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                         "diffusion_mesure": visit_data["diffusion_mesure"],
                         "durée_secondes": visit_data["durée_secondes"],
                     },
+                    digitiser=digitiser,
                 )
                 db.session.add(visit)
             else:
@@ -364,7 +368,7 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
             observation = TMonitoringObservations(
                 id_base_visit=visit.id_base_visit,
                 cd_nom=obs_data["cd_nom"],
-                digitiser=users["gestionnaire"],
+                digitiser=digitiser,
                 data={
                     "abondance": obs_data["abondance"],
                     "récolte": obs_data["récolte"],
