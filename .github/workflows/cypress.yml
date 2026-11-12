@@ -131,7 +131,6 @@ jobs:
         run: |
           geonature install-gn-module ${MODULE_DIR} --build=false
           geonature db upgrade calculatrice@head
-          geonature db upgrade calculatrice-samples-test@head
           geonature db autoupgrade
           geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
