@@ -136,6 +136,24 @@ jobs:
           geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+      - name: Install test monitoring protocols and indicators
+        run: |
+          mkdir ${GITHUB_WORKSPACE}/backend/media/monitorings
+          cd ${GITHUB_WORKSPACE}/backend/media/monitorings
+          ln -s ${MODULE_DIR}/calculatrice_monitoring/data/protocols/mheo_amphibiens_test
+          ln -s ${MODULE_DIR}/calculatrice_monitoring/data/protocols/mheo_flore_test
+          ln -s ${MODULE_DIR}/calculatrice_monitoring/data/protocols/mheo_odonate_test
+          ln -s ${MODULE_DIR}/calculatrice_monitoring/data/protocols/mheo_pedologie_test
+          ln -s ${MODULE_DIR}/calculatrice_monitoring/data/protocols/mheo_piezometrie_test
+          geonature monitorings install mheo_amphibiens_test
+          geonature monitorings install mheo_flore_test
+          geonature monitorings install mheo_odonate_test
+          geonature monitorings install mheo_pedologie_test
+          geonature monitorings install mheo_piezometrie_test
+          geonature db upgrade calculatrice-samples-test@head
+#          geonature permissions supergrant --group --nom "Grp_admin" --yes
+        env:
+          GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
 
       # Install frontend deps for GeoNature (with cache)
       - name: Cache node modules for GeoNature
