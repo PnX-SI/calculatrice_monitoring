@@ -5,6 +5,10 @@ export default defineConfig({
     baseUrl: 'http://127.0.0.1:4200',
     specPattern: 'cypress/e2e/**/*spec.{js,jsx,ts,tsx}',
     supportFile: 'cypress/support/geonatureLogin.js',
+    // Some GeoNature pages issue a lot of requests and
+    // take some time to be ready.
+    defaultCommandTimeout: 10000,
+    retries: { runMode: 2, openMode: 0 },
   },
   env: {
     login_url: '/login',
