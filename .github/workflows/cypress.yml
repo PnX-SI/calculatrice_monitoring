@@ -175,23 +175,40 @@ jobs:
 
       # Run GeoNature application & worker
       - name: Run GeoNature backend
-        run: geonature dev_back &
+        run: geonature dev_back > "$RUNNER_TEMP/backend.log" 2>&1 &
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Run celery
-        run: celery -A geonature.celery_app:app worker &
+        run: celery -A geonature.celery_app:app worker > "$RUNNER_TEMP/celery.log" 2>&1 &
         working-directory: ./backend/geonature/
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Run GeoNature frontend
         run: |
           cd ./frontend
-          npm run start &
+          npm run start > "$RUNNER_TEMP/frontend.log" 2>&1 &
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+
+      # Wait for backend and frontend to be reachable
+      - name: Wait for GeoNature backend & frontend
+        run: |
+          npx --yes wait-on@7 \
+            --timeout 600s --interval 5000 --httpTimeout 30000 \
+            http-get://127.0.0.1:8000/gn_commons/config \
+            http-get://127.0.0.1:4200
 
       # Run frontend tests with Cypress
       - name: cypress
         run: |
           cd "${{ env.MODULE_DIR }}/frontend"
           npx cypress run
+
+      # Keep server logs to diagnose failures (e.g. ESOCKETTIMEDOUT)
+      - name: Upload server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-logs
+          path: ${{ runner.temp }}/*.log
+          if-no-files-found: warn
