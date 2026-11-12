@@ -119,7 +119,6 @@ jobs:
           geonature db upgrade occhab-samples@head
           geonature db upgrade import-samples@head
           geonature db autoupgrade
-          geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Install gn_module_monitoring module
@@ -132,7 +131,24 @@ jobs:
           geonature install-gn-module ${MODULE_DIR} --build=false
           geonature db upgrade calculatrice@head
           geonature db autoupgrade
-          geonature permissions supergrant --group --nom "Grp_admin" --yes
+        env:
+          GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+      - name: Install test monitoring protocols and indicators
+        run: |
+          mkdir ${GITHUB_WORKSPACE}/backend/media/monitorings
+          cd ${GITHUB_WORKSPACE}/backend/media/monitorings
+          ln -s ${MODULE_DIR}/data/protocols/mheo_amphibiens_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_flore_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_odonate_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_pedologie_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_piezometrie_test
+          geonature monitorings install mheo_amphibiens_test
+          geonature monitorings install mheo_flore_test
+          geonature monitorings install mheo_odonate_test
+          geonature monitorings install mheo_pedologie_test
+          geonature monitorings install mheo_piezometrie_test
+          geonature db upgrade calculatrice-samples-test@head
+#          geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
 
