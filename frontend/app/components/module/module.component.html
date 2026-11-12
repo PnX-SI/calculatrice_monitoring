@@ -2,7 +2,7 @@
   <div class="admin-actions">
     <button
       *ngIf="canReadReferenceTables()"
-      [routerLink]="['/calculatrice/reference-tables']"
+      [routerLink]="['/calculatrice_monitoring/reference-tables']"
       class="mb-2 mt-2"
       mat-raised-button
       color="primary"
@@ -52,7 +52,7 @@
           <h2>Liste des indicateurs</h2>
           <button
             *ngIf="canCreateIndicator()"
-            [routerLink]="['/calculatrice/indicator/create']"
+            [routerLink]="['/calculatrice_monitoring/indicator/create']"
             mat-raised-button
             color="primary"
           >
@@ -84,7 +84,7 @@
                 <a
                   class="list-item-link"
                   [title]="indicator.name"
-                  [routerLink]="['/calculatrice/visualization', indicator.id, 'params']"
+                  [routerLink]="['/calculatrice_monitoring/visualization', indicator.id, 'params']"
                 >
                   {{ indicator.name }}
                 </a>
@@ -100,7 +100,7 @@
                     mat-icon-button
                     *ngIf="canEditIndicator()"
                     matTooltip="Éditer l'indicateur"
-                    [routerLink]="['/calculatrice/indicator', indicator.id, 'details']"
+                    [routerLink]="['/calculatrice_monitoring/indicator', indicator.id, 'details']"
                   >
                     <mat-icon>edit</mat-icon>
                   </button>

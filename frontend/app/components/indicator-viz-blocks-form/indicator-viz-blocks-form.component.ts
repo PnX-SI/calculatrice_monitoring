@@ -155,7 +155,7 @@ export class IndicatorVizBlocksFormComponent implements OnInit {
         );
       }
       saveObservable$.subscribe(() => {
-        this._router.navigate(['/calculatrice/indicator', this.indicatorDetails.id, 'details']);
+        this._router.navigate(['/calculatrice_monitoring/indicator', this.indicatorDetails.id, 'details']);
       });
     }
   }

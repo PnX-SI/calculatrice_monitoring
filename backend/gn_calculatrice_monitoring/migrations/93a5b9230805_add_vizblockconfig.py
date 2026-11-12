@@ -13,6 +13,7 @@ from alembic import op
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.schema import Column
+from gn_calculatrice_monitoring import SCHEMA
 
 # revision identifiers, used by Alembic.
 revision = "93a5b9230805"
@@ -36,7 +37,7 @@ def upgrade():
         Column(
             "id_indicator",
             sa.Integer,
-            sa.ForeignKey("gn_calculatrice.t_indicators.id_indicator"),
+            sa.ForeignKey(f"{SCHEMA}.t_indicators.id_indicator"),
             nullable=False,
         ),
         Column("title", sa.Unicode(100), nullable=False),
@@ -44,10 +45,10 @@ def upgrade():
         Column("description", sa.Unicode, nullable=False, default=""),
         Column("type", Enum(VizBlockType, inherit_schema=True)),
         Column("params", JSONB),
-        schema="gn_calculatrice",
+        schema=SCHEMA,
     )
 
 
 def downgrade():
-    op.drop_table("t_viz_block_configs", schema="gn_calculatrice")
-    op.execute("DROP TYPE gn_calculatrice.vizblocktype")
+    op.drop_table("t_viz_block_configs", schema=SCHEMA)
+    op.execute(f"DROP TYPE {SCHEMA}.vizblocktype")

@@ -1,7 +1,7 @@
 from geonature.utils.env import ma
 from marshmallow import ValidationError, post_load, validate, validates_schema
 
-from calculatrice_monitoring.models import (
+from gn_calculatrice_monitoring.models import (
     VIZ_BLOCK_CONFIG_PARAMS,
     Indicator,
     ReferenceTable,

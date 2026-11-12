@@ -5,14 +5,14 @@ from decimal import Decimal
 
 import pytest
 
-from calculatrice_monitoring.eval import (
+from gn_calculatrice_monitoring.eval import (
     Scope,
     VisualizationConfigError,
     evaluate,
     format_numbers,
     prepare_table_vizblock_data,
 )
-from calculatrice_monitoring.models import VizBlockConfig
+from gn_calculatrice_monitoring.models import VizBlockConfig
 
 
 class TestEvalIndicator:

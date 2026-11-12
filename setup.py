@@ -12,7 +12,7 @@ with (root_dir / "requirements.txt").open() as f:
 
 
 setuptools.setup(
-    name="calculatrice_monitoring",
+    name="gn_calculatrice_monitoring",
     version=version,
     description="External module 'calculatrice_monitoring' for GeoNature",
     long_description=long_description,
@@ -23,17 +23,17 @@ setuptools.setup(
     packages=setuptools.find_packages("backend"),
     package_dir={"": "backend"},
     package_data={
-        "calculatrice_monitoring.migrations": ["data/*"],
+        "gn_calculatrice_monitoring.migrations": ["data/*"],
     },
     install_requires=requirements,
     zip_safe=False,
     entry_points={
         "gn_module": [
-            "code = calculatrice_monitoring:MODULE_CODE",
-            "picto = calculatrice_monitoring:MODULE_PICTO",
-            "blueprint = calculatrice_monitoring.blueprint:blueprint",
-            "migrations = calculatrice_monitoring:migrations",
-            "alembic_branch = calculatrice_monitoring:ALEMBIC_BRANCH",
+            "code = gn_calculatrice_monitoring:MODULE_CODE",
+            "picto = gn_calculatrice_monitoring:MODULE_PICTO",
+            "blueprint = gn_calculatrice_monitoring.blueprint:blueprint",
+            "migrations = gn_calculatrice_monitoring:migrations",
+            "alembic_branch = gn_calculatrice_monitoring:ALEMBIC_BRANCH",
         ],
     },
     classifiers=[],

@@ -24,14 +24,14 @@ from gn_module_monitoring.monitoring.models import (
 )
 from marshmallow import ValidationError
 
-from calculatrice_monitoring.models import (
+from gn_calculatrice_monitoring.models import (
     Indicator,
     ReferenceTable,
     VizBlockConfig,
     VizBlockScope,
     VizBlockType,
 )
-from calculatrice_monitoring.schemas import HeadersAndRowsSchema, VizDataSchema
+from gn_calculatrice_monitoring.schemas import HeadersAndRowsSchema, VizDataSchema
 
 
 class Scope(Enum):

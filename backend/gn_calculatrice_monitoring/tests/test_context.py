@@ -2,7 +2,7 @@ import datetime
 
 from gn_module_monitoring.monitoring.models import TMonitoringVisits
 
-from calculatrice_monitoring.eval import (
+from gn_calculatrice_monitoring.eval import (
     Observation,
     Scope,
     Site,

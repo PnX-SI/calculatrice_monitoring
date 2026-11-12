@@ -81,7 +81,7 @@ export class IndicatorCodeEditorComponent implements OnInit {
       }
 
       saveObservable$.pipe(catchError(this._utils.handleError)).subscribe(() => {
-        this._router.navigate(['/calculatrice/indicator', this.indicator.id, 'details']);
+        this._router.navigate(['/calculatrice_monitoring/indicator', this.indicator.id, 'details']);
       });
     }
   }

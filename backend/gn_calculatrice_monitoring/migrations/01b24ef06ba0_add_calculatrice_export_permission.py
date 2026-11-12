@@ -7,6 +7,7 @@ Create Date: 2025-09-05 11:51:36.009433
 """
 
 from alembic import op
+from gn_calculatrice_monitoring import MODULE_CODE
 
 # revision identifiers, used by Alembic.
 revision = "01b24ef06ba0"
@@ -15,9 +16,10 @@ branch_labels = None
 depends_on = None
 
 
+
 def upgrade():
     op.execute(
-        """
+        f"""
         INSERT INTO
             gn_permissions.t_permissions_available (
                 id_module,
@@ -35,7 +37,7 @@ def upgrade():
         FROM
             (
                 VALUES
-                    ('CALCULATRICE', 'ALL', 'E', False,
+                    ('{MODULE_CODE}', 'ALL', 'E', False,
                     'Exporter les résultats d''un indicateur ainsi que les tableaux de référence')
             ) AS v (module_code, object_code, action_code, scope_filter, label)
         JOIN
@@ -50,7 +52,7 @@ def upgrade():
 
 def downgrade():
     op.execute(
-        """
+        f"""
         DELETE FROM gn_permissions.t_permissions_available pa
         USING gn_commons.t_modules m, gn_permissions.t_objects o, gn_permissions.bib_actions a
         WHERE pa.id_object = o.id_object
@@ -58,13 +60,13 @@ def downgrade():
           AND pa.id_action = a.id_action
           AND a.code_action = 'E'
           AND pa.id_module = m.id_module
-          AND m.module_code = 'CALCULATRICE';
+          AND m.module_code = '{MODULE_CODE}';
         """
     )
     # We also remove effective user permissions created from the available permissions
     # of this migration
     op.execute(
-        """
+        f"""
         DELETE
         FROM gn_permissions.t_permissions p
         USING gn_commons.t_modules m, gn_permissions.t_objects o, gn_permissions.bib_actions a
@@ -73,6 +75,6 @@ def downgrade():
           AND p.id_action = a.id_action
           AND a.code_action = 'E'
           AND p.id_module = m.id_module
-          AND m.module_code = 'CALCULATRICE';
+          AND m.module_code = '{MODULE_CODE}';
         """
     )

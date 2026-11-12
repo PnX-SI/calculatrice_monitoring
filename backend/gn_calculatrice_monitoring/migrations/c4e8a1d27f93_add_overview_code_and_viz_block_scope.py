@@ -11,6 +11,7 @@ import enum
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
+from gn_calculatrice_monitoring import SCHEMA
 
 # revision identifiers, used by Alembic.
 revision = "c4e8a1d27f93"
@@ -18,7 +19,7 @@ down_revision = "f1a2b3c4d5e6"
 branch_labels = None
 depends_on = None
 
-SCHEMA = "gn_calculatrice"
+
 
 
 # Pinned version of the VizBlockScope enum for the migration.

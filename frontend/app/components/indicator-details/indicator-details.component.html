@@ -1,7 +1,7 @@
 <div class="container">
   <a
     mat-raised-button
-    routerLink="/calculatrice"
+    routerLink="/calculatrice_monitoring"
     [queryParams]="indicatorDetails ? { protocol: indicatorDetails.protocol.id } : null"
     class="mb-2"
   >
@@ -24,7 +24,7 @@
         <h2>{{ indicatorDetails.name }}</h2>
         <button
           *ngIf="canEditIndicator()"
-          [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit']"
+          [routerLink]="['/calculatrice_monitoring/indicator', indicatorDetails.id, 'edit']"
           mat-stroked-button
           color="primary"
         >
@@ -82,7 +82,7 @@
           <h3>Code (campagnes)</h3>
           <button
             *ngIf="canEditIndicator()"
-            [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit-code']"
+            [routerLink]="['/calculatrice_monitoring/indicator', indicatorDetails.id, 'edit-code']"
             mat-stroked-button
             color="primary"
           >
@@ -111,7 +111,7 @@
               [disabled]="!canConfigureCampaignBlocks()"
               [routerLink]="
                 canConfigureCampaignBlocks()
-                  ? ['/calculatrice/indicator', indicatorDetails.id, 'viz-blocks']
+                  ? ['/calculatrice_monitoring/indicator', indicatorDetails.id, 'viz-blocks']
                   : null
               "
               mat-stroked-button
@@ -176,7 +176,7 @@
           <h3>Code de synthèse</h3>
           <button
             *ngIf="canEditIndicator()"
-            [routerLink]="['/calculatrice/indicator', indicatorDetails.id, 'edit-overview-code']"
+            [routerLink]="['/calculatrice_monitoring/indicator', indicatorDetails.id, 'edit-overview-code']"
             mat-stroked-button
             color="primary"
           >
@@ -205,7 +205,7 @@
               [disabled]="!canConfigureOverviewBlocks()"
               [routerLink]="
                 canConfigureOverviewBlocks()
-                  ? ['/calculatrice/indicator', indicatorDetails.id, 'overview-viz-blocks']
+                  ? ['/calculatrice_monitoring/indicator', indicatorDetails.id, 'overview-viz-blocks']
                   : null
               "
               mat-stroked-button
@@ -274,7 +274,7 @@
           <button
             *ngIf="canEditIndicator()"
             [routerLink]="[
-              '/calculatrice/indicator',
+              '/calculatrice_monitoring/indicator',
               indicatorDetails.id,
               'edit-statistical-tests-code'
             ]"
@@ -306,7 +306,7 @@
               [disabled]="!canConfigureStatisticalTestsBlocks()"
               [routerLink]="
                 canConfigureStatisticalTestsBlocks()
-                  ? ['/calculatrice/indicator', indicatorDetails.id, 'statistical-tests-viz-blocks']
+                  ? ['/calculatrice_monitoring/indicator', indicatorDetails.id, 'statistical-tests-viz-blocks']
                   : null
               "
               mat-stroked-button

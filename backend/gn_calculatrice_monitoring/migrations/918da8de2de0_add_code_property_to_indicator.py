@@ -8,6 +8,7 @@ Create Date: 2025-11-04 10:09:56.892682
 
 import sqlalchemy as sa
 from alembic import op
+from gn_calculatrice_monitoring import SCHEMA
 
 # revision identifiers, used by Alembic.
 revision = "918da8de2de0"
@@ -25,9 +26,9 @@ def upgrade():
             nullable=False,
             server_default="",
         ),
-        schema="gn_calculatrice",
+        schema=SCHEMA,
     )
 
 
 def downgrade():
-    op.drop_column("t_indicators", "code", schema="gn_calculatrice")
+    op.drop_column("t_indicators", "code", schema=SCHEMA)

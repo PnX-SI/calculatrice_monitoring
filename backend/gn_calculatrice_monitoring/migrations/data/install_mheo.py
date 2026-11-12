@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
-from calculatrice_monitoring.models import (
+from gn_calculatrice_monitoring.models import (
     Indicator,
     ReferenceTable,
     VizBlockConfig,

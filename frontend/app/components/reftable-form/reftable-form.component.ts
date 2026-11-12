@@ -152,7 +152,7 @@ export class ReferenceTableFormComponent implements OnInit {
           )
           .pipe(catchError((error: HttpErrorResponse) => this._handleSubmitError(error)))
           .subscribe((data: ReferenceTable) => {
-            this._router.navigate(['/calculatrice/reference-tables']);
+            this._router.navigate(['/calculatrice_monitoring/reference-tables']);
           });
       } else {
         this._data
@@ -168,7 +168,7 @@ export class ReferenceTableFormComponent implements OnInit {
           )
           .pipe(catchError((error: HttpErrorResponse) => this._handleSubmitError(error)))
           .subscribe((data: ReferenceTable) => {
-            this._router.navigate(['/calculatrice/reference-tables']);
+            this._router.navigate(['/calculatrice_monitoring/reference-tables']);
           });
       }
     }

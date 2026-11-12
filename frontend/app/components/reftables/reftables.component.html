@@ -1,7 +1,7 @@
 <div class="container">
   <a
     mat-raised-button
-    routerLink="/calculatrice"
+    routerLink="/calculatrice_monitoring"
     class="mb-2"
   >
     <mat-icon>chevron_left</mat-icon>
@@ -50,7 +50,7 @@
                 <button
                   mat-icon-button
                   matTooltip="Éditer le tableau"
-                  [routerLink]="['/calculatrice/reference-table', refTable.id, 'edit']"
+                  [routerLink]="['/calculatrice_monitoring/reference-table', refTable.id, 'edit']"
                 >
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -107,7 +107,7 @@
       </table>
       <button
         *ngIf="canCreateReferenceTable()"
-        [routerLink]="['/calculatrice/reference-table/create']"
+        [routerLink]="['/calculatrice_monitoring/reference-table/create']"
         class="mt-2 mb-2"
         mat-raised-button
         color="primary"

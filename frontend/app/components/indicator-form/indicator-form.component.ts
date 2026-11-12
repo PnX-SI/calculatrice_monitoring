@@ -95,7 +95,7 @@ export class IndicatorFormComponent implements OnInit {
         if (this.mode === 'create') {
           this._data.selectedProtocolId = this.indicatorForm.value.protocolId;
         }
-        this._router.navigate(['/calculatrice/indicator', data.id, 'details']);
+        this._router.navigate(['/calculatrice_monitoring/indicator', data.id, 'details']);
       });
     }
   }

@@ -8,6 +8,7 @@ Create Date: 2026-10-21 14:00:00.000000
 
 import sqlalchemy as sa
 from alembic import op
+from gn_calculatrice_monitoring import SCHEMA
 
 # revision identifiers, used by Alembic.
 revision = "e9b4c7d2a615"
@@ -15,7 +16,7 @@ down_revision = "d7a3b5c91e24"
 branch_labels = None
 depends_on = None
 
-SCHEMA = "gn_calculatrice"
+
 
 
 def upgrade():

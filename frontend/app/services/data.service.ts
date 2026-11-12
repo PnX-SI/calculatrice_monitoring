@@ -59,13 +59,13 @@ export class DataService {
 
   getProtocol(protocolId: number) {
     return this._http.get<Protocol>(
-      `${this._config.API_ENDPOINT}/calculatrice/protocol/${protocolId}`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/protocol/${protocolId}`
     );
   }
 
   getProtocolProperties(protocolId: number) {
     return this._http.get<ProtocolProperties>(
-      `${this._config.API_ENDPOINT}/calculatrice/protocol/${protocolId}/properties`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/protocol/${protocolId}/properties`
     );
   }
 
@@ -79,28 +79,28 @@ export class DataService {
     for (const key in params) {
       httpParams = httpParams.set(key, params[key].toString());
     }
-    return this._http.get<Array<Protocol>>(`${this._config.API_ENDPOINT}/calculatrice/protocols`, {
+    return this._http.get<Array<Protocol>>(`${this._config.API_ENDPOINT}/calculatrice_monitoring/protocols`, {
       params: httpParams,
     });
   }
 
   createIndicator(indicatorAttributes: IndicatorAttributes) {
     return this._http.post<Indicator>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator`,
       indicatorAttributes
     );
   }
 
   editIndicator(indicatorId: Number, indicatorAttributes: IndicatorAttributes) {
     return this._http.put<Indicator>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}`,
       indicatorAttributes
     );
   }
 
   editIndicatorCode(indicatorId: Number, sourceCode: String) {
     return this._http.put<HttpResponse<String>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/code`,
       { sourceCode: sourceCode },
       { headers: { 'Content-Type': 'application/json' } }
     );
@@ -111,7 +111,7 @@ export class DataService {
     vizBlocksConfig: VisualizationBlockConfigPayload[]
   ) {
     return this._http.put<HttpResponse<String>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/viz-blocks`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/viz-blocks`,
       vizBlocksConfig,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -122,7 +122,7 @@ export class DataService {
 
   editIndicatorOverviewCode(indicatorId: number, code: string) {
     return this._http.put<HttpResponse<string>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-code`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/overview-code`,
       { code: code },
       { headers: { 'Content-Type': 'application/json' } }
     );
@@ -133,7 +133,7 @@ export class DataService {
     vizBlocksConfig: VisualizationBlockConfigPayload[]
   ) {
     return this._http.put<HttpResponse<string>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-viz-blocks`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/overview-viz-blocks`,
       vizBlocksConfig,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -144,7 +144,7 @@ export class DataService {
 
   editIndicatorStatisticalTestsCode(indicatorId: number, sourceCode: string) {
     return this._http.put<HttpResponse<string>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-code`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/statistical-tests-code`,
       { sourceCode: sourceCode },
       { headers: { 'Content-Type': 'application/json' } }
     );
@@ -155,7 +155,7 @@ export class DataService {
     vizBlocksConfig: VisualizationBlockConfigPayload[]
   ) {
     return this._http.put<HttpResponse<string>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-viz-blocks`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/statistical-tests-viz-blocks`,
       vizBlocksConfig,
       {
         headers: { 'Content-Type': 'application/json' },
@@ -166,31 +166,31 @@ export class DataService {
 
   getIndicator(indicatorId: number) {
     return this._http.get<Indicator>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}`
     );
   }
 
   getIndicatorDetails(indicatorId: number) {
     return this._http.get<IndicatorDetails>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/details`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/details`
     );
   }
 
   getIndicatorCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/code-variables`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/code-variables`
     );
   }
 
   getIndicatorOverviewCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/overview-code-variables`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/overview-code-variables`
     );
   }
 
   getIndicatorStatisticalTestsCodeVariables(indicatorId: number) {
     return this._http.get<string[]>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/statistical-tests-code-variables`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/statistical-tests-code-variables`
     );
   }
 
@@ -199,7 +199,7 @@ export class DataService {
    */
   getIndicators(protocolId: number) {
     return this._http.get<Array<Indicator>>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicators?id_protocol=${protocolId}`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicators?id_protocol=${protocolId}`
     );
   }
 
@@ -254,7 +254,7 @@ export class DataService {
     visualizationType: string
   ) {
     return this._http.post<Visualization>(
-      `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/visualize`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/indicator/${indicatorId}/visualize`,
       {
         indicator_id: indicatorId,
         sites_ids: sites.map<number>((item) => item.id),
@@ -269,13 +269,13 @@ export class DataService {
 
   getReferenceTables() {
     return this._http.get<Array<ReferenceTable>>(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables`
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables`
     );
   }
 
   getReferenceTableData(referenceTable: ReferenceTable) {
     return this._http.get(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTable.id}/data`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables/${referenceTable.id}/data`,
       { responseType: 'blob' }
     );
   }
@@ -285,7 +285,7 @@ export class DataService {
     formData.append('file', file);
     formData.append('fields', JSON.stringify(fields));
     return this._http.post<ReferenceTable>(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables`,
       formData,
       { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
@@ -293,7 +293,7 @@ export class DataService {
 
   editReferenceTableActiveStatus(referenceTableId: number, active: boolean) {
     return this._http.put<ReferenceTable>(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}/active`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables/${referenceTableId}/active`,
       { active },
       { headers: { 'Content-Type': 'application/json' } }
     );
@@ -306,7 +306,7 @@ export class DataService {
     }
     formData.append('fields', JSON.stringify(fields));
     return this._http.put<ReferenceTable>(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables/${referenceTableId}`,
       formData,
       { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
@@ -314,7 +314,7 @@ export class DataService {
 
   deleteReferenceTable(referenceTableId: number) {
     return this._http.delete<void>(
-      `${this._config.API_ENDPOINT}/calculatrice/reftables/${referenceTableId}`,
+      `${this._config.API_ENDPOINT}/calculatrice_monitoring/reftables/${referenceTableId}`,
       { headers: new HttpHeaders({ 'not-to-handle': 'true' }) }
     );
   }

@@ -8,14 +8,14 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
 )
 
-from calculatrice_monitoring.eval import (
+from gn_calculatrice_monitoring.eval import (
     Observation,
     Site,
     Visit,
     create_context,
     create_monitoring_collections,
 )
-from calculatrice_monitoring.migrations.data.install_mheo import (
+from gn_calculatrice_monitoring.migrations.data.install_mheo import (
     configure_mheo_flore_test_protocol,
     get_quadrat_flore_site_type,
     get_test_protocols,
@@ -30,7 +30,7 @@ from calculatrice_monitoring.migrations.data.install_mheo import (
     install_test_permissions,
     install_test_users,
 )
-from calculatrice_monitoring.models import Indicator
+from gn_calculatrice_monitoring.models import Indicator
 
 
 @pytest.fixture()

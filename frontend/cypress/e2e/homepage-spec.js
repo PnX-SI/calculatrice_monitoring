@@ -11,13 +11,13 @@ describe('Testing homepage', () => {
   it('should display calculatrice home page and go back to home', () => {
     cy.get(SELECTOR_HOME_CONTENT).should('exist').should('be.visible');
     cy.get(SELECTOR_CALCULATRICE_LINK).click({ force: true });
-    cy.url().should('include', 'calculatrice');
+    cy.url().should('include', 'calculatrice_monitoring');
     cy.get(SELECTOR_SIDEBAR_HOME_BUTTON).click();
     cy.get(SELECTOR_HOME_CONTENT).should('exist').should('be.visible');
   });
 
   it('should have an appropriate page title', () => {
-    cy.visit('/#/calculatrice');
-    cy.title().should('eq', 'GeoNature2 - Calculatrice');
+    cy.visit('/#/calculatrice_monitoring');
+    cy.title().should('eq', 'GeoNature2 - Calculatrice monitoring');
   });
 });

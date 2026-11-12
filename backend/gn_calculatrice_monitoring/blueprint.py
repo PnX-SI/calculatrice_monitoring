@@ -15,10 +15,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from werkzeug.datastructures import MultiDict
 
-from calculatrice_monitoring import MODULE_CODE
-from calculatrice_monitoring.eval import Campaign, Scope, visualize
-from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockScope
-from calculatrice_monitoring.schemas import (
+from gn_calculatrice_monitoring import MODULE_CODE
+from gn_calculatrice_monitoring.eval import Campaign, Scope, visualize
+from gn_calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockScope
+from gn_calculatrice_monitoring.schemas import (
     REFERENCE_TABLE_ENCODINGS,
     IndicatorAttributesSchema,
     IndicatorDetailsSchema,
@@ -29,7 +29,7 @@ from calculatrice_monitoring.schemas import (
     ReferenceTableSchema,
     VizBlockConfigSchema,
 )
-from calculatrice_monitoring.utils import extract_variable_names
+from gn_calculatrice_monitoring.utils import extract_variable_names
 
 REFERENCE_TABLE_MAX_VALUE_LENGTH = 1000
 REFERENCE_TABLE_MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 Mo

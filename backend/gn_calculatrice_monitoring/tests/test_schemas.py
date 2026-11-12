@@ -1,7 +1,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from calculatrice_monitoring.schemas import HeadersAndRowsSchema
+from gn_calculatrice_monitoring.schemas import HeadersAndRowsSchema
 
 
 class TestHeadersAndRowsSchema:

@@ -5,6 +5,7 @@ from gn_module_monitoring.monitoring.models import TMonitoringModules
 from sqlalchemy import Enum
 from sqlalchemy.dialects.postgresql import JSONB
 
+from gn_calculatrice_monitoring import SCHEMA
 
 class VizBlockType(enum.Enum):
     scalar = "scalaire"
@@ -38,21 +39,21 @@ cor_indicator_reference_table = db.Table(
     "cor_indicator_reference_table",
     db.Column(
         "id_indicator",
-        db.ForeignKey("gn_calculatrice.t_indicators.id_indicator"),
+        db.ForeignKey(f"{SCHEMA}.t_indicators.id_indicator"),
         primary_key=True,
     ),
     db.Column(
         "id_reference_table",
-        db.ForeignKey("gn_calculatrice.t_reference_tables.id_reference_table"),
+        db.ForeignKey(f"{SCHEMA}.t_reference_tables.id_reference_table"),
         primary_key=True,
     ),
-    schema="gn_calculatrice",
+    schema=SCHEMA,
 )
 
 
 class Indicator(db.Model):
     __tablename__ = "t_indicators"
-    __table_args__ = {"schema": "gn_calculatrice"}
+    __table_args__ = {"schema": SCHEMA}
 
     id_indicator = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(100), nullable=False)
@@ -75,11 +76,11 @@ class Indicator(db.Model):
 
 class VizBlockConfig(db.Model):
     __tablename__ = "t_viz_block_configs"
-    __table_args__ = {"schema": "gn_calculatrice"}
+    __table_args__ = {"schema": SCHEMA}
 
     id_viz_block_config = db.Column(db.Integer, primary_key=True)
     id_indicator = db.Column(
-        db.ForeignKey("gn_calculatrice.t_indicators.id_indicator"), nullable=False
+        db.ForeignKey(f"{SCHEMA}.t_indicators.id_indicator"), nullable=False
     )
     title = db.Column(db.Unicode(100), nullable=False)
     info = db.Column(db.Unicode, nullable=False, default="")
@@ -97,7 +98,7 @@ class VizBlockConfig(db.Model):
 
 class ReferenceTable(db.Model):
     __tablename__ = "t_reference_tables"
-    __table_args__ = {"schema": "gn_calculatrice"}
+    __table_args__ = {"schema": SCHEMA}
 
     id_reference_table = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(64), nullable=False)

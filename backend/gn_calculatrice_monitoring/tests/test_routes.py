@@ -11,12 +11,12 @@ from pypnusershub.tests.utils import set_logged_user
 from sqlalchemy import select
 from werkzeug.datastructures import Headers
 
-from calculatrice_monitoring.blueprint import (
+from gn_calculatrice_monitoring.blueprint import (
     REFERENCE_TABLE_MAX_FILE_SIZE,
     REFERENCE_TABLE_MAX_VALUE_LENGTH,
 )
-from calculatrice_monitoring.eval import VisualizationErrorType
-from calculatrice_monitoring.models import (
+from gn_calculatrice_monitoring.eval import VisualizationErrorType
+from gn_calculatrice_monitoring.models import (
     Indicator,
     ReferenceTable,
     VizBlockConfig,

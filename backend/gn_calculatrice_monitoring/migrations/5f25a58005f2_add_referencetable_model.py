@@ -10,6 +10,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Column
 
+from gn_calculatrice_monitoring import SCHEMA
+
 # revision identifiers, used by Alembic.
 revision = "5f25a58005f2"
 down_revision = "93a5b9230805"
@@ -25,26 +27,26 @@ def upgrade():
         Column("description", sa.Unicode),
         Column("code", sa.Unicode(32), nullable=False, unique=True),
         Column("data", sa.Text, nullable=False),
-        schema="gn_calculatrice",
+        schema=SCHEMA,
     )
     op.create_table(
         "cor_indicator_reference_table",
         Column(
             "id_indicator",
             sa.Integer,
-            sa.ForeignKey("gn_calculatrice.t_indicators.id_indicator"),
+            sa.ForeignKey(f"{SCHEMA}.t_indicators.id_indicator"),
             primary_key=True,
         ),
         Column(
             "id_reference_table",
             sa.Integer,
-            sa.ForeignKey("gn_calculatrice.t_reference_tables.id_reference_table"),
+            sa.ForeignKey(f"{SCHEMA}.t_reference_tables.id_reference_table"),
             primary_key=True,
         ),
-        schema="gn_calculatrice",
+        schema=SCHEMA,
     )
 
 
 def downgrade():
-    op.drop_table("cor_indicator_reference_table", schema="gn_calculatrice")
-    op.drop_table("t_reference_tables", schema="gn_calculatrice")
+    op.drop_table("cor_indicator_reference_table", schema=SCHEMA)
+    op.drop_table("t_reference_tables", schema=SCHEMA)

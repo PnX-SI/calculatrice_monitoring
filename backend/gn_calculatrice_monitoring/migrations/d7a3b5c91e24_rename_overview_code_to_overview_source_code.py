@@ -7,6 +7,7 @@ Create Date: 2026-10-21 10:00:00.000000
 """
 
 from alembic import op
+from gn_calculatrice_monitoring import SCHEMA
 
 # revision identifiers, used by Alembic.
 revision = "d7a3b5c91e24"
@@ -14,7 +15,7 @@ down_revision = "a7d3e91b5c24"
 branch_labels = None
 depends_on = None
 
-SCHEMA = "gn_calculatrice"
+
 
 
 def upgrade():

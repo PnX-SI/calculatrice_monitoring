@@ -7,6 +7,7 @@ Create Date: 2025-08-28 18:55:23.047899
 """
 
 from alembic import op
+from gn_calculatrice_monitoring import MODULE_CODE
 
 # revision identifiers, used by Alembic.
 revision = "1e2926e0b603"
@@ -14,7 +15,7 @@ down_revision = "78ba67f597ee"
 branch_labels = None
 depends_on = ("f051b88a57fd",)  # geonature: creation of gn_permissions.t_permissions_available
 
-module_code = "CALCULATRICE"
+
 object_code = "ALL"
 action_code = "R"
 
@@ -39,7 +40,7 @@ def upgrade():
         FROM
             (
                 VALUES
-                    ('{module_code}', '{object_code}', '{action_code}', False, 'Accéder au module')
+                    ('{MODULE_CODE}', '{object_code}', '{action_code}', False, 'Accéder au module')
             ) AS v (module_code, object_code, action_code, scope_filter, label)
         JOIN
             gn_commons.t_modules m ON m.module_code = v.module_code
@@ -59,7 +60,7 @@ def downgrade():
             id_module = (
                 SELECT id_module
                 FROM gn_commons.t_modules
-                WHERE module_code = '{module_code}')
+                WHERE module_code = '{MODULE_CODE}')
             AND id_object = (
                 SELECT id_object
                 FROM gn_permissions.t_objects

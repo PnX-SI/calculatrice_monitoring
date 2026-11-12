@@ -7,7 +7,7 @@ Create Date: 2025-09-30 17:10:48.132932
 
 from geonature.utils.env import db
 
-from calculatrice_monitoring.migrations.data.install_mheo import install_all_test_sample_objects
+from gn_calculatrice_monitoring.migrations.data.install_mheo import install_all_test_sample_objects
 
 # revision identifiers, used by Alembic.
 revision = "1c0e69b714c2"
