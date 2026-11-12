@@ -190,6 +190,14 @@ jobs:
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
 
+      # Wait for backend and frontend to be reachable
+      - name: Wait for GeoNature backend & frontend
+        run: |
+          npx --yes wait-on@7 \
+            --timeout 600s --interval 5000 --httpTimeout 30000 \
+            http-get://127.0.0.1:8000/gn_commons/config \
+            http-get://127.0.0.1:4200
+
       # Run frontend tests with Cypress
       - name: cypress
         run: |
