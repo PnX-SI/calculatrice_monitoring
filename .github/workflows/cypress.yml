@@ -203,12 +203,3 @@ jobs:
         run: |
           cd "${{ env.MODULE_DIR }}/frontend"
           npx cypress run
-
-      # Keep server logs to diagnose failures (e.g. ESOCKETTIMEDOUT)
-      - name: Upload server logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-logs
-          path: ${{ runner.temp }}/*.log
-          if-no-files-found: warn
