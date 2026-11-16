@@ -9,7 +9,11 @@ from geonature.core.gn_permissions.decorators import check_cruved_scope
 from geonature.core.gn_permissions.tools import get_scopes_by_action
 from geonature.utils.env import db
 from gn_module_monitoring.config.repositories import get_config
-from gn_module_monitoring.monitoring.models import TMonitoringModules, TMonitoringSites
+from gn_module_monitoring.monitoring.models import (
+    TMonitoringModules,
+    TMonitoringSites,
+    TMonitoringSitesGroups,
+)
 from marshmallow import ValidationError
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
@@ -422,13 +426,18 @@ def get_protocols(with_indicators_only: bool = Query(False)):
 @ValidateParameters()
 def get_indicator_visualization(
     indicator_id: int = Route(),
-    sites_ids: list[int] = Json(),  # noqa: B008  # Calling Json function for a default parameter is
+    sites_group_id: int = Json(),  # noqa: B008  # Calling Json function for a default parameter is
     campaigns: list[dict] = Json(),  # noqa: B008  # the way flask-parameter-validation works.
     viz_type: str = Json(),  # noqa: B008
 ):
     indicator = db.one_or_404(select(Indicator).filter(Indicator.id_indicator == indicator_id))
+    db.one_or_404(
+        select(TMonitoringSitesGroups).filter(
+            TMonitoringSitesGroups.id_sites_group == sites_group_id
+        )
+    )
     monitoring_sites = db.session.scalars(
-        select(TMonitoringSites).filter(TMonitoringSites.id_base_site.in_(sites_ids))
+        select(TMonitoringSites).filter(TMonitoringSites.id_sites_group == sites_group_id)
     ).all()
     return visualize(
         indicator,

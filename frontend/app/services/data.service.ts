@@ -249,7 +249,7 @@ export class DataService {
 
   getVisualizationBlocks(
     indicatorId: number,
-    sites: Site[],
+    sitesGroupId: number,
     campaigns: Campaign[],
     visualizationType: string
   ) {
@@ -257,7 +257,7 @@ export class DataService {
       `${this._config.API_ENDPOINT}/calculatrice/indicator/${indicatorId}/visualize`,
       {
         indicator_id: indicatorId,
-        sites_ids: sites.map<number>((item) => item.id),
+        sites_group_id: sitesGroupId,
         campaigns: campaigns.map((item) => ({
           start_date: item.startDate,
           end_date: item.endDate,

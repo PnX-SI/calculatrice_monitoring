@@ -172,25 +172,18 @@ export class VisualizationParamsFormComponent implements OnInit {
     if (this.campaignForm.valid) {
       const sitesGroupId = this.campaignForm.value.sitesGroup;
       const campaigns = this.campaignForm.value.campaigns;
-      this._data
-        .getSites(
-          this.protocolCode,
-          this.sitesGroups.find((item) => item.id === sitesGroupId)
-        )
-        .subscribe((sites) => {
-          const indicatorId = this._route.snapshot.params.indicatorId;
-          sessionStorage.setItem(
-            `calc-viz-params:${indicatorId}`,
-            JSON.stringify({ sites, campaigns, sitesGroupId })
-          );
-          this._router.navigate(['..'], {
-            relativeTo: this._route,
-            queryParams: {
-              sitesGroup: sitesGroupId,
-              campaigns: serializeCampaigns(campaigns),
-            },
-          });
-        });
+      const indicatorId = this._route.snapshot.params.indicatorId;
+      sessionStorage.setItem(
+        `calc-viz-params:${indicatorId}`,
+        JSON.stringify({ campaigns, sitesGroupId })
+      );
+      this._router.navigate(['..'], {
+        relativeTo: this._route,
+        queryParams: {
+          sitesGroup: sitesGroupId,
+          campaigns: serializeCampaigns(campaigns),
+        },
+      });
     } else {
       console.error('Le formulaire contient des erreurs.');
     }
