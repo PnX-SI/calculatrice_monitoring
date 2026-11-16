@@ -171,6 +171,7 @@ def import_data_from_csv(csv_filename):
     def get_group(row):
         return {
             "name": row["group_name"],
+            "bassin_versant": row["bassin_versant"],
             "sites": {},
         }
 
@@ -284,6 +285,9 @@ def install_test_monitoring_objects_from_csv(csv_filename, flore_protocol, flore
                     sites_group_name=group_data["name"],
                     sites_group_code=group_data["name"].replace(" ", "-").lower(),
                     digitiser=digitiser,
+                    data={
+                        "bassin_versant": group_data["bassin_versant"],
+                    },
                 )
                 group.modules = [flore_protocol]
                 db.session.add(group)
@@ -449,10 +453,16 @@ partir de la végétation présente. Il s’appuie sur les préférences écolog
 de l’humidité, sans tenir compte de leur abondance ou de leur recouvrement : chaque espèce présente
 contribue de manière identique au calcul."""
 
-I02_CODE = """valeurs_he = gn_extract(
+I02_CODE = """if group.bassin_versant == "Rhône":
+  reftable_column = "indice_he_Rhône"
+elif group.bassin_versant == "Loire":
+  reftable_column = "indice_he_Loire"
+else:
+  raise IndicatorError('Le bassin versant de la zone humide doit être "Rhône" ou "Loire"')
+valeurs_he = gn_extract(
     ref_table=indices_he,
     origin_field="cdnom",
-    target_field="indice_he",
+    target_field=reftable_column,
     properties=observations.cd_nom)
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE)
 médiane = gn_median(moyenne)
@@ -502,10 +512,16 @@ I02_ABONDANCE_DESCRIPTION = """Cet indicateur permet de suivre le niveau d’eng
 humide à partir de la végétation présente. Il s’appuie sur les préférences écologiques des espèces
 vis-à-vis de l’humidité et tient compte de leur abondance ou de leur recouvrement."""
 
-I02_ABONDANCE_CODE = """valeurs_he = gn_extract(
+I02_ABONDANCE_CODE = """if group.bassin_versant == "Rhône":
+  reftable_column = "indice_he_Rhône"
+elif group.bassin_versant == "Loire":
+  reftable_column = "indice_he_Loire"
+else:
+  raise IndicatorError('Le bassin versant de la zone humide doit être "Rhône" ou "Loire"')
+valeurs_he = gn_extract(
     ref_table=indices_he,
     origin_field="cdnom",
-    target_field="indice_he",
+    target_field=reftable_column,
     properties=observations.cd_nom)
 abondance_perc = gn_extract(
     ref_table=valeurs_abondance,
@@ -631,10 +647,16 @@ I06_DESCRIPTION = """Cet indicateur permet de suivre le niveau de fertilité du 
 principalement l’azote et le phosphore, sans tenir compte de l’abondance ou du recouvrement des
 espèces : chaque espèce présente contribue de manière identique au calcul."""
 
-I06_CODE = """valeurs_ht = gn_extract(
+I06_CODE = """if group.bassin_versant == "Rhône":
+  reftable_column = "indice_ht_Rhône"
+elif group.bassin_versant == "Loire":
+  reftable_column = "indice_ht_Loire"
+else:
+  raise IndicatorError('Le bassin versant de la zone humide doit être "Rhône" ou "Loire"')
+valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
-    target_field="indice_ht",
+    target_field=reftable_column,
     properties=observations.cd_nom)
 moyenne = gn_mean(valeurs_ht, scope=Scope.SITE)
 médiane = gn_median(moyenne)
@@ -685,10 +707,16 @@ zone humide à partir de la végétation présente. Il renseigne indirectement s
 nutriments, principalement l’azote et le phosphore, en tenant compte de l’abondance ou du
 recouvrement des espèces."""
 
-I06_ABONDANCE_CODE = """valeurs_ht = gn_extract(
+I06_ABONDANCE_CODE = """if group.bassin_versant == "Rhône":
+  reftable_column = "indice_ht_Rhône"
+elif group.bassin_versant == "Loire":
+  reftable_column = "indice_ht_Loire"
+else:
+  raise IndicatorError('Le bassin versant de la zone humide doit être "Rhône" ou "Loire"')
+valeurs_ht = gn_extract(
     ref_table=indices_ht,
     origin_field="cdnom",
-    target_field="indice_ht",
+    target_field=reftable_column,
     properties=observations.cd_nom)
 abondance_perc = gn_extract(
     ref_table=valeurs_abondance,

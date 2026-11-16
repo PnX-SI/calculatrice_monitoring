@@ -1,57 +1,57 @@
-cd_nom;abondance;récolte;date;diffusion_mesure;durée_secondes;site_name;site_long;site_lat;superficie_mètres_carrés;group_name
-95463;1;1;22/05/2023;Non;180;Quadrat 1;5.049162;45.91896;1;Étang Bachelier
-81610;2;1;22/05/2023;Non;180;Quadrat 1;5.049162;45.91896;1;Étang Bachelier
-113260;4;2;22/05/2023;Non;180;Quadrat 1;5.049162;45.91896;1;Étang Bachelier
-102900;1;1;22/05/2023;Oui;120;Quadrat 2;5.049827;45.919266;2;Étang Bachelier
-113260;5;1;22/05/2023;Non;240;Quadrat 3;5.050144;45.919401;2;Étang Bachelier
-100387;1;1;22/05/2023;Non;240;Quadrat 3;5.050144;45.919401;2;Étang Bachelier
-102900;3;2;22/05/2023;Non;240;Quadrat 3;5.050144;45.919401;2;Étang Bachelier
-95463;1;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-81610;2;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-107038;1;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-112975;4;1;22/05/2024;Non;240;Transect 1 Quadrat 2;5.066058;45.892343;2;Étang de Botte
-98910;2;2;22/05/2024;Non;240;Transect 1 Quadrat 2;5.066058;45.892343;2;Étang de Botte
-104173;1;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-191232;2;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-116759;1;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-112741;3;2;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-104173;1;1;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-105966;1;2;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-98910;1;2;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-107038;4;1;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-100310;1;1;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-95463;1;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-81610;2;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-107038;1;2;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-105431;2;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte
-105966;4;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte
-112975;4;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte
-113260;2;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte
-100310;4;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-104173;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-99373;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-112741;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-107117;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-106581;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-191232;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-116759;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-119915;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-106918;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-119977;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte
-112741;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-116759;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-107117;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-104173;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-96271;1;2;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte
-119097;4;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-115156;2;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-191232;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-98910;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-99373;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-116759;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-105966;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-100310;2;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-119949;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-119950;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-119951;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
-119952;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte
+cd_nom;abondance;récolte;date;diffusion_mesure;durée_secondes;site_name;site_long;site_lat;superficie_mètres_carrés;group_name;bassin_versant
+95463;1;1;22/05/2023;Non;180;Quadrat 1;2.487701;47.253578;1;Étang des Marchandons;Loire
+81610;2;1;22/05/2023;Non;180;Quadrat 1;2.487701;47.253578;1;Étang des Marchandons;Loire
+113260;4;2;22/05/2023;Non;180;Quadrat 1;2.487701;47.253578;1;Étang des Marchandons;Loire
+102900;1;1;22/05/2023;Oui;120;Quadrat 2;2.487430;47.253628;2;Étang des Marchandons;Loire
+113260;5;1;22/05/2023;Non;240;Quadrat 3;2.487121;47.253676;2;Étang des Marchandons;Loire
+100387;1;1;22/05/2023;Non;240;Quadrat 3;2.487121;47.253676;2;Étang des Marchandons;Loire
+102900;3;2;22/05/2023;Non;240;Quadrat 3;2.487121;47.253676;2;Étang des Marchandons;Loire
+95463;1;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+81610;2;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+107038;1;2;22/05/2024;Oui;180;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+112975;4;1;22/05/2024;Non;240;Transect 1 Quadrat 2;5.066058;45.892343;2;Étang de Botte;Rhône
+98910;2;2;22/05/2024;Non;240;Transect 1 Quadrat 2;5.066058;45.892343;2;Étang de Botte;Rhône
+104173;1;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+191232;2;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+116759;1;1;22/05/2024;Oui;180;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+112741;3;2;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+104173;1;1;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+105966;1;2;22/05/2024;Non;600;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+98910;1;2;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+107038;4;1;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+100310;1;1;22/05/2024;Oui;320;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+95463;1;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+81610;2;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+107038;1;2;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+105431;2;1;22/05/2025;Oui;360;Transect 1 Quadrat 1;5.065688;45.8928010;1;Étang de Botte;Rhône
+105966;4;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte;Rhône
+112975;4;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte;Rhône
+113260;2;2;22/05/2025;Non;180;Transect 1 Quadrat 2;5.066058;45.892343;4;Étang de Botte;Rhône
+100310;4;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+104173;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+99373;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+112741;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+107117;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+106581;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+191232;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+116759;1;2;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+119915;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+106918;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+119977;1;1;22/05/2025;Oui;1200;Transect 1 Quadrat 3;5.066284;45.891974;2;Étang de Botte;Rhône
+112741;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+116759;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+107117;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+104173;1;1;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+96271;1;2;22/05/2025;Non;240;Transect 2 Quadrat 4;5.066459;45.893968;1;Étang de Botte;Rhône
+119097;4;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+115156;2;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+191232;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+98910;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+99373;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+116759;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+105966;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+100310;2;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+119949;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+119950;1;1;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+119951;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône
+119952;1;2;22/05/2025;Oui;900;Transect 2 Quadrat 5;5.066902;45.894179;4;Étang de Botte;Rhône

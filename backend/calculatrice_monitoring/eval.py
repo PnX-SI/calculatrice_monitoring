@@ -58,6 +58,19 @@ class Root(Entity):
 ROOT = Root()
 
 
+class Group(Entity):
+    id: Any
+    id_sites_group: int
+    sites_group_name: str
+
+    def __init__(self, protocol, group_model_instance: TMonitoringSitesGroups):
+        self.id_sites_group = group_model_instance.id_sites_group
+        self.sites_group_name = group_model_instance.sites_group_name
+        self.id = self.id_sites_group
+        props = get_config(protocol.module_code)
+        self._create_props_from_model_instance(props["sites_group"], group_model_instance)
+
+
 class Site(Entity):
     id: Any
     id_base_site: int
@@ -397,7 +410,9 @@ class VisualizationErrorType(enum.Enum):
 
 
 def create_context(
-    collections: dict[Scope, MonitoringCollection], reference_tables: list[ReferenceTable]
+    group: Group,
+    collections: dict[Scope, MonitoringCollection],
+    reference_tables: list[ReferenceTable],
 ) -> dict:
     context = {}
     context["gn_mean"] = gn_mean
@@ -405,6 +420,7 @@ def create_context(
     context["observations"] = collections[Scope.OBSERVATION]
     context["visites"] = collections[Scope.VISIT]
     context["sites"] = collections[Scope.SITE]
+    context["group"] = group
     context["gn_median"] = gn_median
     context["Scope"] = Scope
     context["gn_extract"] = gn_extract
@@ -581,6 +597,8 @@ def evaluate_campaign(
 ):
     code = indicator.source_code
 
+    group = Group(indicator.protocol, monitoring_sites_group)
+
     monitoring_sites = db.session.scalars(
         db.select(TMonitoringSites).filter(
             TMonitoringSites.id_sites_group == monitoring_sites_group.id_sites_group
@@ -609,7 +627,7 @@ def evaluate_campaign(
     visits = [Visit(indicator.protocol, obj) for obj in monitoring_visits]
 
     collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
-    context = create_context(collections, indicator.reference_tables)
+    context = create_context(group, collections, indicator.reference_tables)
     try:
         variables = evaluate(code, context)
     except IndicatorError:

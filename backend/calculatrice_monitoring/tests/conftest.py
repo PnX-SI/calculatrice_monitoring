@@ -9,6 +9,7 @@ from gn_module_monitoring.monitoring.models import (
 )
 
 from calculatrice_monitoring.eval import (
+    Group,
     Observation,
     Site,
     Visit,
@@ -145,5 +146,10 @@ def eval_context(indicators, monitoring_objects):
     observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
     visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
     sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
+    group = [
+        Group(protocol, group)
+        for group in monitoring_objects["sites_groups"]
+        if group.sites_group_name == "Étang de Botte"
+    ][0]
     collections = create_monitoring_collections(protocol, observations, visits, sites)
-    return create_context(collections, indicator.reference_tables)
+    return create_context(group, collections, indicator.reference_tables)

@@ -33,6 +33,7 @@ export interface Protocol {
 }
 
 export interface ProtocolProperties {
+  group: string[];
   site: string[];
   visit: string[];
   observation: string[];

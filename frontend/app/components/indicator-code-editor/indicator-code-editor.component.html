@@ -55,6 +55,47 @@
                   <mat-expansion-panel-header>
                     <mat-panel-title
                       class="object-name"
+                      (click)="insertCode('group'); $event.stopPropagation()"
+                    >
+                      group
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <p>
+                    L'object
+                    <code>group</code>
+                    représente le groupe de sites sélectionné. Il permet d'accéder aux propriétés
+                    avec l'opérateur . (point).
+                  </p>
+                  <p>Propriétés génériques</p>
+                  <ul>
+                    <li
+                      (click)="insertCode('group.id_sites_group'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      id_sites_group
+                    </li>
+                    <li
+                      (click)="insertCode('group.sites_group_name'); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      sites_group_name
+                    </li>
+                  </ul>
+                  <p>Propriétés du protocole</p>
+                  <ul>
+                    <li
+                      *ngFor="let prop of protocolProperties.sites_group"
+                      (click)="insertCode('group.' + prop); $event.stopPropagation()"
+                      class="object-name"
+                    >
+                      {{ prop }}
+                    </li>
+                  </ul>
+                </mat-expansion-panel>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title
+                      class="object-name"
                       (click)="insertCode('sites'); $event.stopPropagation()"
                     >
                       sites
