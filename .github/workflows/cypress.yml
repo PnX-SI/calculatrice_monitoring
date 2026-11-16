@@ -17,7 +17,7 @@ env:
 
 jobs:
   mount_app_and_run_cypress:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: ghcr.io/pnx-si/geonature-db:2.16.3
