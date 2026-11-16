@@ -68,7 +68,6 @@ export class VisualizationParamsFormComponent implements OnInit {
   campaignForm: FormGroup;
   sitesGroupChoices: Array<SitesGroupChoice> = undefined;
   protected protocolId: number | undefined;
-  private sitesGroups: Array<SitesGroup> = undefined;
   private protocolCode: string = undefined;
 
   constructor(
@@ -91,7 +90,6 @@ export class VisualizationParamsFormComponent implements OnInit {
         this._data.getProtocol(indicator.protocolId).subscribe((protocol: Protocol) => {
           this.protocolCode = protocol.code;
           this._data.getSitesGroups(this.protocolCode).subscribe((data: Array<SitesGroup>) => {
-            this.sitesGroups = data;
             this.sitesGroupChoices = this.getSitesGroupChoices(data);
             this._initFormValues(indicatorId);
           });
