@@ -44,7 +44,6 @@ export class VisualizationPageComponent implements OnInit {
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
   private _campaigns: Campaign[];
-  private _indicatorId: number;
 
   constructor(
     private _data: DataService,
@@ -56,7 +55,6 @@ export class VisualizationPageComponent implements OnInit {
   ngOnInit() {
     this._route.params.subscribe((params) => {
       this.indicatorId = Number(params.indicatorId);
-      this._indicatorId = this.indicatorId;
 
       const queryParams = this._route.snapshot.queryParams;
       let sitesGroupId = queryParams['sitesGroup'] ? Number(queryParams['sitesGroup']) : undefined;
@@ -64,7 +62,7 @@ export class VisualizationPageComponent implements OnInit {
         ? parseCampaigns(queryParams['campaigns'])
         : undefined;
 
-      const cachedParams = sessionStorage.getItem(`calc-viz-params:${this._indicatorId}`);
+      const cachedParams = sessionStorage.getItem(`calc-viz-params:${this.indicatorId}`);
       const parsed = cachedParams ? JSON.parse(cachedParams) : undefined;
 
       if (!sitesGroupId && parsed?.sitesGroupId) {
@@ -93,14 +91,14 @@ export class VisualizationPageComponent implements OnInit {
       if (this._sites) {
         this._renderVisualization();
       } else if (sitesGroupId) {
-        this._data.getIndicator(this._indicatorId).subscribe((indicator: Indicator) => {
+        this._data.getIndicator(this.indicatorId).subscribe((indicator: Indicator) => {
           this._data.getProtocol(indicator.protocolId).subscribe((protocol: Protocol) => {
             this._data
               .getSites(protocol.code, { id: sitesGroupId } as SitesGroup)
               .subscribe((sites) => {
                 this._sites = sites;
                 sessionStorage.setItem(
-                  `calc-viz-params:${this._indicatorId}`,
+                  `calc-viz-params:${this.indicatorId}`,
                   JSON.stringify({
                     sites,
                     campaigns: this._campaigns,
@@ -249,7 +247,7 @@ export class VisualizationPageComponent implements OnInit {
   private _updateVisualization(vizSelection: Selection) {
     this._data
       .getVisualizationBlocks(
-        this._indicatorId,
+        this.indicatorId,
         this._sites,
         vizSelection.campaigns,
         vizSelection.type
