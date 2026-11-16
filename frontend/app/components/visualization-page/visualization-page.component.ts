@@ -5,8 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   Campaign,
   parseCampaigns,
-  serializeCampaigns,
-  Site,
   VisualizationBlockDefinition,
   VisualizationError,
 } from '../../interfaces';
@@ -40,7 +38,6 @@ export class VisualizationPageComponent implements OnInit {
   protected indicatorId: number;
   protected sitesGroupId: number;
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
-  private _sites: Site[];
   private _campaigns: Campaign[];
 
   constructor(
@@ -55,28 +52,11 @@ export class VisualizationPageComponent implements OnInit {
       this.indicatorId = Number(params.indicatorId);
 
       const queryParams = this._route.snapshot.queryParams;
-      let sitesGroupId = queryParams['sitesGroup'] ? Number(queryParams['sitesGroup']) : undefined;
-      let campaignsParam = queryParams['campaigns']
+      this.sitesGroupId = queryParams['sitesGroup'] ? Number(queryParams['sitesGroup']) : undefined;
+      this._campaigns = queryParams['campaigns']
         ? parseCampaigns(queryParams['campaigns'])
         : undefined;
-
-      const cachedParams = sessionStorage.getItem(`calc-viz-params:${this.indicatorId}`);
-      const parsed = cachedParams ? JSON.parse(cachedParams) : undefined;
-
-      if (!sitesGroupId && parsed?.sitesGroupId) {
-        sitesGroupId = Number(parsed.sitesGroupId);
-      }
-      if ((!campaignsParam || campaignsParam.length === 0) && parsed?.campaigns) {
-        campaignsParam = parsed.campaigns;
-      }
-
-      this.sitesGroupId = sitesGroupId;
-      this._campaigns = campaignsParam;
-
-      this.queryParams = {
-        sitesGroup: sitesGroupId,
-        campaigns: campaignsParam ? serializeCampaigns(campaignsParam) : undefined,
-      };
+      this.queryParams = queryParams;
 
       if (!this._campaigns || this._campaigns.length === 0 || !this.sitesGroupId) {
         this._router.navigate(['./params'], {
@@ -85,14 +65,6 @@ export class VisualizationPageComponent implements OnInit {
         });
         return;
       }
-
-      sessionStorage.setItem(
-        `calc-viz-params:${this.indicatorId}`,
-        JSON.stringify({
-          campaigns: this._campaigns,
-          sitesGroupId,
-        })
-      );
 
       this._renderVisualization();
     });
