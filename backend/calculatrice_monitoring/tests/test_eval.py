@@ -128,7 +128,7 @@ moyenne = gn_mean(observations.abondance, scope=Scope.SITE)
     @pytest.mark.usefixtures("monitoring_objects")
     def test_eval_code_moyenne_he_per_site_and_médiane_all_observations(self, eval_context):
         code = """
-valeurs_he = gn_extract(indices_he, "cdnom", "indice_he", observations.cd_nom)
+valeurs_he = gn_extract(indices_he, "cdnom", "indice_he_Rhône", observations.cd_nom)
 moyenne = gn_mean(valeurs_he, scope=Scope.SITE)
 médiane = gn_median(moyenne)
 """
@@ -168,7 +168,7 @@ médiane = gn_median(moyenne)
         self, eval_context
     ):
         code = """
-valeurs_he = gn_extract(indices_he, "cdnom", "indice_he", observations.cd_nom)
+valeurs_he = gn_extract(indices_he, "cdnom", "indice_he_Rhône", observations.cd_nom)
 abondance_perc = gn_extract(
     ref_table=valeurs_abondance,
     origin_field="libellé_abondance",

@@ -198,8 +198,9 @@ class TestGetProtocolProperties:
             url_for("calculatrice.get_protocol_properties", protocol_id=flore_protocol.id_module)
         )
         assert response.status_code == 200
-        for scope in ["observation", "site", "visit"]:
+        for scope in ["observation", "site", "visit", "sites_group"]:
             assert scope in response.json
+        assert "bassin_versant" in response.json["sites_group"]
         assert "superficie_mètres_carrés" in response.json["site"]
         assert "diffusion_mesure" in response.json["visit"]
         assert "durée_secondes" in response.json["visit"]
@@ -615,6 +616,49 @@ class TestGetIndicatorVisualization:
         table_data = table_viz_block["data"]
         assert table_data["headers"] == ["", "Moyenne HE par quadrat"]
         assert table_data["rows"][0] == ["Transect 1 Quadrat 1", "8.79"]
+
+    @pytest.mark.usefixtures(
+        "calculatrice_permissions",
+        "monitoring_objects",
+        "i02_abondance_viz_blocks",
+    )
+    def test_get_indicator_visualization_with_another_sites_group(
+        self, client, users, more_monitoring_objects, indicators
+    ):
+        i02_abondance = indicators["i02_abondance"]
+        set_logged_user(client, users["admin"])
+        sites_group = self._get_sites_group(more_monitoring_objects, "Étang des Marchandons")
+        response = client.post(
+            url_for(
+                "calculatrice.get_indicator_visualization", indicator_id=i02_abondance.id_indicator
+            ),
+            data={
+                "sites_group_id": sites_group.id_sites_group,
+                "campaigns": [{"start_date": "2023-01-01", "end_date": "2023-12-31"}],
+                "viz_type": "campaign",
+            },
+        )
+        assert response.status_code == 200
+        viz_blocks = response.json["vizBlocks"]
+        assert len(viz_blocks) == 4
+        scalar_viz_block = viz_blocks[0]
+        assert scalar_viz_block["data"]["figure"] == "7.83"
+        barchart_viz_block = viz_blocks[1]
+        assert barchart_viz_block["data"]["datasets"][0]["data"] == [
+            "8.86",
+            "5.00",
+            "7.83",
+        ]
+        linechart_viz_block = viz_blocks[2]
+        assert linechart_viz_block["data"]["datasets"][0]["data"] == [
+            "8.86",
+            "5.00",
+            "7.83",
+        ]
+        table_viz_block = viz_blocks[3]
+        table_data = table_viz_block["data"]
+        assert table_data["headers"] == ["", "Moyenne HE par quadrat"]
+        assert table_data["rows"][0] == ["Quadrat 1", "8.86"]
 
     @pytest.mark.usefixtures(
         "calculatrice_permissions",

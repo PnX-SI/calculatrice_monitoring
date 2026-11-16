@@ -1,0 +1,20 @@
+{
+  "genre": "F",
+  "label": "Zone humide",
+  "label_list": "Zones humides",
+  "display_properties": [
+    "sites_group_name",
+    "sites_group_code",
+    "nb_sites",
+    "nb_visits"
+  ],
+  "specific": {
+    "nb_sites": {
+      "attribut_label": "Nombre de points de suivi"
+    },
+    "bassin_versant": {
+      "attribut_label": "Bassin versant",
+      "type_widget": "text"
+    }
+  }
+}

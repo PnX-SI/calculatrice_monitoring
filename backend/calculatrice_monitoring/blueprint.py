@@ -182,7 +182,7 @@ def get_protocol_properties(protocol_id: int):
     if scopes["R"] == 0:
         abort(403, description=f"Missing permission to read protocol {protocol_id}")
     properties = {}
-    for scope in ["site", "visit", "observation"]:
+    for scope in ["sites_group", "site", "visit", "observation"]:
         specific_props = list(get_config(protocol.module_code)[scope]["specific"].keys())
         properties[scope] = specific_props
     return properties, 200
