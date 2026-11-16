@@ -4,12 +4,9 @@ import { MatListOption } from '@angular/material/list';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   Campaign,
-  Indicator,
   parseCampaigns,
-  Protocol,
   serializeCampaigns,
   Site,
-  SitesGroup,
   VisualizationBlockDefinition,
   VisualizationError,
 } from '../../interfaces';
@@ -41,6 +38,7 @@ export class VisualizationPageComponent implements OnInit {
   protected secondCampaignControl = new FormControl('');
   protected activeBlockIndex?: number;
   protected indicatorId: number;
+  protected sitesGroupId: number;
   protected queryParams: { sitesGroup?: number; campaigns?: string } = {};
   private _sites: Site[];
   private _campaigns: Campaign[];
@@ -72,15 +70,15 @@ export class VisualizationPageComponent implements OnInit {
         campaignsParam = parsed.campaigns;
       }
 
+      this.sitesGroupId = sitesGroupId;
       this._campaigns = campaignsParam;
-      this._sites = parsed?.sites;
 
       this.queryParams = {
         sitesGroup: sitesGroupId,
         campaigns: campaignsParam ? serializeCampaigns(campaignsParam) : undefined,
       };
 
-      if (!this._campaigns || this._campaigns.length === 0) {
+      if (!this._campaigns || this._campaigns.length === 0 || !this.sitesGroupId) {
         this._router.navigate(['./params'], {
           relativeTo: this._route,
           queryParams: this.queryParams,
@@ -88,33 +86,15 @@ export class VisualizationPageComponent implements OnInit {
         return;
       }
 
-      if (this._sites) {
-        this._renderVisualization();
-      } else if (sitesGroupId) {
-        this._data.getIndicator(this.indicatorId).subscribe((indicator: Indicator) => {
-          this._data.getProtocol(indicator.protocolId).subscribe((protocol: Protocol) => {
-            this._data
-              .getSites(protocol.code, { id: sitesGroupId } as SitesGroup)
-              .subscribe((sites) => {
-                this._sites = sites;
-                sessionStorage.setItem(
-                  `calc-viz-params:${this.indicatorId}`,
-                  JSON.stringify({
-                    sites,
-                    campaigns: this._campaigns,
-                    sitesGroupId,
-                  })
-                );
-                this._renderVisualization();
-              });
-          });
-        });
-      } else {
-        this._router.navigate(['./params'], {
-          relativeTo: this._route,
-          queryParams: this.queryParams,
-        });
-      }
+      sessionStorage.setItem(
+        `calc-viz-params:${this.indicatorId}`,
+        JSON.stringify({
+          campaigns: this._campaigns,
+          sitesGroupId,
+        })
+      );
+
+      this._renderVisualization();
     });
   }
 
@@ -248,7 +228,7 @@ export class VisualizationPageComponent implements OnInit {
     this._data
       .getVisualizationBlocks(
         this.indicatorId,
-        this._sites,
+        this.sitesGroupId,
         vizSelection.campaigns,
         vizSelection.type
       )
