@@ -20,6 +20,7 @@ from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
     TMonitoringObservations,
     TMonitoringSites,
+    TMonitoringSitesGroups,
     TMonitoringVisits,
 )
 from marshmallow import ValidationError
@@ -576,9 +577,15 @@ def _get_error_line_number(error: Exception) -> int:
 
 
 def evaluate_campaign(
-    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
+    indicator: Indicator, monitoring_sites_group: TMonitoringSitesGroups, campaign: Campaign
 ):
     code = indicator.source_code
+
+    monitoring_sites = db.session.scalars(
+        db.select(TMonitoringSites).filter(
+            TMonitoringSites.id_sites_group == monitoring_sites_group.id_sites_group
+        )
+    ).all()
 
     sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
     sites_ids = [site.id_base_site for site in sites]
@@ -614,14 +621,14 @@ def evaluate_campaign(
 
 
 def visualize_campaign(
-    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaign: Campaign
+    indicator: Indicator, monitoring_sites_group: TMonitoringSitesGroups, campaign: Campaign
 ):
-    variables = evaluate_campaign(indicator, monitoring_sites, campaign)
+    variables = evaluate_campaign(indicator, monitoring_sites_group, campaign)
     return build_viz_blocks(variables, indicator)
 
 
 def visualize_overview(
-    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns: list[Campaign]
+    indicator: Indicator, monitoring_sites_group: TMonitoringSitesGroups, campaigns: list[Campaign]
 ):
     campaign_results = []
     for campaign in campaigns:
@@ -629,7 +636,7 @@ def visualize_overview(
             CampaignResult(
                 start_date=campaign.start_date,
                 end_date=campaign.end_date,
-                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+                vars=evaluate_campaign(indicator, monitoring_sites_group, campaign),
             )
         )
     context = create_overview_context(campaign_results)
@@ -644,7 +651,7 @@ def visualize_overview(
 
 
 def visualize_statistical_tests(
-    indicator: Indicator, monitoring_sites: list[TMonitoringSites], campaigns: list[Campaign]
+    indicator: Indicator, monitoring_sites_group: TMonitoringSitesGroups, campaigns: list[Campaign]
 ):
     campaign_results = []
     for campaign in campaigns:
@@ -652,7 +659,7 @@ def visualize_statistical_tests(
             CampaignResult(
                 start_date=campaign.start_date,
                 end_date=campaign.end_date,
-                vars=evaluate_campaign(indicator, monitoring_sites, campaign),
+                vars=evaluate_campaign(indicator, monitoring_sites_group, campaign),
             )
         )
     context = create_statistical_tests_context(campaign_results)
@@ -670,17 +677,17 @@ def visualize_statistical_tests(
 
 def visualize(
     indicator: Indicator,
-    monitoring_sites: list[TMonitoringSites],
+    monitoring_sites_group: TMonitoringSitesGroups,
     campaigns: list[Campaign],
     viz_type: str,
 ):
     try:
         if viz_type == "campaign":
-            viz_blocks = visualize_campaign(indicator, monitoring_sites, campaigns[0])
+            viz_blocks = visualize_campaign(indicator, monitoring_sites_group, campaigns[0])
         elif viz_type == "overview":
-            viz_blocks = visualize_overview(indicator, monitoring_sites, campaigns)
+            viz_blocks = visualize_overview(indicator, monitoring_sites_group, campaigns)
         elif viz_type == "statisticalTests":
-            viz_blocks = visualize_statistical_tests(indicator, monitoring_sites, campaigns)
+            viz_blocks = visualize_statistical_tests(indicator, monitoring_sites_group, campaigns)
     except IndicatorError as error:
         return {
             "error": {"type": VisualizationErrorType.public.value, "message": str(error)},
