@@ -19,7 +19,7 @@ from sqlalchemy.exc import NoResultFound
 from werkzeug.datastructures import MultiDict
 
 from calculatrice_monitoring import MODULE_CODE
-from calculatrice_monitoring.eval import Campaign, Scope, visualize
+from calculatrice_monitoring.eval import Campaign, visualize
 from calculatrice_monitoring.models import Indicator, ReferenceTable, VizBlockConfig, VizBlockScope
 from calculatrice_monitoring.schemas import (
     REFERENCE_TABLE_ENCODINGS,
@@ -182,7 +182,7 @@ def get_protocol_properties(protocol_id: int):
     if scopes["R"] == 0:
         abort(403, description=f"Missing permission to read protocol {protocol_id}")
     properties = {}
-    for scope in [Scope.SITE.value, Scope.VISIT.value, Scope.OBSERVATION.value]:
+    for scope in ["site", "visit", "observation"]:
         specific_props = list(get_config(protocol.module_code)[scope]["specific"].keys())
         properties[scope] = specific_props
     return properties, 200
