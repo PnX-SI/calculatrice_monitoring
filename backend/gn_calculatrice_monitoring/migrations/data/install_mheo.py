@@ -28,6 +28,7 @@ from pypnnomenclature.models import BibNomenclaturesTypes, TNomenclatures
 from pypnusershub.db.models import Organisme, User
 from shapely import Point
 from sqlalchemy import select
+from gn_calculatrice_monitoring import MODULE_CODE
 
 
 def get_test_protocols():
@@ -114,14 +115,14 @@ def install_test_permissions(protocols, users):
         )
 
     with db.session.begin_nested():
-        add_permission(users["gestionnaire"], "CALCULATRICE", "R", "ALL", scope=2)
-        add_permission(users["gestionnaire"], "CALCULATRICE", "E", "ALL", scope=2)
-        add_permission(users["admin"], "CALCULATRICE", "R", "ALL", scope=None)
-        add_permission(users["admin"], "CALCULATRICE", "E", "ALL", scope=None)
-        add_permission(users["admin"], "CALCULATRICE", "C", "CALC_ADMIN_INDICATOR", scope=None)
-        add_permission(users["admin"], "CALCULATRICE", "R", "CALC_ADMIN_INDICATOR", scope=None)
-        add_permission(users["admin"], "CALCULATRICE", "U", "CALC_ADMIN_INDICATOR", scope=None)
-        add_permission(users["admin"], "CALCULATRICE", "D", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["gestionnaire"], MODULE_CODE, "R", "ALL", scope=2)
+        add_permission(users["gestionnaire"], MODULE_CODE, "E", "ALL", scope=2)
+        add_permission(users["admin"], MODULE_CODE, "R", "ALL", scope=None)
+        add_permission(users["admin"], MODULE_CODE, "E", "ALL", scope=None)
+        add_permission(users["admin"], MODULE_CODE, "C", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["admin"], MODULE_CODE, "R", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["admin"], MODULE_CODE, "U", "CALC_ADMIN_INDICATOR", scope=None)
+        add_permission(users["admin"], MODULE_CODE, "D", "CALC_ADMIN_INDICATOR", scope=None)
         for gestionnaire_protocol in [
             "mheo_amphibiens_test",
             "mheo_flore_test",
