@@ -11,7 +11,6 @@ from geonature.utils.env import db
 from gn_module_monitoring.config.repositories import get_config
 from gn_module_monitoring.monitoring.models import (
     TMonitoringModules,
-    TMonitoringSites,
     TMonitoringSitesGroups,
 )
 from marshmallow import ValidationError
@@ -431,17 +430,17 @@ def get_indicator_visualization(
     viz_type: str = Json(),  # noqa: B008
 ):
     indicator = db.one_or_404(select(Indicator).filter(Indicator.id_indicator == indicator_id))
-    db.one_or_404(
+    sites_group = db.one_or_404(
         select(TMonitoringSitesGroups).filter(
             TMonitoringSitesGroups.id_sites_group == sites_group_id
         )
     )
-    monitoring_sites = db.session.scalars(
-        select(TMonitoringSites).filter(TMonitoringSites.id_sites_group == sites_group_id)
-    ).all()
+    # monitoring_sites = db.session.scalars(
+    #     select(TMonitoringSites).filter(TMonitoringSites.id_sites_group == sites_group_id)
+    # ).all()
     return visualize(
         indicator,
-        monitoring_sites,
+        sites_group,
         [Campaign(**c_dict) for c_dict in campaigns],
         viz_type,
     )
