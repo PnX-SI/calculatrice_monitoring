@@ -12,15 +12,20 @@ on:
       - 'frontend/**'
       - '.github/workflows/cypress.yml'
 
+# Cancel superseded runs, including the duplicate push/pull_request run on a PR branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 env:
-  gn_module_monitoring_ref: "1.1.0"
+  gn_module_monitoring_ref: "1.3.0"
 
 jobs:
   mount_app_and_run_cypress:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
-        image: ghcr.io/pnx-si/geonature-db:2.16.3
+        image: ghcr.io/pnx-si/geonature-db:2.17.0
         env:
           POSTGRES_DB: geonature2db
           POSTGRES_PASSWORD: geonatadmin
@@ -48,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: pnx-si/geonature
-          ref: "2.16.3"
+          ref: "2.17.0"
           submodules: true
       - name: Clone gn_module_monitoring
         uses: actions/checkout@v4
@@ -114,7 +119,6 @@ jobs:
           geonature db upgrade occhab-samples@head
           geonature db upgrade import-samples@head
           geonature db autoupgrade
-          geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
       - name: Install gn_module_monitoring module
@@ -127,7 +131,24 @@ jobs:
           geonature install-gn-module ${MODULE_DIR} --build=false
           geonature db upgrade calculatrice@head
           geonature db autoupgrade
-          geonature permissions supergrant --group --nom "Grp_admin" --yes
+        env:
+          GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+      - name: Install test monitoring protocols and indicators
+        run: |
+          mkdir ${GITHUB_WORKSPACE}/backend/media/monitorings
+          cd ${GITHUB_WORKSPACE}/backend/media/monitorings
+          ln -s ${MODULE_DIR}/data/protocols/mheo_amphibiens_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_flore_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_odonate_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_pedologie_test
+          ln -s ${MODULE_DIR}/data/protocols/mheo_piezometrie_test
+          geonature monitorings install mheo_amphibiens_test
+          geonature monitorings install mheo_flore_test
+          geonature monitorings install mheo_odonate_test
+          geonature monitorings install mheo_pedologie_test
+          geonature monitorings install mheo_piezometrie_test
+          geonature db upgrade calculatrice-samples-test@head
+#          geonature permissions supergrant --group --nom "Grp_admin" --yes
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
 
@@ -184,6 +205,14 @@ jobs:
           npm run start &
         env:
           GEONATURE_CONFIG_FILE: '${{ github.workspace }}/config/test_config.toml'
+
+      # Wait for backend and frontend to be reachable
+      - name: Wait for GeoNature backend & frontend
+        run: |
+          npx --yes wait-on@7 \
+            --timeout 600s --interval 5000 --httpTimeout 30000 \
+            http-get://127.0.0.1:8000/gn_commons/config \
+            http-get://127.0.0.1:4200
 
       # Run frontend tests with Cypress
       - name: cypress
