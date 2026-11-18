@@ -42,6 +42,16 @@ class Scope(Enum):
     GLOBAL = "global"
 
 
+ProtocolSpecificProperties: TypeAlias = dict[str, Any]
+
+
+class ProtocolConfig:
+    sites_group: ProtocolSpecificProperties
+    site: ProtocolSpecificProperties
+    visit: ProtocolSpecificProperties
+    observation: ProtocolSpecificProperties
+
+
 class Entity:
     def _create_props_from_model_instance(self, config, model_instance):
         specific_props = config["specific"]
@@ -105,12 +115,15 @@ class Site(Entity):
         id_base_site: int,
         base_site_name: Optional[str] = None,
         group: Group,
+        specifics: ProtocolSpecificProperties,
     ):
         site = Site()
         site.id_base_site = id_base_site
         site.base_site_name = base_site_name
         site.id = site.id_base_site
         site.group = group
+        for prop_key, prop_value in specifics.items():
+            setattr(site, prop_key, prop_value)
         return site
 
 
@@ -145,8 +158,7 @@ class Visit(Entity):
         id_base_visit: int,
         visit_date_min: date,
         site: Site,
-        # FIXME: cannot type with ProtocolSpecificProperties. Why?
-        specifics,
+        specifics: ProtocolSpecificProperties,
     ):
         visit = Visit()
         visit.id_base_visit = id_base_visit
@@ -232,16 +244,6 @@ generic_props_by_scope = {
     ],
     Scope.SITE: ["base_site_name"],
 }
-
-
-ProtocolSpecificProperties: TypeAlias = dict[str, Any]
-
-
-class ProtocolConfig:
-    sites_group: ProtocolSpecificProperties
-    site: ProtocolSpecificProperties
-    visit: ProtocolSpecificProperties
-    observation: ProtocolSpecificProperties
 
 
 def create_monitoring_collection_impl(
