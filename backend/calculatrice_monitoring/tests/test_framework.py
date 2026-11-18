@@ -192,5 +192,32 @@ class TestGnAdd:
         prop_value_3 = self.get_value_by_entity_id(visit_total_durations, entity_id=3)
         assert prop_value_3.value == 33
 
-    # missing value
+    def test_it_handles_missing_values(self):
+        entities = _get_test_entities()
+        visits = entities["visits"]
+        visit_durations_1 = PropertyCollection(
+            [
+                PropertyValue(value=10, entity=visits[0]),
+                PropertyValue(value=20, entity=visits[1]),
+                PropertyValue(value=None, entity=visits[2]),
+            ]
+        )
+        visit_durations_2 = PropertyCollection(
+            [
+                PropertyValue(value=1, entity=visits[0]),
+                PropertyValue(value=None, entity=visits[1]),
+                PropertyValue(value=3, entity=visits[2]),
+            ]
+        )
+
+        visit_total_durations = gn_add(visit_durations_1, visit_durations_2)
+
+        assert len(visit_total_durations.values) == 3
+        prop_value_1 = self.get_value_by_entity_id(visit_total_durations, entity_id=1)
+        assert prop_value_1.value == 11
+        prop_value_2 = self.get_value_by_entity_id(visit_total_durations, entity_id=2)
+        assert prop_value_2.value is None
+        prop_value_3 = self.get_value_by_entity_id(visit_total_durations, entity_id=3)
+        assert prop_value_3.value is None
+
     # check the type of passed values

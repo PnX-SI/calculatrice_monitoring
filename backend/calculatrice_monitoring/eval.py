@@ -460,9 +460,13 @@ def gn_add(prop_collection_1: PropertyCollection, prop_collection_2: PropertyCol
         for candidate_value in prop_collection_2.values:
             if prop_value_1.entity == candidate_value.entity:
                 prop_value_2 = candidate_value
+        if prop_value_1.value is None or prop_value_2.value is None:
+            new_value = None
+        else:
+            new_value = prop_value_1.value + prop_value_2.value
         values.append(
             PropertyValue(
-                value=prop_value_1.value + prop_value_2.value,
+                value=new_value,
                 entity=prop_value_1.entity,
             )
         )
