@@ -455,11 +455,15 @@ def gn_add(prop_collection_1: PropertyCollection, prop_collection_2: PropertyCol
         )
 
     values = []
-    for prop1, prop2 in zip(prop_collection_1.values, prop_collection_2.values):
+
+    for prop_value_1 in prop_collection_1.values:
+        for candidate_value in prop_collection_2.values:
+            if prop_value_1.entity == candidate_value.entity:
+                prop_value_2 = candidate_value
         values.append(
             PropertyValue(
-                value=prop1.value + prop2.value,
-                entity=prop1.entity,
+                value=prop_value_1.value + prop_value_2.value,
+                entity=prop_value_1.entity,
             )
         )
     return PropertyCollection(values=values, scope=prop_collection_1.scope)
