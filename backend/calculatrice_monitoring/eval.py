@@ -93,6 +93,8 @@ class Group(Entity):
 
 
 class Site(Entity):
+    __scope__ = Scope.SITE
+
     id: Any
     id_base_site: int
     base_site_name: str
@@ -115,15 +117,16 @@ class Site(Entity):
         id_base_site: int,
         base_site_name: Optional[str] = None,
         group: Group,
-        specifics: ProtocolSpecificProperties,
+        specifics: ProtocolSpecificProperties = None,
     ):
         site = Site()
         site.id_base_site = id_base_site
         site.base_site_name = base_site_name
         site.id = site.id_base_site
         site.group = group
-        for prop_key, prop_value in specifics.items():
-            setattr(site, prop_key, prop_value)
+        if specifics:
+            for prop_key, prop_value in specifics.items():
+                setattr(site, prop_key, prop_value)
         return site
 
 
@@ -135,6 +138,8 @@ def get_site(protocol, site_id) -> Site:
 
 
 class Visit(Entity):
+    __scope__ = Scope.VISIT
+
     id: Any
     id_base_visit: int
     id_base_site: int
@@ -207,9 +212,12 @@ class PropertyCollection:
     values: list[PropertyValue]
     scope: Scope
 
-    def __init__(self, values, scope):
+    def __init__(self, values, scope=None):
         self.values = values
-        self.scope = scope
+        if scope:
+            self.scope = scope
+        else:
+            self.scope = self.values[0].entity.__scope__
 
 
 class MonitoringCollection:
@@ -433,6 +441,30 @@ def gn_median(prop_collection: PropertyCollection) -> PropertyCollection:
     return PropertyCollection(values=values, scope=Scope.GLOBAL)
 
 
+def gn_add(prop_collection_1: PropertyCollection, prop_collection_2: PropertyCollection):
+    if prop_collection_1.scope != prop_collection_2.scope:
+        raise IndicatorFrameworkError(
+            "gn_add: both property collections should have the same scope"
+        )
+
+    entities_set_1 = {value.entity for value in prop_collection_1.values}
+    entities_set_2 = {value.entity for value in prop_collection_2.values}
+    if entities_set_1 != entities_set_2:
+        raise IndicatorFrameworkError(
+            "gn_add: both property collections should hold the same entities"
+        )
+
+    values = []
+    for prop1, prop2 in zip(prop_collection_1.values, prop_collection_2.values):
+        values.append(
+            PropertyValue(
+                value=prop1.value + prop2.value,
+                entity=prop1.entity,
+            )
+        )
+    return PropertyCollection(values=values, scope=prop_collection_1.scope)
+
+
 # --- VISUALIZE FUNCTION AND SUB-FUNCTIONS ---
 
 
@@ -469,6 +501,10 @@ class UnexpectedIndicatorError(Exception):
     def __init__(self, *args, scope: UnexpectedIndicatorErrorScope):
         self.scope = scope
         super().__init__(*args)
+
+
+class IndicatorFrameworkError(Exception):
+    pass
 
 
 class VisualizationConfigError(Exception):
