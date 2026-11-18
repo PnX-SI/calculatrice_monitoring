@@ -1,3 +1,4 @@
+import math
 from datetime import date
 
 import pytest
@@ -152,6 +153,15 @@ class TestGnAdd:
 
         with pytest.raises(IndicatorFrameworkError, match="should hold the same entities"):
             gn_add(average_value_sites_2023, average_value_sites_2024)
+
+    def test_both_collections_should_have_same_scope_error(self):
+        entities = _get_test_entities()
+        sites_property = PropertyCollection([PropertyValue(value=10, entity=entities["site"])])
+        visits_property = PropertyCollection(
+            [PropertyValue(value=10, entity=visit) for visit in entities["visits"]]
+        )
+        with pytest.raises(IndicatorFrameworkError, match="should have the same scope"):
+            gn_add(sites_property, visits_property)
 
     # same length
     # missing value
