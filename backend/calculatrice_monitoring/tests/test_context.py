@@ -40,7 +40,9 @@ class TestObservationCollection:
     def test_context_visit(self, protocols, monitoring_objects):
         # à partir d'observations et d'un protocole test
         protocol = protocols["mheo_flore_test"]
-        visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
+        visits = [
+            Visit.from_monitoring_object(protocol, obj) for obj in monitoring_objects["visits"]
+        ]
         visit_collection = create_monitoring_collection(protocol, visits, scope=Scope.VISIT)
 
         # tester que le PropCollection sont bien créées
@@ -77,7 +79,7 @@ class TestObservationCollection:
 
     def test_context_with_sites(self, protocols, monitoring_objects):
         protocol = protocols["mheo_flore_test"]
-        sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
+        sites = [Site.from_monitoring_object(protocol, obj) for obj in monitoring_objects["sites"]]
         site_collection = create_monitoring_collection(protocol, sites, scope=Scope.SITE)
 
         site_superficies = site_collection.superficie_mètres_carrés
@@ -93,7 +95,7 @@ class TestObservationCollection:
         # Create a monitoring visit without values for specific properties
         monitoring_visit = TMonitoringVisits(visit_date_min=datetime.datetime(2025, 1, 1))
 
-        visit = Visit(flore_protocol, monitoring_visit)
+        visit = Visit.from_monitoring_object(flore_protocol, monitoring_visit)
 
         assert visit.visit_date_min == datetime.datetime(2025, 1, 1)
         assert hasattr(visit, "durée_secondes")

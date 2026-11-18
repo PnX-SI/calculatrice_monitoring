@@ -11,7 +11,7 @@ from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from io import StringIO
-from typing import Any
+from typing import Any, Optional, TypeAlias
 
 import scipy
 from geonature.utils.env import db
@@ -63,32 +63,62 @@ class Group(Entity):
     id_sites_group: int
     sites_group_name: str
 
-    def __init__(self, protocol, group_model_instance: TMonitoringSitesGroups):
-        self.id_sites_group = group_model_instance.id_sites_group
-        self.sites_group_name = group_model_instance.sites_group_name
-        self.id = self.id_sites_group
+    @classmethod
+    def from_monitoring_object(cls, protocol, group_monitoring_object: TMonitoringSitesGroups):
+        group = Group()
+        group.id_sites_group = group_monitoring_object.id_sites_group
+        group.sites_group_name = group_monitoring_object.sites_group_name
+        group.id = group.id_sites_group
         props = get_config(protocol.module_code)
-        self._create_props_from_model_instance(props["sites_group"], group_model_instance)
+        group._create_props_from_model_instance(props["sites_group"], group_monitoring_object)
+        return group
+
+    @classmethod
+    def from_attr(cls, id_sites_group: int, sites_group_name: Optional[str] = None):
+        group = Group()
+        group.id_sites_group = id_sites_group
+        group.id = group.id_sites_group
+        group.sites_group_name = sites_group_name
+        return group
 
 
 class Site(Entity):
     id: Any
     id_base_site: int
     base_site_name: str
+    group: Group
 
-    def __init__(self, protocol, site_model_instance):
-        self.id_base_site = site_model_instance.id_base_site
-        self.base_site_name = site_model_instance.base_site_name
-        self.id = self.id_base_site
+    @classmethod
+    def from_monitoring_object(cls, protocol, site_monitoring_object: TMonitoringSites):
+        site = Site()
+        site.id_base_site = site_monitoring_object.id_base_site
+        site.base_site_name = site_monitoring_object.base_site_name
+        site.id = site.id_base_site
         props = get_config(protocol.module_code)
-        self._create_props_from_model_instance(props[Scope.SITE.value], site_model_instance)
+        site._create_props_from_model_instance(props[Scope.SITE.value], site_monitoring_object)
+        return site
+
+    @classmethod
+    def from_attr(
+        cls,
+        *,
+        id_base_site: int,
+        base_site_name: Optional[str] = None,
+        group: Group,
+    ):
+        site = Site()
+        site.id_base_site = id_base_site
+        site.base_site_name = base_site_name
+        site.id = site.id_base_site
+        site.group = group
+        return site
 
 
 def get_site(protocol, site_id) -> Site:
     site_model_instance = db.session.scalar(
         db.select(TMonitoringSites).filter(TMonitoringSites.id_base_site == site_id)
     )
-    return Site(protocol, site_model_instance)
+    return Site.from_monitoring_object(protocol, site_model_instance)
 
 
 class Visit(Entity):
@@ -97,20 +127,42 @@ class Visit(Entity):
     id_base_site: int
     visit_date_min: date
 
-    def __init__(self, protocol, visit_model_instance):
-        self.id_base_visit = visit_model_instance.id_base_visit
-        self.visit_date_min = visit_model_instance.visit_date_min
-        self.id_base_site = visit_model_instance.id_base_site
-        self.id = self.id_base_visit
+    @classmethod
+    def from_monitoring_object(cls, protocol, visit_monitoring_object):
+        visit = Visit()
+        visit.id_base_visit = visit_monitoring_object.id_base_visit
+        visit.visit_date_min = visit_monitoring_object.visit_date_min
+        visit.id_base_site = visit_monitoring_object.id_base_site
+        visit.id = visit.id_base_visit
         props = get_config(protocol.module_code)
-        self._create_props_from_model_instance(props[Scope.VISIT.value], visit_model_instance)
+        visit._create_props_from_model_instance(props[Scope.VISIT.value], visit_monitoring_object)
+        return visit
+
+    @classmethod
+    def from_attr(
+        cls,
+        *,
+        id_base_visit: int,
+        visit_date_min: date,
+        site: Site,
+        # FIXME: cannot type with ProtocolSpecificProperties. Why?
+        specifics,
+    ):
+        visit = Visit()
+        visit.id_base_visit = id_base_visit
+        visit.visit_date_min = visit_date_min
+        visit.site = site
+        visit.id = visit.id_base_visit
+        for prop_key, prop_value in specifics.items():
+            setattr(visit, prop_key, prop_value)
+        return visit
 
 
 def get_visit(protocol, visit_id) -> Visit:
     visit_model_instance = db.session.scalar(
         db.select(TMonitoringVisits).filter(TMonitoringVisits.id_base_visit == visit_id)
     )
-    return Visit(protocol, visit_model_instance)
+    return Visit.from_monitoring_object(protocol, visit_model_instance)
 
 
 class Observation(Entity):
@@ -182,6 +234,49 @@ generic_props_by_scope = {
 }
 
 
+ProtocolSpecificProperties: TypeAlias = dict[str, Any]
+
+
+class ProtocolConfig:
+    sites_group: ProtocolSpecificProperties
+    site: ProtocolSpecificProperties
+    visit: ProtocolSpecificProperties
+    observation: ProtocolSpecificProperties
+
+
+def create_monitoring_collection_impl(
+    specific_props: ProtocolSpecificProperties, entities: list[Entity], scope: Scope
+):
+    def create_prop_collection_from_entities(instances, scope, propname):
+        values = []
+        for instance in instances:
+            values.append(
+                PropertyValue(
+                    value=getattr(instance, propname, None),
+                    entity=instance,
+                )
+            )
+        return PropertyCollection(values=values, scope=scope)
+
+    def install_properties(collection, scope, entities, property_list):
+        for prop_key in property_list:
+            prop_collection = create_prop_collection_from_entities(
+                instances=entities, scope=scope, propname=prop_key
+            )
+            setattr(collection, prop_key, prop_collection)
+
+    generic_props = generic_props_by_scope[scope]
+    # specific_props = get_config(protocol.module_code)[scope.value]["specific"].keys()
+    # specific_props = protocol_config[scope]
+    coll = MonitoringCollection(scope=scope)
+    install_properties(collection=coll, scope=scope, entities=entities, property_list=generic_props)
+    install_properties(
+        collection=coll, scope=scope, entities=entities, property_list=specific_props
+    )
+    coll.entities = entities
+    return coll
+
+
 def create_monitoring_collection(
     protocol: TMonitoringModules,
     entities: list[Entity],
@@ -198,34 +293,8 @@ def create_monitoring_collection(
     This is temporary as PropertyCollections creation should be dynamic, depending on generic and
     protocol-specific properties of monitoring objects.
     """
-
-    def create_prop_collection_from_entities(instances, scope, propname):
-        values = []
-        for instance in instances:
-            values.append(
-                PropertyValue(
-                    value=getattr(instance, propname),
-                    entity=instance,
-                )
-            )
-        return PropertyCollection(values=values, scope=scope)
-
-    def install_properties(collection, scope, entities, property_list):
-        for prop_key in property_list:
-            prop_collection = create_prop_collection_from_entities(
-                instances=entities, scope=scope, propname=prop_key
-            )
-            setattr(collection, prop_key, prop_collection)
-
-    generic_props = generic_props_by_scope[scope]
-    specific_props = get_config(protocol.module_code)[scope.value]["specific"].keys()
-    coll = MonitoringCollection(scope=scope)
-    install_properties(collection=coll, scope=scope, entities=entities, property_list=generic_props)
-    install_properties(
-        collection=coll, scope=scope, entities=entities, property_list=specific_props
-    )
-    coll.entities = entities
-    return coll
+    specific_props = get_config(protocol.module_code)[scope.value]["specific"]
+    return create_monitoring_collection_impl(specific_props, entities, scope)
 
 
 @dataclass
@@ -597,7 +666,7 @@ def evaluate_campaign(
 ):
     code = indicator.source_code
 
-    group = Group(indicator.protocol, monitoring_sites_group)
+    group = Group.from_monitoring_object(indicator.protocol, monitoring_sites_group)
 
     monitoring_sites = db.session.scalars(
         db.select(TMonitoringSites).filter(
@@ -605,7 +674,7 @@ def evaluate_campaign(
         )
     ).all()
 
-    sites = [Site(indicator.protocol, obj) for obj in monitoring_sites]
+    sites = [Site.from_monitoring_object(indicator.protocol, obj) for obj in monitoring_sites]
     sites_ids = [site.id_base_site for site in sites]
 
     visits_query = (
@@ -624,7 +693,7 @@ def evaluate_campaign(
     observations = [
         Observation(indicator.protocol, obj) for obj in db.session.scalars(observations_query).all()
     ]
-    visits = [Visit(indicator.protocol, obj) for obj in monitoring_visits]
+    visits = [Visit.from_monitoring_object(indicator.protocol, obj) for obj in monitoring_visits]
 
     collections = create_monitoring_collections(indicator.protocol, observations, visits, sites)
     context = create_context(group, collections, indicator.reference_tables)

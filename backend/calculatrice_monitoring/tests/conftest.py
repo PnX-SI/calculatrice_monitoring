@@ -144,10 +144,10 @@ def eval_context(indicators, monitoring_objects):
     indicator = indicators["i02_abondance"]
     protocol = indicator.protocol
     observations = [Observation(protocol, obj) for obj in monitoring_objects["observations"]]
-    visits = [Visit(protocol, obj) for obj in monitoring_objects["visits"]]
-    sites = [Site(protocol, obj) for obj in monitoring_objects["sites"]]
+    visits = [Visit.from_monitoring_object(protocol, obj) for obj in monitoring_objects["visits"]]
+    sites = [Site.from_monitoring_object(protocol, obj) for obj in monitoring_objects["sites"]]
     group = [
-        Group(protocol, group)
+        Group.from_monitoring_object(protocol, group)
         for group in monitoring_objects["sites_groups"]
         if group.sites_group_name == "Étang de Botte"
     ][0]
